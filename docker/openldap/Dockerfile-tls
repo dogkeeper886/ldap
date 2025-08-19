@@ -4,3 +4,9 @@ LABEL maintainer="LDAP Admin <admin@tsengsyu.com>"
 # Add custom TLS certificates using the official recommended approach
 # Certificates will be copied from certbot container during build
 COPY certs/ /container/service/slapd/assets/certs/
+
+# Add automated user initialization for test environment
+COPY bootstrap/init-users.sh /container/service/slapd/assets/config/bootstrap/custom/
+RUN chmod +x /container/service/slapd/assets/config/bootstrap/custom/init-users.sh
+
+# The osixia/openldap image automatically executes scripts in the bootstrap/custom directory

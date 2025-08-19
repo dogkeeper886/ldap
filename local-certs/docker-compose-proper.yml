@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  openldap:
+    build:
+      context: .
+      dockerfile: Dockerfile-proper
+    container_name: openldap-proper
+    hostname: ldap.tsengsyu.com
+    restart: unless-stopped
+    ports:
+      - "639:636"
+      - "392:389"
+    environment:
+      - LDAP_ORGANISATION=Tseng Syu Organization
+      - LDAP_DOMAIN=ldap.tsengsyu.com
+      - LDAP_ADMIN_PASSWORD=SecureAdmin123!
+      - LDAP_TLS=true
+      - LDAP_TLS_CRT_FILENAME=cert.pem
+      - LDAP_TLS_KEY_FILENAME=privkey.pem
+      - LDAP_TLS_CA_CRT_FILENAME=fullchain.pem
