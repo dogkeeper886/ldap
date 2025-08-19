@@ -33,7 +33,6 @@ services:
       - ldap-data:/var/lib/ldap
       - ldap-config:/etc/ldap/slapd.d
       - certificates:/etc/letsencrypt:ro
-      - certificates:/container/service/slapd/assets/certs:ro
       - ldap-health:/opt/ldap-health
       - ./ldifs:/ldifs:ro
       - ./config/openldap:/opt/ldap-config:ro
