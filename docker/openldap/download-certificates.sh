@@ -33,12 +33,16 @@ RETRY_DELAY=5
 setup_target_directory() {
     log "Setting up target directory: $TARGET_DIR"
     
+    # Create directory with proper permissions as root first
     mkdir -p "$TARGET_DIR"
     
-    # Set proper ownership (OpenLDAP user)
-    chown -R openldap:openldap "$TARGET_DIR" 2>/dev/null || true
+    # Set permissions that allow writing
+    chmod 755 "$TARGET_DIR"
     
-    log "Target directory ready"
+    # Try to set ownership (may fail if not root, that's OK)
+    chown -R openldap:openldap "$TARGET_DIR" 2>/dev/null || chown -R 911:911 "$TARGET_DIR" 2>/dev/null || true
+    
+    log "Target directory ready: $(ls -ld $TARGET_DIR)"
 }
 
 # Wait for certbot HTTP server to be available
@@ -81,23 +85,44 @@ download_certificate_file() {
     temp_file=$(mktemp)
     
     if curl -s --fail --connect-timeout 10 --max-time 30 "$url" -o "$temp_file"; then
-        # Verify it's a valid certificate file
+        # Verify it's a valid PEM file
         if [[ "$filename" == *.pem ]]; then
-            if openssl x509 -in "$temp_file" -noout -text >/dev/null 2>&1 || \
-               openssl rsa -in "$temp_file" -noout -text >/dev/null 2>&1 || \
-               openssl crl -in "$temp_file" -noout -text >/dev/null 2>&1; then
-                
+            local is_valid=false
+            
+            # Check if it's a certificate
+            if openssl x509 -in "$temp_file" -noout -text >/dev/null 2>&1; then
+                log "$filename is a valid certificate"
+                is_valid=true
+            # Check if it's a private key
+            elif openssl rsa -in "$temp_file" -noout -text >/dev/null 2>&1; then
+                log "$filename is a valid private key"
+                is_valid=true
+            # Check if it's a certificate chain
+            elif openssl crl -in "$temp_file" -noout -text >/dev/null 2>&1; then
+                log "$filename is a valid certificate chain"
+                is_valid=true
+            # For fullchain.pem, just check if it contains certificate data
+            elif grep -q "BEGIN CERTIFICATE" "$temp_file"; then
+                log "$filename contains certificate data"
+                is_valid=true
+            fi
+            
+            if [ "$is_valid" = true ]; then
                 # Move to target location
-                mv "$temp_file" "$target_path"
-                
-                # Set proper permissions
-                chown openldap:openldap "$target_path" 2>/dev/null || true
-                chmod 644 "$target_path"
-                
-                log "Successfully downloaded: $filename"
-                return 0
+                if mv "$temp_file" "$target_path"; then
+                    # Set proper permissions
+                    chown openldap:openldap "$target_path" 2>/dev/null || chown 911:911 "$target_path" 2>/dev/null || true
+                    chmod 644 "$target_path"
+                    
+                    log "Successfully downloaded: $filename"
+                    return 0
+                else
+                    error "Failed to move $filename to target location"
+                    rm -f "$temp_file"
+                    return 1
+                fi
             else
-                error "Downloaded file $filename is not a valid certificate"
+                error "Downloaded file $filename is not a valid PEM file"
                 rm -f "$temp_file"
                 return 1
             fi
