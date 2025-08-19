@@ -47,7 +47,7 @@ services:
       - LDAP_DOMAIN=${LDAP_DOMAIN:-example.com}
       - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}
       - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
-      - LDAP_TLS=true
+      - LDAP_TLS=false
       - LDAP_TLS_ENFORCE=false
       - LDAP_TLS_CRT_FILENAME=ldap.crt
       - LDAP_TLS_KEY_FILENAME=ldap.key
@@ -57,6 +57,7 @@ services:
       - LDAP_TLS_VERIFY_CLIENT=never
       - LDAP_BACKEND=mdb
       - LDAP_LOG_LEVEL=256
+      - CONTAINER_LOG_LEVEL=4
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - TEST_USER_PASSWORD=${TEST_USER_PASSWORD}
       - GUEST_USER_PASSWORD=${GUEST_USER_PASSWORD}
