@@ -63,8 +63,6 @@ services:
     volumes:
       - ldap-data:/var/lib/ldap
       - ldap-config:/etc/ldap/slapd.d
-      - ./ldifs:/ldifs:ro
-      - ./config/openldap:/opt/ldap-config:ro
     networks:
       - ldap-network
     depends_on:
