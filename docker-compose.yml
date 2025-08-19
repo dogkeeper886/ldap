@@ -13,7 +13,7 @@ services:
       - LDAP_DOMAIN=${LDAP_DOMAIN:-example.com}
       - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}
       - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
-      - LDAP_TLS=true
+      - LDAP_TLS=false
       - LDAP_TLS_ENFORCE=false
       - LDAP_TLS_CRT_FILENAME=ldap-certs/cert.pem
       - LDAP_TLS_KEY_FILENAME=ldap-certs/privkey.pem
@@ -32,7 +32,6 @@ services:
     volumes:
       - ldap-data:/var/lib/ldap
       - ldap-config:/etc/ldap/slapd.d
-      - certificates:/container/service/slapd/assets/certs
       - ldap-health:/opt/ldap-health
       - ./ldifs:/ldifs:ro
       - ./config/openldap:/opt/ldap-config:ro
