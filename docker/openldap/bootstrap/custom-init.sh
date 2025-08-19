@@ -39,6 +39,7 @@ EOF
 echo "[Custom Init] Creating test users..."
 
 # User 1: wifi-user
+WIFI_PASS=$(slappasswd -s "WiFiPass123!")
 ldapadd -x -H ldap://localhost -D "cn=admin,$LDAP_BASE_DN" -w "$LDAP_ADMIN_PASSWORD" <<EOF 2>/dev/null || true
 dn: uid=wifi-user,ou=users,$LDAP_BASE_DN
 objectClass: inetOrgPerson
@@ -49,10 +50,11 @@ cn: WiFi User
 sn: User
 givenName: WiFi
 mail: wifi-user@$LDAP_DOMAIN
-userPassword: WiFiPass123!
+userPassword: $WIFI_PASS
 EOF
 
 # User 2: test-user
+TEST_PASS=$(slappasswd -s "TestPass456!")
 ldapadd -x -H ldap://localhost -D "cn=admin,$LDAP_BASE_DN" -w "$LDAP_ADMIN_PASSWORD" <<EOF 2>/dev/null || true
 dn: uid=test-user,ou=users,$LDAP_BASE_DN
 objectClass: inetOrgPerson
@@ -63,10 +65,11 @@ cn: Test User
 sn: User
 givenName: Test
 mail: test-user@$LDAP_DOMAIN
-userPassword: TestPass456!
+userPassword: $TEST_PASS
 EOF
 
 # User 3: admin-user
+ADMIN_PASS=$(slappasswd -s "AdminPass789!")
 ldapadd -x -H ldap://localhost -D "cn=admin,$LDAP_BASE_DN" -w "$LDAP_ADMIN_PASSWORD" <<EOF 2>/dev/null || true
 dn: uid=admin-user,ou=users,$LDAP_BASE_DN
 objectClass: inetOrgPerson
@@ -77,10 +80,11 @@ cn: Admin User
 sn: User
 givenName: Admin
 mail: admin-user@$LDAP_DOMAIN
-userPassword: AdminPass789!
+userPassword: $ADMIN_PASS
 EOF
 
 # User 4: guest-user
+GUEST_PASS=$(slappasswd -s "GuestPass000!")
 ldapadd -x -H ldap://localhost -D "cn=admin,$LDAP_BASE_DN" -w "$LDAP_ADMIN_PASSWORD" <<EOF 2>/dev/null || true
 dn: uid=guest-user,ou=users,$LDAP_BASE_DN
 objectClass: inetOrgPerson
@@ -91,10 +95,11 @@ cn: Guest User
 sn: User
 givenName: Guest
 mail: guest-user@$LDAP_DOMAIN
-userPassword: GuestPass000!
+userPassword: $GUEST_PASS
 EOF
 
 # User 5: vip-user
+VIP_PASS=$(slappasswd -s "VipPass111!")
 ldapadd -x -H ldap://localhost -D "cn=admin,$LDAP_BASE_DN" -w "$LDAP_ADMIN_PASSWORD" <<EOF 2>/dev/null || true
 dn: uid=vip-user,ou=users,$LDAP_BASE_DN
 objectClass: inetOrgPerson
@@ -105,7 +110,7 @@ cn: VIP User
 sn: User
 givenName: VIP
 mail: vip-user@$LDAP_DOMAIN
-userPassword: VipPass111!
+userPassword: $VIP_PASS
 EOF
 
 # Create groups
