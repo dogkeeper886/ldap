@@ -2,10 +2,7 @@ version: '3.8'
 
 services:
   openldap:
-    build:
-      context: ./docker/openldap
-      dockerfile: Dockerfile
-    image: ldap-openldap:latest
+    image: osixia/openldap:1.5.0
     container_name: openldap
     restart: unless-stopped
     ports:
@@ -18,9 +15,9 @@ services:
       - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
       - LDAP_TLS=true
       - LDAP_TLS_ENFORCE=true
-      - LDAP_TLS_CRT_FILENAME=cert.pem
-      - LDAP_TLS_KEY_FILENAME=privkey.pem
-      - LDAP_TLS_CA_CRT_FILENAME=fullchain.pem
+      - LDAP_TLS_CRT_FILENAME=/etc/letsencrypt/ldap-certs/cert.pem
+      - LDAP_TLS_KEY_FILENAME=/etc/letsencrypt/ldap-certs/privkey.pem
+      - LDAP_TLS_CA_CRT_FILENAME=/etc/letsencrypt/ldap-certs/fullchain.pem
       - LDAP_TLS_PROTOCOL_MIN=3.3
       - LDAP_TLS_CIPHER_SUITE=HIGH:!aNULL:!MD5
       - LDAP_TLS_VERIFY_CLIENT=never
