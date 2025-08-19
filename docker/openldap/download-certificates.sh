@@ -25,7 +25,7 @@ warn() {
 
 # Configuration
 CERTBOT_HTTP_URL="http://certbot:8080"
-TARGET_DIR="/opt/ldap-certs"
+TARGET_DIR="/container/service/slapd/assets/certs"
 MAX_RETRIES=10
 RETRY_DELAY=5
 
@@ -73,13 +73,14 @@ wait_for_certbot() {
     return 1
 }
 
-# Download a certificate file
-download_certificate_file() {
-    local filename="$1"
-    local target_path="$TARGET_DIR/$filename"
-    local url="$CERTBOT_HTTP_URL/$filename"
+# Download a certificate file with mapping
+download_certificate_file_mapped() {
+    local source_filename="$1"  # cert.pem
+    local target_filename="$2"  # ldap.crt
+    local target_path="$TARGET_DIR/$target_filename"
+    local url="$CERTBOT_HTTP_URL/$source_filename"
     
-    log "Downloading $filename from certbot..."
+    log "Downloading $source_filename -> $target_filename from certbot..."
     
     local temp_file
     temp_file=$(mktemp)
@@ -146,14 +147,22 @@ download_certificate_file() {
 download_certificates() {
     log "Starting certificate download from certbot HTTP server..."
     
-    local files=("cert.pem" "privkey.pem" "fullchain.pem")
+    # Download files from certbot and rename to OpenLDAP expected names
+    local files=(
+        "cert.pem:ldap.crt"         # cert.pem -> ldap.crt
+        "privkey.pem:ldap.key"      # privkey.pem -> ldap.key  
+        "fullchain.pem:ca.crt"      # fullchain.pem -> ca.crt
+    )
     local success=true
     
-    for file in "${files[@]}"; do
-        if download_certificate_file "$file"; then
-            log "✓ $file downloaded successfully"
+    for file_mapping in "${files[@]}"; do
+        local source_file="${file_mapping%:*}"  # cert.pem
+        local target_file="${file_mapping#*:}"  # ldap.crt
+        
+        if download_certificate_file_mapped "$source_file" "$target_file"; then
+            log "✓ $source_file -> $target_file downloaded successfully"
         else
-            error "✗ Failed to download $file"
+            error "✗ Failed to download $source_file -> $target_file"
             success=false
         fi
     done

@@ -219,16 +219,83 @@ services:
 - [ ] Documentation updated with new architecture
 - [ ] Rollback plan tested and documented
 
-## Next Actions
+## SOLUTION IDENTIFIED - Init Container Pattern (2025-08-19)
 
-1. **Select implementation approach** (recommend Option C - Shared Volume)
-2. **Implement certificate copying mechanism**
-3. **Test in staging/development environment**
-4. **Gradual rollout with monitoring**
-5. **Update operational documentation**
+### Final Root Cause Analysis
+After extensive troubleshooting and memory review, the core issue was identified:
+
+**Volume Mounting Fails**: Direct volume mounting from certbot to OpenLDAP causes permission conflicts because:
+1. OpenLDAP expects certificates at `/container/service/slapd/assets/certs/`
+2. OpenLDAP startup tries to `chown` the certificate directory
+3. Shared volumes cause "Permission denied" errors during chown operations
+
+### Recommended Solution: Init Container Pattern
+
+#### Architecture
+```yaml
+services:
+  cert-copier:
+    image: alpine:latest
+    volumes:
+      - certificates:/source           # From certbot
+      - ldap-certs:/target            # To OpenLDAP
+    command: |
+      sh -c "
+        # Wait for certbot certificates
+        while [ ! -f /source/ldap-certs/cert.pem ]; do sleep 5; done
+        # Copy with correct names
+        cp /source/ldap-certs/cert.pem /target/ldap.crt
+        cp /source/ldap-certs/privkey.pem /target/ldap.key  
+        cp /source/ldap-certs/fullchain.pem /target/ca.crt
+        # Set proper permissions
+        chmod 644 /target/*
+        echo 'Certificates copied successfully'
+      "
+    depends_on:
+      - certbot
+  
+  openldap:
+    image: osixia/openldap:1.5.0       # Use base image directly
+    volumes:
+      - ldap-certs:/container/service/slapd/assets/certs:ro
+    environment:
+      - LDAP_TLS=true
+      - LDAP_TLS_CRT_FILENAME=ldap.crt
+      - LDAP_TLS_KEY_FILENAME=ldap.key
+      - LDAP_TLS_CA_CRT_FILENAME=ca.crt
+    depends_on:
+      - cert-copier
+```
+
+#### Benefits
+- ✅ **No Permission Conflicts**: Files are copied, not mounted
+- ✅ **Proper File Ownership**: Init container sets correct permissions
+- ✅ **Standard OpenLDAP Image**: No custom Dockerfiles needed
+- ✅ **Proper Dependencies**: Ensures certificates exist before OpenLDAP starts
+- ✅ **Official osixia Pattern**: Follows documented certificate mounting approach
+
+#### Implementation Steps
+1. **Simplify docker-compose.yml**: Remove custom OpenLDAP build
+2. **Add cert-copier service**: Implement init container pattern
+3. **Update volumes**: Create separate `ldap-certs` volume
+4. **Test certificate copying**: Verify files reach OpenLDAP correctly
+5. **Enable LDAPS**: Test TLS connections on port 636
+
+### Previous Failed Approaches Summary
+- **HTTP File Sharing**: Overcomplicated, permission issues
+- **Direct Volume Mounting**: Permission conflicts during chown
+- **Custom Entrypoints**: Timing issues with base image initialization
+- **Complex Path Mapping**: Violated osixia image expectations
+
+### Success Criteria
+- [ ] Init container successfully copies certificates
+- [ ] OpenLDAP starts without permission errors
+- [ ] LDAPS connections work on port 636
+- [ ] Certificate auto-renewal maintains functionality
 
 ---
 
-**Document Version**: 1.0  
+**Document Version**: 2.0  
 **Last Updated**: 2025-08-19  
-**Next Review**: After implementation completion
+**Status**: Solution Identified - Ready for Implementation  
+**Next Review**: After init container implementation
