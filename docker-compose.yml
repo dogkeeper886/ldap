@@ -15,9 +15,9 @@ services:
       - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
       - LDAP_TLS=true
       - LDAP_TLS_ENFORCE=true
-      - LDAP_TLS_CRT_FILENAME=/etc/letsencrypt/ldap-certs/cert.pem
-      - LDAP_TLS_KEY_FILENAME=/etc/letsencrypt/ldap-certs/privkey.pem
-      - LDAP_TLS_CA_CRT_FILENAME=/etc/letsencrypt/ldap-certs/fullchain.pem
+      - LDAP_TLS_CRT_FILENAME=ldap-certs/cert.pem
+      - LDAP_TLS_KEY_FILENAME=ldap-certs/privkey.pem
+      - LDAP_TLS_CA_CRT_FILENAME=ldap-certs/fullchain.pem
       - LDAP_TLS_PROTOCOL_MIN=3.3
       - LDAP_TLS_CIPHER_SUITE=HIGH:!aNULL:!MD5
       - LDAP_TLS_VERIFY_CLIENT=never
@@ -33,6 +33,7 @@ services:
       - ldap-data:/var/lib/ldap
       - ldap-config:/etc/ldap/slapd.d
       - certificates:/etc/letsencrypt:ro
+      - certificates:/container/service/slapd/assets/certs:ro
       - ldap-health:/opt/ldap-health
       - ./ldifs:/ldifs:ro
       - ./config/openldap:/opt/ldap-config:ro
