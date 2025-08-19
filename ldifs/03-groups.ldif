@@ -1,0 +1,54 @@
+# Groups for role-based access control
+# Purpose: Creates groups for organizing users by access level
+# Dependencies: 01-base.ldif and 02-users.ldif must be imported first
+
+# WiFi Users Group - Standard Access
+dn: cn=wifi-users,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: wifi-users
+description: Standard WiFi access group for employees and contractors
+member: uid=test-user-01,ou=users,dc=example,dc=com
+member: uid=test-user-04,ou=users,dc=example,dc=com
+member: uid=test-user-05,ou=users,dc=example,dc=com
+
+# WiFi Admins Group - Administrative Access
+dn: cn=wifi-admins,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: wifi-admins
+description: Administrative WiFi access with elevated privileges
+member: uid=test-user-03,ou=users,dc=example,dc=com
+
+# WiFi Guests Group - Limited Access
+dn: cn=wifi-guests,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: wifi-guests
+description: Guest WiFi access with time and bandwidth restrictions
+member: uid=test-user-02,ou=users,dc=example,dc=com
+
+# IT Department Group
+dn: cn=it-department,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: it-department
+description: Information Technology department staff
+member: uid=test-user-01,ou=users,dc=example,dc=com
+member: uid=test-user-03,ou=users,dc=example,dc=com
+
+# External Users Group
+dn: cn=external-users,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: external-users
+description: External contractors and temporary users
+member: uid=test-user-04,ou=users,dc=example,dc=com
+
+# Executive Group - VIP Access
+dn: cn=executives,ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: executives
+description: Executive team with premium network access
+member: uid=test-user-05,ou=users,dc=example,dc=com

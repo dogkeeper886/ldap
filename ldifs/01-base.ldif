@@ -1,0 +1,26 @@
+# Base LDAP directory structure
+# Purpose: Creates the root organization and organizational units
+# Dependencies: None (must be imported first)
+
+# Organization root
+dn: dc=example,dc=com
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: Example Organization
+dc: example
+description: LDAP directory for WiFi authentication testing
+
+# Users organizational unit
+dn: ou=users,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+description: User accounts for WiFi authentication
+
+# Groups organizational unit  
+dn: ou=groups,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+description: Groups for access control and role-based permissions

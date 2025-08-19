@@ -1,0 +1,94 @@
+# Test users for WiFi authentication testing
+# Purpose: Creates 5 test users with different departments and access levels
+# Dependencies: 01-base.ldif must be imported first
+# Note: Passwords will be set via scripts using SSHA hashing
+
+# Test User 01 - IT Employee (Standard Access)
+dn: uid=test-user-01,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: test-user-01
+cn: Test User One
+sn: One
+givenName: Test User
+displayName: Test User One
+mail: test.user01@example.com
+telephoneNumber: +1-555-0101
+department: IT
+employeeType: Full-Time
+description: IT department employee with standard network access
+# userPassword will be set via script
+
+# Test User 02 - Guest User (Limited Access)
+dn: uid=test-user-02,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: test-user-02
+cn: Guest User
+sn: User
+givenName: Guest
+displayName: Guest User
+mail: guest.user@example.com
+telephoneNumber: +1-555-0102
+department: Guest
+employeeType: Visitor
+description: Guest user with limited network access
+# userPassword will be set via script
+
+# Test User 03 - Admin User (Full Access)
+dn: uid=test-user-03,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: test-user-03
+cn: Admin User
+sn: User
+givenName: Admin
+displayName: Admin User
+mail: admin.user@example.com
+telephoneNumber: +1-555-0103
+department: IT
+employeeType: Admin
+description: Administrator with full network privileges
+# userPassword will be set via script
+
+# Test User 04 - Contractor (Standard Access)
+dn: uid=test-user-04,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: test-user-04
+cn: Contractor User
+sn: User
+givenName: Contractor
+displayName: Contractor User
+mail: contractor@example.com
+telephoneNumber: +1-555-0104
+department: External
+employeeType: Contractor
+description: External contractor with restricted network access
+# userPassword will be set via script
+
+# Test User 05 - Executive (VIP Access)
+dn: uid=test-user-05,ou=users,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: test-user-05
+cn: VIP User
+sn: User
+givenName: VIP
+displayName: VIP User
+mail: vip.user@example.com
+telephoneNumber: +1-555-0105
+department: Executive
+employeeType: Full-Time
+description: Executive user with VIP network access and privileges
+# userPassword will be set via script

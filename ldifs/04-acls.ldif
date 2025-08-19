@@ -1,0 +1,42 @@
+# Access Control Lists (ACLs) for LDAP security
+# Purpose: Defines security policies and access controls
+# Dependencies: All other LDIF files must be imported first
+# Note: This file contains LDAP configuration modifications
+
+# Password access control - Users can only read their own passwords
+# Anonymous users can authenticate but not read passwords
+# Note: This would typically be configured in slapd.conf or via cn=config
+# For reference only - actual ACLs are set in OpenLDAP configuration
+
+# Example ACL structure (for documentation):
+# olcAccess: to attrs=userPassword
+#   by self write
+#   by anonymous auth  
+#   by * none
+#
+# olcAccess: to dn.base=""
+#   by * read
+#
+# olcAccess: to *
+#   by self write
+#   by users read
+#   by anonymous auth
+
+# Default search indices for performance
+# Note: These would be configured via cn=config in production
+# 
+# olcDbIndex: objectClass eq
+# olcDbIndex: uid eq,sub
+# olcDbIndex: cn eq,sub  
+# olcDbIndex: mail eq,sub
+# olcDbIndex: department eq
+# olcDbIndex: employeeType eq
+# olcDbIndex: memberOf eq
+# olcDbIndex: member eq
+
+# Security configuration notes:
+# - userPassword attributes are protected
+# - Users can modify their own entries
+# - Anonymous access only for authentication
+# - Read access for authenticated users
+# - Administrative access via rootdn only
