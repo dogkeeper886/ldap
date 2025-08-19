@@ -85,6 +85,7 @@ override.yml
 *.ssh
 id_rsa*
 id_ed25519*
+google_compute_engine*
 
 # GPG keys
 *.gpg
@@ -102,6 +103,13 @@ secrets.yml
 # Custom scripts that might contain secrets
 local-*.sh
 private-*.sh
+
+# Google Cloud SDK
+google-cloud-sdk/
+.config/gcloud/
+
+# Claude development notes (contains sensitive info)
+CLAUDE.md
 
 # System files
 .fuse_hidden*
