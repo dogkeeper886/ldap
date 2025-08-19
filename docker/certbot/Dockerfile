@@ -7,7 +7,7 @@ LABEL version="1.0.0"
 
 # Install additional tools
 USER root
-RUN apk add --no-cache     bash     curl     netcat-openbsd     openssl     docker-cli     jq     && rm -rf /var/cache/apk/*
+RUN apk add --no-cache     bash     curl     netcat-openbsd     openssl     docker-cli     jq     python3     && rm -rf /var/cache/apk/*
 
 # Create directories for custom scripts and certbot
 RUN mkdir -p /opt/certbot-scripts     && mkdir -p /opt/certbot-config     && mkdir -p /opt/certbot-logs     && mkdir -p /var/log/letsencrypt     && mkdir -p /var/lib/letsencrypt     && mkdir -p /etc/letsencrypt
@@ -17,6 +17,7 @@ COPY entrypoint.sh /opt/certbot-scripts/entrypoint.sh
 COPY renew-certificates.sh /opt/certbot-scripts/renew-certificates.sh
 COPY check-certificates.sh /opt/certbot-scripts/check-certificates.sh
 COPY hook-post-renew.sh /opt/certbot-scripts/hook-post-renew.sh
+COPY start-http-server.sh /opt/certbot-scripts/start-http-server.sh
 
 # Make scripts executable
 RUN chmod +x /opt/certbot-scripts/*.sh

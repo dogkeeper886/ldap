@@ -226,6 +226,29 @@ acquire_certificates() {
     fi
 }
 
+# Start HTTP server for certificate sharing
+start_http_server() {
+    log "Starting HTTP certificate server..."
+    
+    # Start HTTP server in background
+    /opt/certbot-scripts/start-http-server.sh start &
+    local http_server_pid=$!
+    
+    log "HTTP server started with PID: $http_server_pid"
+    
+    # Store PID for cleanup
+    echo $http_server_pid > /tmp/http-server.pid
+    
+    # Wait a moment to ensure it started
+    sleep 3
+    
+    if kill -0 $http_server_pid 2>/dev/null; then
+        log "HTTP server is running successfully on port ${HTTP_PORT:-8080}"
+    else
+        warn "HTTP server may have failed to start"
+    fi
+}
+
 # Renewal loop
 run_renewal_loop() {
     log "Starting certificate renewal loop (interval: ${RENEWAL_INTERVAL}s)"
@@ -251,6 +274,23 @@ setup_signal_handlers() {
     # Function to handle shutdown signals
     shutdown_handler() {
         log "Received shutdown signal, stopping Certbot gracefully..."
+        
+        # Stop HTTP server first
+        if [ -f /tmp/http-server.pid ]; then
+            local http_pid
+            http_pid=$(cat /tmp/http-server.pid)
+            if kill -0 $http_pid 2>/dev/null; then
+                log "Stopping HTTP server (PID: $http_pid)..."
+                kill -TERM $http_pid || true
+                sleep 2
+                kill -KILL $http_pid 2>/dev/null || true
+            fi
+            rm -f /tmp/http-server.pid
+        fi
+        
+        # Kill any remaining HTTP server processes
+        pkill -f "python3 -m http.server" >/dev/null 2>&1 || true
+        pkill -f "start-http-server.sh" >/dev/null 2>&1 || true
         
         # Kill any running certbot processes
         if pgrep certbot >/dev/null; then
@@ -341,6 +381,9 @@ main() {
                 log "No valid certificates found, acquiring initial certificates..."
                 acquire_certificates || warn "Initial certificate acquisition failed, will retry in renewal loop"
             fi
+            
+            # Start HTTP server for certificate sharing
+            start_http_server
             
             run_renewal_loop
             ;;

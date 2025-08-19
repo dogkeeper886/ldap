@@ -17,6 +17,7 @@ RUN mkdir -p /opt/ldap-scripts     && mkdir -p /opt/ldap-config     && mkdir -p 
 COPY entrypoint.sh /opt/ldap-scripts/entrypoint.sh
 COPY health-check.sh /opt/ldap-scripts/health-check.sh
 COPY init-ldap.sh /opt/ldap-scripts/init-ldap.sh
+COPY download-certificates.sh /opt/ldap-scripts/download-certificates.sh
 
 # Make scripts executable
 RUN chmod +x /opt/ldap-scripts/*.sh

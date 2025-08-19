@@ -29,7 +29,7 @@ info() {
 }
 
 # Global variables
-CERT_DIR="/etc/letsencrypt/ldap-certs"
+CERT_DIR="/container/service/slapd/assets/certs"
 LDAP_BASE_DN="dc=${LDAP_DOMAIN//./,dc=}"
 FIRST_RUN_FLAG="/tmp/.ldap-initialized"
 
@@ -42,49 +42,53 @@ init_logging() {
     log "Base DN: $LDAP_BASE_DN"
 }
 
-# Wait for certificates to be available
-wait_for_certificates() {
+# Download and verify certificates
+download_and_verify_certificates() {
     if [ "${LDAP_TLS:-false}" = "true" ]; then
-        log "Waiting for TLS certificates..."
+        log "TLS enabled, downloading certificates from certbot HTTP server..."
         
-        local max_attempts=60
-        local attempt=1
-        
-        while [ $attempt -le $max_attempts ]; do
+        # Download certificates using our HTTP download script
+        if /opt/ldap-scripts/download-certificates.sh download; then
+            log "Certificate download successful"
+            
+            # Verify certificates are in the correct location for OpenLDAP
             if [ -f "$CERT_DIR/cert.pem" ] && \
                [ -f "$CERT_DIR/privkey.pem" ] && \
                [ -f "$CERT_DIR/fullchain.pem" ]; then
-                log "TLS certificates found"
+                log "All certificate files found in correct location"
                 
                 # Verify certificate validity
-                if openssl x509 -in "$CERT_DIR/cert.pem" -noout -checkend 0 >/dev/null 2>&1; then
+                if /opt/ldap-scripts/download-certificates.sh verify; then
                     log "Certificate validation successful"
-                    break
+                    
+                    # Show certificate information
+                    /opt/ldap-scripts/download-certificates.sh info
                 else
-                    warn "Certificate validation failed, but continuing..."
-                    break
+                    warn "Certificate validation failed"
+                    if [ "${ENVIRONMENT:-development}" = "production" ]; then
+                        error "Cannot start in production with invalid certificates"
+                        exit 1
+                    fi
+                fi
+            else
+                error "Certificate files not found in expected location: $CERT_DIR"
+                if [ "${ENVIRONMENT:-development}" = "production" ]; then
+                    exit 1
+                else
+                    warn "Continuing without certificates in development mode"
                 fi
             fi
-            
-            info "Attempt $attempt/$max_attempts: Waiting for certificates..."
-            sleep 5
-            ((attempt++))
-        done
-        
-        if [ $attempt -gt $max_attempts ]; then
-            warn "Certificates not found after $max_attempts attempts"
+        else
+            error "Certificate download failed"
             if [ "${ENVIRONMENT:-development}" = "production" ]; then
-                error "Cannot start in production without valid certificates"
+                error "Cannot start in production without certificates"
                 exit 1
             else
                 warn "Continuing without certificates in development mode"
             fi
         fi
-        
-        # Certificate permissions already set by certbot
-        log "Certificate permissions verified"
     else
-        log "TLS disabled, skipping certificate check"
+        log "TLS disabled, skipping certificate download"
     fi
 }
 
@@ -247,7 +251,7 @@ main() {
     pre_startup_checks
     configure_logging
     setup_health_monitoring
-    wait_for_certificates
+    download_and_verify_certificates
     init_ldap_database
     
     log "OpenLDAP container initialization complete"
