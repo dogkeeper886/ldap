@@ -29,7 +29,7 @@ info() {
 }
 
 # Global variables
-CERT_DIR="/etc/letsencrypt/live/${LDAP_DOMAIN}"
+CERT_DIR="/etc/letsencrypt/ldap-certs"
 LDAP_BASE_DN="dc=${LDAP_DOMAIN//./,dc=}"
 FIRST_RUN_FLAG="/var/lib/ldap/.ldap-initialized"
 

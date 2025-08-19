@@ -68,9 +68,8 @@ copy_certificates_to_ldap() {
         cp "$source_dir/privkey.pem" "$ldap_cert_dir/privkey.pem"
         cp "$source_dir/fullchain.pem" "$ldap_cert_dir/fullchain.pem"
         
-        # Set proper permissions
-        chmod 644 "$ldap_cert_dir/cert.pem" "$ldap_cert_dir/fullchain.pem"
-        chmod 600 "$ldap_cert_dir/privkey.pem"
+        # Set proper permissions for OpenLDAP access
+        chmod 644 "$ldap_cert_dir/cert.pem" "$ldap_cert_dir/fullchain.pem" "$ldap_cert_dir/privkey.pem"
         
         log "Certificates copied successfully to $ldap_cert_dir"
         return 0
