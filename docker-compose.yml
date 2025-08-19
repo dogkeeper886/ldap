@@ -1,45 +1,13 @@
 version: '3.8'
 
 services:
-  cert-copier:
-    image: alpine:latest
-    container_name: cert-copier
-    volumes:
-      - certificates:/source
-      - ldap-certs:/target
-    command: |
-      sh -c "
-        echo 'Waiting for certificates from certbot...'
-        # Wait for certbot certificates to be available
-        while [ ! -f /source/ldap-certs/cert.pem ]; do
-          echo 'Certificates not ready, waiting 5 seconds...'
-          sleep 5
-        done
-        echo 'Certificates found, copying to OpenLDAP format...'
-        # Copy certificates with OpenLDAP expected names
-        cp /source/ldap-certs/cert.pem /target/ldap.crt
-        cp /source/ldap-certs/privkey.pem /target/ldap.key  
-        cp /source/ldap-certs/fullchain.pem /target/ca.crt
-        # Set proper ownership and permissions for OpenLDAP user (911:911)
-        chown 911:911 /target/ldap.crt /target/ldap.key /target/ca.crt
-        chmod 644 /target/ldap.crt /target/ca.crt
-        chmod 640 /target/ldap.key
-        # List copied files for verification
-        ls -la /target/
-        echo 'Certificates copied successfully to OpenLDAP volume'
-      "
-    depends_on:
-      - certbot
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=cert-copier"
-
   openldap:
-    image: osixia/openldap:1.5.0
+    build:
+      context: ./docker/openldap
+      dockerfile: Dockerfile-tls
+    image: ldap-openldap-tls:latest
     container_name: openldap
+    hostname: ldap.tsengsyu.com
     restart: unless-stopped
     ports:
       - "636:636"
@@ -49,8 +17,11 @@ services:
       - LDAP_DOMAIN=${LDAP_DOMAIN:-example.com}
       - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}
       - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
-      - LDAP_TLS=false
+      - LDAP_TLS=true
       - LDAP_TLS_ENFORCE=false
+      - LDAP_TLS_CRT_FILENAME=cert.pem
+      - LDAP_TLS_KEY_FILENAME=privkey.pem
+      - LDAP_TLS_CA_CRT_FILENAME=fullchain.pem
       - LDAP_BACKEND=mdb
       - LDAP_LOG_LEVEL=256
       - CONTAINER_LOG_LEVEL=4
@@ -117,8 +88,6 @@ volumes:
   ldap-health:
     driver: local
   certbot-logs:
-    driver: local
-  ldap-certs:
     driver: local
 
 networks:

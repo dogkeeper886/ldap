@@ -1,7 +1,7 @@
 # Makefile for LDAP WiFi Authentication Server
 # This file provides convenient targets for common operations
 
-.PHONY: help init deploy stop restart clean backup restore test health logs setup-users init-certs
+.PHONY: help init deploy stop restart clean backup restore test health logs setup-users init-certs copy-certs build-tls
 
 # Default target
 help:
@@ -12,6 +12,8 @@ help:
 	@echo "  make init          - Complete initial setup (certificates + deployment + users)"
 	@echo "  make init-certs    - Initialize Let's Encrypt certificates"
 	@echo "  make build         - Build custom Docker images"
+	@echo "  make copy-certs    - Copy certificates from certbot for OpenLDAP build"
+	@echo "  make build-tls     - Copy certificates and build OpenLDAP with TLS"
 	@echo "  make deploy        - Deploy/start all services"
 	@echo "  make setup-users   - Set up test users in LDAP"
 	@echo ""
@@ -75,6 +77,18 @@ init: check-env build init-certs deploy setup-users health
 init-certs: check-env
 	@echo "Initializing Let's Encrypt certificates..."
 	@./scripts/init-certificates.sh
+
+# Copy certificates from certbot for OpenLDAP build
+copy-certs: check-env
+	@echo "Copying certificates from certbot..."
+	@./scripts/copy-certs-for-build.sh
+	@echo "Certificates copied successfully"
+
+# Build OpenLDAP with TLS certificates
+build-tls: check-env copy-certs
+	@echo "Building OpenLDAP with TLS certificates..."
+	@docker-compose build openldap
+	@echo "OpenLDAP TLS image built successfully"
 
 # Build custom Docker images
 build: check-env
