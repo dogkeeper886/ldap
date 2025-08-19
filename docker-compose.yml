@@ -69,13 +69,12 @@ services:
     volumes:
       - ldap-data:/var/lib/ldap
       - ldap-config:/etc/ldap/slapd.d
-      - ldap-certs:/container/service/slapd/assets/certs
       - ./ldifs:/ldifs:ro
       - ./config/openldap:/opt/ldap-config:ro
     networks:
       - ldap-network
     depends_on:
-      - cert-copier
+      - certbot
     logging:
       driver: json-file
       options:
