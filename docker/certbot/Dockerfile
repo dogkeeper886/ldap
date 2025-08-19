@@ -34,8 +34,9 @@ RUN touch /opt/certbot-logs/certbot.log     && chown certbot:certbot /opt/certbo
 # Health check
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3     CMD /opt/certbot-scripts/check-certificates.sh
 
-# Switch to certbot user
-USER certbot
+# Stay as root for permission management
+# The entrypoint will run certbot commands with proper user
+USER root
 
 # Set custom entrypoint
 ENTRYPOINT ["/opt/certbot-scripts/entrypoint.sh"]

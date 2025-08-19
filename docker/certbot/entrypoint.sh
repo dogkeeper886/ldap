@@ -183,10 +183,23 @@ acquire_certificates() {
         log "Running in dry-run mode"
     fi
     
-    # Execute certbot
+    # Execute certbot (run as certbot user if we're root)
     log "Executing: $certbot_cmd ${certbot_args[*]}"
     
-    if $certbot_cmd "${certbot_args[@]}"; then
+    local success=false
+    if [ "$(id -u)" = "0" ]; then
+        # Running as root, execute certbot as certbot user
+        if su certbot -c "$certbot_cmd ${certbot_args[*]}"; then
+            success=true
+        fi
+    else
+        # Already running as certbot user
+        if $certbot_cmd "${certbot_args[@]}"; then
+            success=true
+        fi
+    fi
+    
+    if [ "$success" = "true" ]; then
         log "Certificate acquisition successful"
         
         # Set proper permissions for OpenLDAP access (user 911)
@@ -317,6 +330,11 @@ main() {
             validate_environment
             setup_signal_handlers
             check_dns_resolution
+            
+            # Fix permissions for existing certificates first
+            if [ -d "/etc/letsencrypt/live/${DOMAIN}" ]; then
+                fix_certificate_permissions
+            fi
             
             # Try to acquire certificates if they don't exist
             if ! check_existing_certificates; then
