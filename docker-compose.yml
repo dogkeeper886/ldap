@@ -5,6 +5,12 @@ services:
     image: osixia/openldap:1.5.0
     container_name: openldap
     restart: unless-stopped
+    command: >
+      bash -c "
+        mkdir -p /container/service/slapd/assets/certs/ldap-certs &&
+        cp /etc/letsencrypt/ldap-certs/*.pem /container/service/slapd/assets/certs/ldap-certs/ &&
+        /container/tool/run
+      "
     ports:
       - "636:636"
       - "389:389"
@@ -33,7 +39,6 @@ services:
       - ldap-data:/var/lib/ldap
       - ldap-config:/etc/ldap/slapd.d
       - certificates:/etc/letsencrypt:ro
-      - certificates:/container/service/slapd/assets/certs:ro
       - ldap-health:/opt/ldap-health
       - ./ldifs:/ldifs:ro
       - ./config/openldap:/opt/ldap-config:ro
