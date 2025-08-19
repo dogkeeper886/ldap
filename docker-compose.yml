@@ -14,7 +14,7 @@ services:
       - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}
       - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
       - LDAP_TLS=true
-      - LDAP_TLS_ENFORCE=true
+      - LDAP_TLS_ENFORCE=false
       - LDAP_TLS_CRT_FILENAME=ldap-certs/cert.pem
       - LDAP_TLS_KEY_FILENAME=ldap-certs/privkey.pem
       - LDAP_TLS_CA_CRT_FILENAME=ldap-certs/fullchain.pem
