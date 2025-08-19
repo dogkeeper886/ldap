@@ -6,6 +6,9 @@ LABEL maintainer="LDAP Admin <admin@tsengsyu.com>"
 COPY certs/ /container/service/slapd/assets/certs/
 
 # Add automated user initialization for test environment
-# The osixia/openldap image runs scripts from /container/service/:service_name/startup
-COPY bootstrap/init-users.sh /container/service/slapd/startup/99-init-users.sh
-RUN chmod +x /container/service/slapd/startup/99-init-users.sh
+COPY bootstrap/custom-init.sh /custom-init.sh
+COPY bootstrap/entrypoint-wrapper.sh /entrypoint-wrapper.sh
+RUN chmod +x /custom-init.sh /entrypoint-wrapper.sh
+
+# Override entrypoint to run our wrapper
+ENTRYPOINT ["/entrypoint-wrapper.sh"]
