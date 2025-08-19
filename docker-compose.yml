@@ -18,9 +18,9 @@ services:
       - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
       - LDAP_TLS=true
       - LDAP_TLS_ENFORCE=false
-      - LDAP_TLS_CRT_FILENAME=cert.pem
-      - LDAP_TLS_KEY_FILENAME=privkey.pem
-      - LDAP_TLS_CA_CRT_FILENAME=fullchain.pem
+      - LDAP_TLS_CRT_FILENAME=/opt/ldap-certs/cert.pem
+      - LDAP_TLS_KEY_FILENAME=/opt/ldap-certs/privkey.pem
+      - LDAP_TLS_CA_CRT_FILENAME=/opt/ldap-certs/fullchain.pem
       - LDAP_TLS_PROTOCOL_MIN=3.3
       - LDAP_TLS_CIPHER_SUITE=HIGH:!aNULL:!MD5
       - LDAP_TLS_VERIFY_CLIENT=never

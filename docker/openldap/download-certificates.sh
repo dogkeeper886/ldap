@@ -25,7 +25,7 @@ warn() {
 
 # Configuration
 CERTBOT_HTTP_URL="http://certbot:8080"
-TARGET_DIR="/container/service/slapd/assets/certs"
+TARGET_DIR="/opt/ldap-certs"
 MAX_RETRIES=10
 RETRY_DELAY=5
 

@@ -29,7 +29,7 @@ info() {
 }
 
 # Global variables
-CERT_DIR="/container/service/slapd/assets/certs"
+CERT_DIR="/opt/ldap-certs"
 LDAP_BASE_DN="dc=${LDAP_DOMAIN//./,dc=}"
 FIRST_RUN_FLAG="/tmp/.ldap-initialized"
 
