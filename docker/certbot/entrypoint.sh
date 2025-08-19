@@ -119,6 +119,7 @@ check_existing_certificates() {
             local expiry_date
             expiry_date=$(openssl x509 -in "$CERT_DIR/cert.pem" -noout -enddate | cut -d= -f2)
             log "Certificates are valid until: $expiry_date"
+            fix_certificate_permissions
             return 0
         else
             warn "Existing certificates are expired or expiring soon"
@@ -128,6 +129,30 @@ check_existing_certificates() {
         log "No existing certificates found"
         return 1
     fi
+}
+
+# Fix permissions for existing certificates
+fix_certificate_permissions() {
+    log "Fixing certificate permissions for cross-container access..."
+    
+    # Fix parent directories
+    chmod 755 /etc/letsencrypt 2>/dev/null || true
+    chmod 755 /etc/letsencrypt/live 2>/dev/null || true
+    chmod 755 /etc/letsencrypt/archive 2>/dev/null || true
+    
+    # Fix domain-specific directories and files
+    if [ -d "/etc/letsencrypt/archive/$DOMAIN" ]; then
+        chmod 755 "/etc/letsencrypt/archive/$DOMAIN" 2>/dev/null || true
+        chmod 644 "/etc/letsencrypt/archive/$DOMAIN"/*.pem 2>/dev/null || true
+        chmod 640 "/etc/letsencrypt/archive/$DOMAIN/privkey"*.pem 2>/dev/null || true
+    fi
+    
+    if [ -d "$CERT_DIR" ]; then
+        chmod 755 "$CERT_DIR" 2>/dev/null || true
+        # Note: symlinks don't need chmod, they inherit from target
+    fi
+    
+    log "Certificate permissions fixed"
 }
 
 # Acquire initial certificates
@@ -164,12 +189,21 @@ acquire_certificates() {
     if $certbot_cmd "${certbot_args[@]}"; then
         log "Certificate acquisition successful"
         
-        # Set proper permissions
+        # Set proper permissions for OpenLDAP access (user 911)
         if [ -d "$CERT_DIR" ] && [ "$DRY_RUN" != "true" ]; then
+            # Fix parent directories
+            chmod 755 /etc/letsencrypt || true
+            chmod 755 /etc/letsencrypt/live || true
+            chmod 755 /etc/letsencrypt/archive || true
+            chmod 755 "/etc/letsencrypt/archive/$DOMAIN" || true
+            # Fix domain directory and files
             chmod 755 "$CERT_DIR"
             chmod 644 "$CERT_DIR"/*.pem || true
-            chmod 600 "$CERT_DIR/privkey.pem" || true
-            log "Certificate permissions set"
+            chmod 644 "$CERT_DIR"/../../archive/"$DOMAIN"/*.pem || true
+            # Keep private key secure but readable
+            chmod 640 "$CERT_DIR/privkey.pem" || true
+            chmod 640 "/etc/letsencrypt/archive/$DOMAIN/privkey"*.pem || true
+            log "Certificate permissions set for cross-container access"
         fi
         
         return 0
