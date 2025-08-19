@@ -1,11 +1,42 @@
 version: '3.8'
 
 services:
+  cert-copier:
+    image: alpine:latest
+    container_name: cert-copier
+    volumes:
+      - certificates:/source
+      - ldap-certs:/target
+    command: |
+      sh -c "
+        echo 'Waiting for certificates from certbot...'
+        # Wait for certbot certificates to be available
+        while [ ! -f /source/ldap-certs/cert.pem ]; do
+          echo 'Certificates not ready, waiting 5 seconds...'
+          sleep 5
+        done
+        echo 'Certificates found, copying to OpenLDAP format...'
+        # Copy certificates with OpenLDAP expected names
+        cp /source/ldap-certs/cert.pem /target/ldap.crt
+        cp /source/ldap-certs/privkey.pem /target/ldap.key  
+        cp /source/ldap-certs/fullchain.pem /target/ca.crt
+        # Set proper permissions
+        chmod 644 /target/*
+        # List copied files for verification
+        ls -la /target/
+        echo 'Certificates copied successfully to OpenLDAP volume'
+      "
+    depends_on:
+      - certbot
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=cert-copier"
+
   openldap:
-    build:
-      context: ./docker/openldap
-      dockerfile: Dockerfile
-    image: ldap-openldap:latest
+    image: osixia/openldap:1.5.0
     container_name: openldap
     restart: unless-stopped
     ports:
@@ -18,9 +49,9 @@ services:
       - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
       - LDAP_TLS=true
       - LDAP_TLS_ENFORCE=false
-      - LDAP_TLS_CRT_FILENAME=/opt/ldap-certs/cert.pem
-      - LDAP_TLS_KEY_FILENAME=/opt/ldap-certs/privkey.pem
-      - LDAP_TLS_CA_CRT_FILENAME=/opt/ldap-certs/fullchain.pem
+      - LDAP_TLS_CRT_FILENAME=ldap.crt
+      - LDAP_TLS_KEY_FILENAME=ldap.key
+      - LDAP_TLS_CA_CRT_FILENAME=ca.crt
       - LDAP_TLS_PROTOCOL_MIN=3.3
       - LDAP_TLS_CIPHER_SUITE=HIGH:!aNULL:!MD5
       - LDAP_TLS_VERIFY_CLIENT=never
@@ -35,13 +66,13 @@ services:
     volumes:
       - ldap-data:/var/lib/ldap
       - ldap-config:/etc/ldap/slapd.d
-      - ldap-health:/opt/ldap-health
+      - ldap-certs:/container/service/slapd/assets/certs:ro
       - ./ldifs:/ldifs:ro
       - ./config/openldap:/opt/ldap-config:ro
     networks:
       - ldap-network
     depends_on:
-      - certbot
+      - cert-copier
     logging:
       driver: json-file
       options:
@@ -92,6 +123,8 @@ volumes:
   ldap-health:
     driver: local
   certbot-logs:
+    driver: local
+  ldap-certs:
     driver: local
 
 networks:
