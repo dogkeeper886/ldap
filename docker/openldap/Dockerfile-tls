@@ -6,7 +6,6 @@ LABEL maintainer="LDAP Admin <admin@tsengsyu.com>"
 COPY certs/ /container/service/slapd/assets/certs/
 
 # Add automated user initialization for test environment
-COPY bootstrap/init-users.sh /container/service/slapd/assets/config/bootstrap/custom/
-RUN chmod +x /container/service/slapd/assets/config/bootstrap/custom/init-users.sh
-
-# The osixia/openldap image automatically executes scripts in the bootstrap/custom directory
+# The osixia/openldap image runs scripts from /container/service/:service_name/startup
+COPY bootstrap/init-users.sh /container/service/slapd/startup/99-init-users.sh
+RUN chmod +x /container/service/slapd/startup/99-init-users.sh
