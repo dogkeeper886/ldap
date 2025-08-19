@@ -49,7 +49,7 @@ services:
       - LDAP_DOMAIN=${LDAP_DOMAIN:-example.com}
       - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}
       - LDAP_CONFIG_PASSWORD=${LDAP_CONFIG_PASSWORD}
-      - LDAP_TLS=true
+      - LDAP_TLS=false
       - LDAP_TLS_ENFORCE=false
       - LDAP_TLS_CRT_FILENAME=ldap.crt
       - LDAP_TLS_KEY_FILENAME=ldap.key
