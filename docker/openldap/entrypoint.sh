@@ -31,7 +31,7 @@ info() {
 # Global variables
 CERT_DIR="/etc/letsencrypt/ldap-certs"
 LDAP_BASE_DN="dc=${LDAP_DOMAIN//./,dc=}"
-FIRST_RUN_FLAG="/var/lib/ldap/.ldap-initialized"
+FIRST_RUN_FLAG="/tmp/.ldap-initialized"
 
 # Initialize logging
 init_logging() {
@@ -81,12 +81,8 @@ wait_for_certificates() {
             fi
         fi
         
-        # Set proper certificate permissions
-        if [ -f "$CERT_DIR/cert.pem" ]; then
-            chmod 644 "$CERT_DIR/cert.pem" "$CERT_DIR/fullchain.pem" || true
-            chmod 600 "$CERT_DIR/privkey.pem" || true
-            log "Certificate permissions set"
-        fi
+        # Certificate permissions already set by certbot
+        log "Certificate permissions verified"
     else
         log "TLS disabled, skipping certificate check"
     fi
