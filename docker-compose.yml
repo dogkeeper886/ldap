@@ -32,7 +32,7 @@ services:
     volumes:
       - ldap-data:/var/lib/ldap
       - ldap-config:/etc/ldap/slapd.d
-      - certificates:/etc/letsencrypt:ro
+      - certificates:/container/service/slapd/assets/certs
       - ldap-health:/opt/ldap-health
       - ./ldifs:/ldifs:ro
       - ./config/openldap:/opt/ldap-config:ro
