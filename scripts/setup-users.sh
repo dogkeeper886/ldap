@@ -57,7 +57,7 @@ mail: john.smith@example.com
 telephoneNumber: +1-555-0101
 mobile: +1-555-1001
 title: IT Administrator
-department: IT" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+ou: IT" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 # Jane Doe - Network Engineer
 echo "dn: uid=test-user-02,ou=users,$DOMAIN_DN
@@ -71,7 +71,7 @@ mail: jane.doe@example.com
 telephoneNumber: +1-555-0102
 mobile: +1-555-1002
 title: Network Engineer
-department: IT" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+ou: IT" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 # Mike Johnson - Guest User
 echo "dn: uid=test-user-03,ou=users,$DOMAIN_DN
@@ -85,13 +85,14 @@ mail: mike.johnson@example.com
 telephoneNumber: +1-555-0103
 mobile: +1-555-1003
 title: Guest User
-department: Guest" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+ou: Guest" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 # 4. Set passwords with ldappasswd
 log "4. Setting passwords..."
-docker exec openldap ldappasswd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" -s "TestPass123!" "uid=test-user-01,ou=users,$DOMAIN_DN" || true
-docker exec openldap ldappasswd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" -s "TestPass456!" "uid=test-user-02,ou=users,$DOMAIN_DN" || true
-docker exec openldap ldappasswd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" -s "GuestPass789!" "uid=test-user-03,ou=users,$DOMAIN_DN" || true
+sleep 2  # Wait for users to be fully created
+docker exec openldap ldappasswd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" -s "TestPass123!" "uid=test-user-01,ou=users,$DOMAIN_DN"
+docker exec openldap ldappasswd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" -s "TestPass456!" "uid=test-user-02,ou=users,$DOMAIN_DN"
+docker exec openldap ldappasswd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" -s "GuestPass789!" "uid=test-user-03,ou=users,$DOMAIN_DN"
 
 # 5. Create groups
 log "5. Creating groups..."
