@@ -109,17 +109,25 @@ setup-users:
 	@echo "Setting up test users..."
 	@./scripts/setup-users.sh
 
-# Setup test users directly (hardcoded with proper sequence)
+# Setup test users directly (dynamic domain from env)
 setup-users-direct:
 	@echo "Setting up test users directly..."
 	@sleep 5  # Wait for LDAP to be ready
+	$(eval DOMAIN_DN := $(shell grep LDAP_DOMAIN .env | cut -d= -f2 | sed 's/\./,dc=/g' | sed 's/^/dc=/'))
+	$(eval ADMIN_DN := cn=admin,$(DOMAIN_DN))
+	$(eval LDAP_ORG := $(shell grep LDAP_ORG .env | cut -d= -f2 | tr -d "'"))
+	$(eval PASSWORD := $(shell grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2))
+	@echo "Using domain: $(DOMAIN_DN)"
 	@echo "1. Creating base domain..."
-	@echo "dn: dc=example,dc=com\nobjectClass: top\nobjectClass: dcObject\nobjectClass: organization\no: Example Organization\ndc: example" | docker exec -i openldap ldapadd -x -D "cn=admin,dc=example,dc=com" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" || true
+	@echo "dn: $(DOMAIN_DN)\nobjectClass: top\nobjectClass: dcObject\nobjectClass: organization\no: $(LDAP_ORG)\ndc: $$(echo $(DOMAIN_DN) | cut -d, -f1 | cut -d= -f2)" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
 	@echo "2. Creating OUs..."
-	@echo "dn: ou=users,dc=example,dc=com\nobjectClass: organizationalUnit\nou: users" | docker exec -i openldap ldapadd -x -D "cn=admin,dc=example,dc=com" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" || true
-	@echo "dn: ou=groups,dc=example,dc=com\nobjectClass: organizationalUnit\nou: groups" | docker exec -i openldap ldapadd -x -D "cn=admin,dc=example,dc=com" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" || true
+	@echo "dn: ou=users,$(DOMAIN_DN)\nobjectClass: organizationalUnit\nou: users" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
+	@echo "dn: ou=groups,$(DOMAIN_DN)\nobjectClass: organizationalUnit\nou: groups" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
 	@echo "3. Creating test users..."
-	@echo "dn: uid=test-user-01,ou=users,dc=example,dc=com\nobjectClass: inetOrgPerson\nuid: test-user-01\ncn: Test User 01\nsn: User\nmail: test01@example.com\nuserPassword: TestPass123!" | docker exec -i openldap ldapadd -x -D "cn=admin,dc=example,dc=com" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" || true
+	@echo "dn: uid=test-user-01,ou=users,$(DOMAIN_DN)\nobjectClass: inetOrgPerson\nuid: test-user-01\ncn: Test User 01\nsn: User\nmail: test01@example.com\nuserPassword: TestPass123!" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
+	@echo "dn: uid=test-user-02,ou=users,$(DOMAIN_DN)\nobjectClass: inetOrgPerson\nuid: test-user-02\ncn: Test User 02\nsn: User\nmail: test02@example.com\nuserPassword: TestPass123!" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
+	@echo "4. Creating test group..."
+	@echo "dn: cn=testgroup,ou=groups,$(DOMAIN_DN)\nobjectClass: groupOfNames\ncn: testgroup\nmember: uid=test-user-01,ou=users,$(DOMAIN_DN)" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
 	@echo "Test users setup completed"
 
 # Stop services
