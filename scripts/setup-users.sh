@@ -18,7 +18,7 @@ log "Waiting for LDAP service..."
 sleep 5
 
 # Convert domain to DN (Option 1 approach)
-DOMAIN_DN=$(echo "$LDAP_DOMAIN" | sed 's/\./,dc=/g' | sed 's/^/dc=/')
+DOMAIN_DN=$(echo "$LDAP_DOMAIN" | sed 's/\\./,dc=/g' | sed 's/^/dc=/')
 ADMIN_DN="cn=admin,$DOMAIN_DN"
 
 log "Using domain: $DOMAIN_DN"
