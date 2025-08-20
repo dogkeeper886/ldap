@@ -248,7 +248,7 @@ shell-certbot:
 # View LDAP database contents
 view-ldap:
 	@echo "Viewing LDAP database contents..."
-	@DOMAIN_DN=$$(grep LDAP_DOMAIN .env | cut -d= -f2 | sed 's/\\./,dc=/g' | sed 's/^/dc=/') && docker compose exec openldap ldapsearch -x -H ldap://localhost -D "cn=admin,$$DOMAIN_DN" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" -b "$$DOMAIN_DN"
+	@DOMAIN_DN=$$(grep LDAP_DOMAIN .env | cut -d= -f2 | sed 's/\./,dc=/g' | sed 's/^/dc=/') && docker compose exec openldap ldapsearch -x -H ldap://localhost -D "cn=admin,$$DOMAIN_DN" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" -b "$$DOMAIN_DN"
 
 # Create test environment
 dev-setup: env
