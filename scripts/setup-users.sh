@@ -30,17 +30,17 @@ objectClass: top
 objectClass: dcObject
 objectClass: organization
 o: $LDAP_ORG
-dc: $(echo $DOMAIN_DN | cut -d, -f1 | cut -d= -f2)" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+dc: $(echo $DOMAIN_DN | cut -d, -f1 | cut -d= -f2)" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 # 2. Create OUs
 log "2. Creating organizational units..."
 echo "dn: ou=users,$DOMAIN_DN
 objectClass: organizationalUnit
-ou: users" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+ou: users" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 echo "dn: ou=groups,$DOMAIN_DN
 objectClass: organizationalUnit
-ou: groups" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+ou: groups" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 # 3. Create test users (without passwords)
 log "3. Creating test users..."
@@ -57,7 +57,7 @@ mail: john.smith@example.com
 telephoneNumber: +1-555-0101
 mobile: +1-555-1001
 title: IT Administrator
-ou: IT" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+ou: IT" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 # Jane Doe - Network Engineer
 echo "dn: uid=test-user-02,ou=users,$DOMAIN_DN
@@ -71,7 +71,7 @@ mail: jane.doe@example.com
 telephoneNumber: +1-555-0102
 mobile: +1-555-1002
 title: Network Engineer
-ou: IT" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+ou: IT" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 # Mike Johnson - Guest User
 echo "dn: uid=test-user-03,ou=users,$DOMAIN_DN
@@ -85,7 +85,7 @@ mail: mike.johnson@example.com
 telephoneNumber: +1-555-0103
 mobile: +1-555-1003
 title: Guest User
-ou: Guest" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+ou: Guest" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 # 4. Set passwords with ldappasswd
 log "4. Setting passwords..."
@@ -102,13 +102,13 @@ echo "dn: cn=it-staff,ou=groups,$DOMAIN_DN
 objectClass: groupOfNames
 cn: it-staff
 member: uid=test-user-01,ou=users,$DOMAIN_DN
-member: uid=test-user-02,ou=users,$DOMAIN_DN" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+member: uid=test-user-02,ou=users,$DOMAIN_DN" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 # Guest group
 echo "dn: cn=guests,ou=groups,$DOMAIN_DN
 objectClass: groupOfNames
 cn: guests
-member: uid=test-user-03,ou=users,$DOMAIN_DN" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+member: uid=test-user-03,ou=users,$DOMAIN_DN" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 # All users group
 echo "dn: cn=all-users,ou=groups,$DOMAIN_DN
@@ -116,7 +116,7 @@ objectClass: groupOfNames
 cn: all-users
 member: uid=test-user-01,ou=users,$DOMAIN_DN
 member: uid=test-user-02,ou=users,$DOMAIN_DN
-member: uid=test-user-03,ou=users,$DOMAIN_DN" | docker exec -i openldap ldapadd -x -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+member: uid=test-user-03,ou=users,$DOMAIN_DN" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
 
 log "LDAP users setup completed successfully!"
 log "Test users:"
