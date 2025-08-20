@@ -1,337 +1,234 @@
-# LDAP Server for WiFi Authentication Testing
+# LDAP Authentication Server for WiFi Testing
 
-A production-ready LDAP server for testing WiFi authentication with RUCKUS One Access Points. Get secure LDAP directory services running in minutes with automated TLS certificates and pre-configured test users.
+A production-ready LDAP server designed specifically for testing WiFi authentication with enterprise access points (RUCKUS One, Cisco, Aruba, etc.). Deploy a fully functional LDAP server with TLS support and test users in minutes.
 
-## 🚀 Quick Start
+## 🎯 Project Goal
 
-### What You Need
-- Domain name (e.g., `ldap.yourdomain.com`)
-- GCP VM or any Linux server with Docker
-- 15 minutes for setup
+Provide a simple, reliable LDAP authentication backend for:
+- **WiFi WPA2/WPA3 Enterprise authentication testing**
+- **802.1X EAP authentication development**
+- **Network access control (NAC) testing**
+- **RADIUS server integration testing**
+- **Enterprise access point configuration validation**
 
-### 1. Get It Running
+## ⚡ Quick Start
+
+### Prerequisites
+- Linux server with Docker and Docker Compose v2
+- Domain name pointing to your server
+- Ports 389, 636, and 80 available
+
+### 1. Clone and Configure
+
 ```bash
-# Clone the project
+# Clone the repository
 git clone https://github.com/dogkeeper886/ldap.git
 cd ldap
 
-# Create configuration
-make env
-# Edit .env with your domain and email
+# Create environment configuration
+cp .env.example .env
 
-# Deploy everything
-make init
+# Edit .env with your settings:
+# - LDAP_DOMAIN (your domain, e.g., ldap.example.com)
+# - LDAP_ADMIN_PASSWORD (admin password)
+# - LETSENCRYPT_EMAIL (for SSL certificates)
+nano .env
 ```
 
-### 2. Test It Works
+### 2. Deploy LDAP Server
+
 ```bash
-# Check health
-make health
+# Initialize and start the LDAP server with TLS certificates
+make init
 
-# Test authentication
-make test-auth
+# This command will:
+# 1. Build Docker images
+# 2. Obtain Let's Encrypt certificates
+# 3. Start OpenLDAP with TLS support
+# 4. Configure the directory structure
+```
 
-# View all users
+### 3. Add Test Users
+
+```bash
+# Create test users and groups
+make setup-users
+
+# This creates three test users ready for authentication testing
+```
+
+## 👥 Test Users
+
+After running `make setup-users`, the following test accounts are available:
+
+| Username | Password | Full Name | Role | Department |
+|----------|----------|-----------|------|------------|
+| `test-user-01` | `TestPass123!` | John Smith | IT Administrator | IT |
+| `test-user-02` | `TestPass456!` | Jane Doe | Network Engineer | IT |
+| `test-user-03` | `GuestPass789!` | Mike Johnson | Guest User | Guest |
+
+### User Attributes
+Each user has complete attributes for policy testing:
+- **Email**: `firstname.lastname@example.com`
+- **Phone**: Unique numbers for each user
+- **Groups**: IT staff, guests, or all-users
+- **Department**: IT or Guest (stored in `ou` attribute)
+
+## 🔧 Access Point Configuration
+
+### RUCKUS One Configuration
+```
+Server Type: LDAP/LDAPS
+Server: your-domain.com
+Port: 636 (LDAPS) or 389 (LDAP)
+Base DN: dc=your,dc=domain,dc=com
+Admin DN: cn=admin,dc=your,dc=domain,dc=com
+Admin Password: [your admin password]
+Search Filter: uid=%s
+Key Attribute: [leave empty]
+```
+
+### Important Configuration Notes
+- **Base DN**: Automatically derived from your domain (example.com → dc=example,dc=com)
+- **Search Filter**: Use `uid=%s` where `%s` is replaced with the username
+- **Key Attribute**: Leave empty to avoid filter conflicts
+- **User Search Base**: The entire directory is searched from Base DN
+
+## 📁 Project Structure
+
+```
+ldap/
+├── docker-compose.yml      # Service orchestration
+├── Makefile               # Management commands
+├── .env.example           # Environment template
+├── docker/
+│   ├── openldap/         # OpenLDAP container configuration
+│   └── certbot/          # Let's Encrypt automation
+├── scripts/
+│   ├── setup-users.sh    # User creation script
+│   └── init-certificates.sh  # Certificate initialization
+└── tests/                # Testing scripts
+```
+
+## 🔐 Security Features
+
+- **TLS/SSL Encryption**: Automatic Let's Encrypt certificates
+- **SSHA Password Hashing**: Secure password storage
+- **Network Isolation**: Docker network security
+- **Access Control**: LDAP ACLs for data protection
+- **Certificate Auto-Renewal**: Automated certificate updates
+
+## 🛠️ Common Operations
+
+### View LDAP Directory
+```bash
+# Show all users and groups
 make view-ldap
 ```
 
-### 3. Connect Your WiFi
-Configure your RUCKUS One Access Point:
-- **Server**: `ldap.yourdomain.com`
-- **Port**: `636` (LDAPS)
-- **Base DN**: `dc=yourdomain,dc=com` (auto-generated from your domain)
-- **Bind DN**: `cn=admin,dc=yourdomain,dc=com`
-- **User Search Base**: `ou=users,dc=yourdomain,dc=com`
-- **User Search Filter**: `(uid=%s)`
-
-**Test Users Ready to Use:**
-- `test-user-01` (John Smith) - IT Administrator - TestPass123!
-- `test-user-02` (Jane Doe) - Network Engineer - TestPass456!
-- `test-user-03` (Mike Johnson) - Guest User - GuestPass789!
-
-## 📋 Common Operations
-
-### Daily Operations
+### Check Service Health
 ```bash
-# Check system health
+# Verify services are running correctly
 make health
+```
 
-# View logs
+### View Logs
+```bash
+# Check recent logs
 make logs
 
+# Follow logs in real-time
+make logs-follow
+```
+
+### Restart Services
+```bash
+# Restart LDAP server
+make restart
+```
+
+### Backup and Restore
+```bash
 # Create backup
 make backup
 
-# Restart services
-make restart
+# Restore from backup
+make restore FILE=backup-file.tar.gz
 ```
 
-### User Management
+## 🧪 Testing Authentication
+
+### From Command Line
 ```bash
-# Reset test users
-make setup-users
+# Test LDAP authentication (port 389)
+ldapwhoami -x -H ldap://your-domain.com:389 \
+  -D "uid=test-user-01,ou=users,dc=your,dc=domain,dc=com" \
+  -w "TestPass123!"
 
-# View all LDAP data
-make view-ldap
-
-# Access LDAP container
-make shell-ldap
+# Test LDAPS authentication (port 636)
+ldapwhoami -x -H ldaps://your-domain.com:636 \
+  -D "uid=test-user-01,ou=users,dc=your,dc=domain,dc=com" \
+  -w "TestPass123!"
 ```
 
-### Certificate Management
+### WiFi Client Testing
+1. Configure your device for WPA2/WPA3 Enterprise
+2. Choose EAP method (usually PEAP or EAP-TTLS)
+3. Enter username: `test-user-01`
+4. Enter password: `TestPass123!`
+5. Accept the certificate (if prompted)
+
+## 🔍 Troubleshooting
+
+### Enable Debug Logging
 ```bash
-# Check certificate status
-make health-verbose
+# Check current logs
+docker logs openldap --tail 50
 
-# Force certificate renewal
-make force-renew-certs
+# Enable verbose logging for troubleshooting
+docker exec openldap slapcat -n 0 | grep olcLogLevel
 ```
-
-## 🧪 Testing Examples
-
-### Test User Authentication
-```bash
-# Test specific user (John Smith)
-ldapsearch -x -H ldaps://ldap.yourdomain.com:636 \
-  -D "uid=test-user-01,ou=users,dc=yourdomain,dc=com" \
-  -w "TestPass123!" \
-  -b "" -s base
-
-# Test Jane Doe
-ldapsearch -x -H ldaps://ldap.yourdomain.com:636 \
-  -D "uid=test-user-02,ou=users,dc=yourdomain,dc=com" \
-  -w "TestPass456!" \
-  -b "" -s base
-```
-
-### Test Attribute Retrieval (RUCKUS Required)
-```bash
-# Get user attributes for access policies
-ldapsearch -x -H ldaps://ldap.yourdomain.com:636 \
-  -D "cn=admin,dc=yourdomain,dc=com" \
-  -w "your_admin_password" \
-  -b "uid=test-user-01,ou=users,dc=yourdomain,dc=com" \
-  displayName mail telephoneNumber department title givenName sn
-
-# Get all users with full contact info
-ldapsearch -x -H ldaps://ldap.yourdomain.com:636 \
-  -D "cn=admin,dc=yourdomain,dc=com" \
-  -w "your_admin_password" \
-  -b "ou=users,dc=yourdomain,dc=com" \
-  uid cn mail telephoneNumber mobile title department
-```
-
-### Test TLS Security
-```bash
-# Verify certificate
-openssl s_client -connect ldap.yourdomain.com:636
-
-# Test TLS configuration
-make test-tls
-```
-
-## 📡 RUCKUS One Integration
-
-### Identity Provider Setup
-1. **Add LDAP Server** in RUCKUS One dashboard
-2. **Server Settings:**
-   - Server: `ldap.yourdomain.com`
-   - Port: `636` (LDAPS)
-   - Security: SSL/TLS
-   - Base DN: `dc=example,dc=com`
-   - User Search Base: `ou=users,dc=example,dc=com`
-   - User Search Filter: `(uid=%s)`
-
-### Access Policy Examples
-Create policies based on user attributes:
-
-**IT Policy** (Full Access):
-```
-Condition: Custom Attribute 1 = "IT"
-Access: Full network + admin privileges
-```
-
-**Guest Policy** (Limited):
-```
-Condition: Custom Attribute 1 = "Guest"  
-Access: Internet only, 4 hours, 10 Mbps
-```
-
-**Executive Policy** (VIP):
-```
-Condition: Custom Attribute 1 = "Executive"
-Access: Premium network, unlimited, high priority
-```
-
-### Attribute Mapping
-| RUCKUS Field | LDAP Attribute | Example Value |
-|--------------|----------------|---------------|
-| Display Name | displayName | "Test User One" |
-| Email | mail | "test.user01@example.com" |
-| Phone | telephoneNumber | "+1-555-0101" |
-| Custom Attribute 1 | department | "IT" |
-
-## 🔧 Configuration
-
-### Environment File (.env)
-```bash
-# Your Settings
-LDAP_DOMAIN=ldap.yourdomain.com
-LETSENCRYPT_EMAIL=admin@yourdomain.com
-LDAP_ADMIN_PASSWORD=your_secure_admin_password
-
-# Test User Passwords (change these!)
-TEST_USER_PASSWORD=TestPass123!
-GUEST_USER_PASSWORD=GuestPass789!
-ADMIN_USER_PASSWORD=AdminPass456!
-CONTRACTOR_PASSWORD=ContractorPass321!
-VIP_PASSWORD=VipPass654!
-
-# Environment
-ENVIRONMENT=production
-```
-
-### Test User Details
-| Username | Full Name | Password | Email | Department | Title | Phone | Use Case |
-|----------|-----------|----------|-------|------------|-------|-------|----------|
-| test-user-01 | John Smith | TestPass123! | john.smith@example.com | IT | IT Administrator | +1-555-0101 | Regular admin |
-| test-user-02 | Jane Doe | TestPass456! | jane.doe@example.com | IT | Network Engineer | +1-555-0102 | IT staff |
-| test-user-03 | Mike Johnson | GuestPass789! | mike.johnson@example.com | Guest | Guest User | +1-555-0103 | Guest access |
-
-## 🚨 Troubleshooting
 
 ### Common Issues
 
-**Certificate Problems:**
-```bash
-# Check certificate status
-make health-verbose
+**Authentication Fails**
+- Verify the domain name in your Base DN matches your LDAP_DOMAIN
+- Ensure you're using the correct password (check for special characters)
+- Verify the user exists: `make view-ldap`
 
-# Force renewal
-make force-renew-certs
+**Certificate Issues**
+- Check certificate status: `make health`
+- Verify DNS points to your server
+- Ensure port 80 is open for Let's Encrypt validation
 
-# Verify DNS
-dig ldap.yourdomain.com
-```
+**Connection Refused**
+- Check firewall rules for ports 389, 636
+- Verify containers are running: `docker ps`
+- Check bind address in docker-compose.yml
 
-**Authentication Failures:**
-```bash
-# Test users exist
-make view-ldap | grep test-user
+## 🚀 Advanced Configuration
 
-# Reset users
-make setup-users
+### Custom Users
+Edit `scripts/setup-users.sh` to add your own users with specific attributes.
 
-# Check admin password
-make test-auth
-```
+### Custom Schema
+Add custom LDAP schemas in `docker/openldap/schema/` for specialized attributes.
 
-**Service Issues:**
-```bash
-# Check status
-make status
+### Replication
+Configure LDAP replication for high availability in production environments.
 
-# View logs
-make logs
+## 📄 License
 
-# Restart everything
-make restart
-```
+MIT License - See LICENSE file for details
 
-### Getting Help
-1. Check logs: `make logs`
-2. Run health check: `make health-verbose` 
-3. Run tests: `make test`
-4. Check [DEPLOYMENT.md](DEPLOYMENT.md) for detailed setup
-5. Open shell: `make shell-ldap`
+## 🤝 Contributing
 
-## 📚 Documentation
+Contributions are welcome! Please feel free to submit pull requests.
 
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide
-- **[docs/architecture.md](docs/architecture.md)** - System architecture
-- **[docs/prd.md](docs/prd.md)** - Product requirements
+## 📮 Support
+
+For issues, questions, or suggestions, please open an issue on GitHub.
 
 ---
 
-## 🛠️ Development Guide
-
-### Project Architecture
-- **Docker Compose** orchestration
-- **OpenLDAP 2.6.6** with MDB backend
-- **Let's Encrypt** automated certificates
-- **GCP deployment** ready
-
-### Development Setup
-```bash
-# Development environment
-make dev-setup
-
-# Edit configuration files
-# Note: Uses self-signed certs for local testing
-```
-
-### Project Structure
-```
-ldap/
-├── docker-compose.yml      # Main orchestration
-├── Makefile               # Common operations
-├── DEPLOYMENT.md          # Deployment guide
-├── config/               # LDAP & Certbot config
-├── docker/               # Custom Docker images
-├── ldifs/                # LDAP schema & users
-├── scripts/              # Automation scripts
-├── tests/                # Test framework
-└── docs/                 # Architecture & PRD
-```
-
-### Available Commands
-```bash
-# Setup & Deployment
-make init          # Complete setup
-make init-certs    # Get certificates
-make deploy        # Start services
-make setup-users   # Create test users
-
-# Operations  
-make health        # Health checks
-make logs          # View logs
-make backup        # Create backup
-make restart       # Restart services
-
-# Testing
-make test          # Run all tests
-make test-auth     # Test authentication
-make test-tls      # Test TLS config
-
-# Development
-make shell-ldap    # LDAP container shell
-make clean         # Clean containers
-make rebuild       # Rebuild images
-```
-
-### Adding Users
-1. Edit `ldifs/02-users.ldif`
-2. Add user entry with required attributes
-3. Run `make setup-users`
-
-### Customizing Attributes
-1. Modify LDIF files for additional attributes
-2. Update test scripts if needed  
-3. Redeploy with `make restart`
-
-### Security Features
-- **TLS 1.2+ only** encryption
-- **SSHA password** hashing
-- **Let's Encrypt** trusted certificates  
-- **Network-level** access control
-- **No plain-text** credentials
-
-### Contributing
-1. Test changes thoroughly
-2. Update documentation
-3. Ensure all tests pass
-4. Follow security best practices
-
----
-
-**Ready to test WiFi authentication with RUCKUS One Access Points!**
+**Ready for Enterprise WiFi Authentication Testing!** 🔒📡

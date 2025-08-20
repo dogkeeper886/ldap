@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   openldap:
     build:
@@ -7,7 +5,7 @@ services:
       dockerfile: Dockerfile-tls
     image: ldap-openldap-tls:latest
     container_name: openldap
-    hostname: ldap.tsengsyu.com
+    hostname: ${LDAP_DOMAIN:-ldap.example.com}
     restart: unless-stopped
     ports:
       - "636:636"
