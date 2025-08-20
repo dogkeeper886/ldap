@@ -115,12 +115,13 @@ import_base_structure() {
 
 # Create LDIF with password hashes
 create_users_with_passwords() {
-    log "Creating users LDIF with password hashes..."
+    log "Creating users LDIF with password hashes and comprehensive attributes..."
     
     local temp_ldif="/tmp/users-with-passwords.ldif"
     
-    # Copy base users LDIF
-    cp ldifs/02-users.ldif "$temp_ldif"
+    # Update domain in LDIF to match current environment
+    sed "s/dc=example,dc=com/dc=${LDAP_DOMAIN%%.*},dc=${LDAP_DOMAIN#*.}/g" ldifs/02-users.ldif > "$temp_ldif"
+    sed -i "s/@example.com/@${LDAP_DOMAIN}/g" "$temp_ldif"
     
     # Generate password hashes
     local test_user_hash
@@ -135,10 +136,7 @@ create_users_with_passwords() {
     contractor_hash=$(generate_password_hash "${CONTRACTOR_PASSWORD:-ContractorPass321!}")
     vip_hash=$(generate_password_hash "${VIP_PASSWORD:-VipPass654!}")
     
-    # Replace password placeholders with actual hashes
-    sed -i "s|# userPassword will be set via script|userPassword: $test_user_hash|" "$temp_ldif"
-    
-    # Add passwords for each user (need to be more specific)
+    # Add passwords for each user with proper matching
     awk -v test_hash="$test_user_hash" \
         -v guest_hash="$guest_user_hash" \
         -v admin_hash="$admin_user_hash" \
@@ -159,7 +157,8 @@ create_users_with_passwords() {
         next
     }
     { print }
-    ' ldifs/02-users.ldif > "$temp_ldif"
+    ' "$temp_ldif" > "$temp_ldif.new"
+    mv "$temp_ldif.new" "$temp_ldif"
     
     # Copy to container
     docker cp "$temp_ldif" openldap:/tmp/users-with-passwords.ldif
@@ -167,7 +166,7 @@ create_users_with_passwords() {
     # Clean up
     rm "$temp_ldif"
     
-    log "Users LDIF with passwords created"
+    log "Users LDIF with passwords and full attributes created"
 }
 
 # Import users with passwords
@@ -249,14 +248,46 @@ test_authentication() {
 display_summary() {
     log "User setup completed successfully!"
     echo
-    echo "=== Test User Summary ==="
-    echo "test-user-01 (IT Employee):     Password: ${TEST_USER_PASSWORD:-TestPass123!}"
-    echo "test-user-02 (Guest):           Password: ${GUEST_USER_PASSWORD:-GuestPass789!}"
-    echo "test-user-03 (Admin):           Password: ${ADMIN_USER_PASSWORD:-AdminPass456!}"
-    echo "test-user-04 (Contractor):      Password: ${CONTRACTOR_PASSWORD:-ContractorPass321!}"
-    echo "test-user-05 (VIP):             Password: ${VIP_PASSWORD:-VipPass654!}"
+    echo "=== Test User Summary with Comprehensive Attributes ==="
     echo
-    echo "Users can be tested with:"
+    echo "test-user-01 (IT Employee):"
+    echo "  Password: ${TEST_USER_PASSWORD:-TestPass123!}"
+    echo "  Title: IT Support Specialist"
+    echo "  Department: IT Department"
+    echo "  Location: San Francisco, CA"
+    echo
+    echo "test-user-02 (Guest):"
+    echo "  Password: ${GUEST_USER_PASSWORD:-GuestPass789!}"
+    echo "  Title: Visitor"
+    echo "  Department: External"
+    echo "  Location: New York, NY"
+    echo
+    echo "test-user-03 (Admin):"
+    echo "  Password: ${ADMIN_USER_PASSWORD:-AdminPass456!}"
+    echo "  Title: Senior System Administrator"
+    echo "  Department: IT Operations"
+    echo "  Location: Seattle, WA"
+    echo
+    echo "test-user-04 (Contractor):"
+    echo "  Password: ${CONTRACTOR_PASSWORD:-ContractorPass321!}"
+    echo "  Title: Technical Consultant"
+    echo "  Department: Professional Services"
+    echo "  Location: Austin, TX"
+    echo
+    echo "test-user-05 (VIP):"
+    echo "  Password: ${VIP_PASSWORD:-VipPass654!}"
+    echo "  Title: Chief Technology Officer"
+    echo "  Department: Executive Management"
+    echo "  Location: Los Angeles, CA"
+    echo
+    echo "All users have full attributes including:"
+    echo "  - displayName, telephoneNumber, mobile"
+    echo "  - title, ou (department), departmentNumber"
+    echo "  - employeeNumber, employeeType"
+    echo "  - street, city, state, postalCode"
+    echo "  - preferredLanguage, description"
+    echo
+    echo "Test authentication with:"
     echo "ldapsearch -x -H ldaps://$LDAP_DOMAIN:636 -D 'uid=test-user-01,ou=users,dc=${LDAP_DOMAIN%%.*},dc=${LDAP_DOMAIN#*.}' -w '${TEST_USER_PASSWORD:-TestPass123!}' -b '' -s base"
 }
 

@@ -1,0 +1,107 @@
+# LDAP Test Data Generated on Wed Aug 20 10:54:05 AM CST 2025
+# Number of users: 3
+# Base DN: dc=ldap,dc=tsengsyu.com
+# 
+# Note: This file contains test users with comprehensive attributes
+# Each user has a password in the format: TestPassXXX!
+# 
+# Import with:
+# ldapadd -x -H ldap://localhost -D "cn=admin,dc=ldap,dc=tsengsyu.com" -w <admin_password> -f test-users-20250820-105405.ldif
+
+# Organizational Units (if not already created)
+dn: ou=users,dc=ldap,dc=tsengsyu.com
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=groups,dc=ldap,dc=tsengsyu.com
+objectClass: organizationalUnit
+ou: groups
+
+# Test User test-user-0001 - Michael Anderson
+dn: uid=test-user-0001,ou=users,dc=ldap,dc=tsengsyu.com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: test-user-0001
+cn: Michael Anderson
+sn: Anderson
+givenName: Michael
+displayName: Michael Anderson - Manager - Engineering
+mail: michael.anderson@example.com
+telephoneNumber: +1-555-6066
+mobile: +1-555-0030
+title: Manager - Engineering
+ou: Engineering
+departmentNumber: ENG077
+employeeNumber: EMP017682
+employeeType: Contractor
+description: Test user account for Michael Anderson in Engineering
+street: 5800 View Drive
+l: New York
+st: OR
+postalCode: 10120
+preferredLanguage: en-US
+userPassword: TestPass940!
+
+# Test User test-user-0002 - William Smith
+dn: uid=test-user-0002,ou=users,dc=ldap,dc=tsengsyu.com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: test-user-0002
+cn: William Smith
+sn: Smith
+givenName: William
+displayName: William Smith - Lead - Product Management
+mail: william.smith@example.com
+telephoneNumber: +1-555-4636
+mobile: +1-555-1771
+title: Lead - Product Management
+ou: Product Management
+departmentNumber: DEPT023
+employeeNumber: EMP000252
+employeeType: Full-Time
+description: Test user account for William Smith in Product Management
+street: 9534 Maple Boulevard
+l: Phoenix
+st: TX
+postalCode: 21459
+preferredLanguage: en-US
+userPassword: TestPass535!
+
+# Test User test-user-0003 - William Lopez
+dn: uid=test-user-0003,ou=users,dc=ldap,dc=tsengsyu.com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: test-user-0003
+cn: William Lopez
+sn: Lopez
+givenName: William
+displayName: William Lopez - Coordinator - Finance
+mail: william.lopez@example.com
+telephoneNumber: +1-555-6294
+mobile: +1-555-1338
+title: Coordinator - Finance
+ou: Finance
+departmentNumber: FIN062
+employeeNumber: EMP016014
+employeeType: Contractor
+description: Test user account for William Lopez in Finance
+street: 1681 Park Avenue
+l: Philadelphia
+st: PA
+postalCode: 31224
+preferredLanguage: en-US
+userPassword: TestPass316!
+
+# Group for WiFi access
+dn: cn=wifi-users,ou=groups,dc=ldap,dc=tsengsyu.com
+objectClass: groupOfNames
+cn: wifi-users
+member: uid=test-user-0001,ou=users,dc=ldap,dc=tsengsyu.com
+member: uid=test-user-0002,ou=users,dc=ldap,dc=tsengsyu.com
+member: uid=test-user-0003,ou=users,dc=ldap,dc=tsengsyu.com

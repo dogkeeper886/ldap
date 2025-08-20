@@ -13,12 +13,21 @@ uid: test-user-01
 cn: Test User One
 sn: One
 givenName: Test User
-displayName: Test User One
+displayName: Test User One - IT Employee
 mail: test.user01@example.com
 telephoneNumber: +1-555-0101
-department: IT
+mobile: +1-555-9101
+title: IT Support Specialist
+ou: IT Department
+departmentNumber: IT001
+employeeNumber: EMP001
 employeeType: Full-Time
 description: IT department employee with standard network access
+street: 123 Tech Street
+l: San Francisco
+st: CA
+postalCode: 94102
+preferredLanguage: en-US
 # userPassword will be set via script
 
 # Test User 02 - Guest User (Limited Access)
@@ -31,12 +40,21 @@ uid: test-user-02
 cn: Guest User
 sn: User
 givenName: Guest
-displayName: Guest User
+displayName: Guest User - Visitor
 mail: guest.user@example.com
 telephoneNumber: +1-555-0102
-department: Guest
-employeeType: Visitor
+mobile: +1-555-9102
+title: Visitor
+ou: External
+departmentNumber: EXT001
+employeeNumber: GUEST001
+employeeType: Temporary
 description: Guest user with limited network access
+street: 456 Visitor Plaza
+l: New York
+st: NY
+postalCode: 10001
+preferredLanguage: en-US
 # userPassword will be set via script
 
 # Test User 03 - Admin User (Full Access)
@@ -49,12 +67,21 @@ uid: test-user-03
 cn: Admin User
 sn: User
 givenName: Admin
-displayName: Admin User
+displayName: Admin User - System Administrator
 mail: admin.user@example.com
 telephoneNumber: +1-555-0103
-department: IT
-employeeType: Admin
+mobile: +1-555-9103
+title: Senior System Administrator
+ou: IT Operations
+departmentNumber: IT002
+employeeNumber: EMP003
+employeeType: Full-Time
 description: Administrator with full network privileges
+street: 789 Admin Tower
+l: Seattle
+st: WA
+postalCode: 98101
+preferredLanguage: en-US
 # userPassword will be set via script
 
 # Test User 04 - Contractor (Standard Access)
@@ -67,12 +94,21 @@ uid: test-user-04
 cn: Contractor User
 sn: User
 givenName: Contractor
-displayName: Contractor User
+displayName: Contractor User - External
 mail: contractor@example.com
 telephoneNumber: +1-555-0104
-department: External
+mobile: +1-555-9104
+title: Technical Consultant
+ou: Professional Services
+departmentNumber: PS001
+employeeNumber: CTR001
 employeeType: Contractor
 description: External contractor with restricted network access
+street: 321 Contractor Lane
+l: Austin
+st: TX
+postalCode: 78701
+preferredLanguage: en-US
 # userPassword will be set via script
 
 # Test User 05 - Executive (VIP Access)
@@ -85,10 +121,19 @@ uid: test-user-05
 cn: VIP User
 sn: User
 givenName: VIP
-displayName: VIP User
+displayName: VIP User - Executive
 mail: vip.user@example.com
 telephoneNumber: +1-555-0105
-department: Executive
-employeeType: Full-Time
+mobile: +1-555-9105
+title: Chief Technology Officer
+ou: Executive Management
+departmentNumber: EXEC001
+employeeNumber: EMP005
+employeeType: Executive
 description: Executive user with VIP network access and privileges
+street: 999 Executive Boulevard
+l: Los Angeles
+st: CA
+postalCode: 90001
+preferredLanguage: en-US
 # userPassword will be set via script
