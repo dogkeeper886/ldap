@@ -63,7 +63,6 @@ street: 123 Test Street
 l: San Francisco
 st: CA
 postalCode: 94102
-c: US
 preferredLanguage: en-US
 EOF
 ldappasswd -x -H ldap://localhost -D "cn=admin,$LDAP_BASE_DN" -w "$LDAP_ADMIN_PASSWORD" -s "WiFiPass123!" "uid=wifi-user,ou=users,$LDAP_BASE_DN" 2>/dev/null || true
@@ -93,7 +92,6 @@ street: 456 Dev Avenue
 l: Austin
 st: TX
 postalCode: 78701
-c: US
 preferredLanguage: en-US
 EOF
 ldappasswd -x -H ldap://localhost -D "cn=admin,$LDAP_BASE_DN" -w "$LDAP_ADMIN_PASSWORD" -s "TestPass456!" "uid=test-user,ou=users,$LDAP_BASE_DN" 2>/dev/null || true
@@ -123,7 +121,6 @@ street: 789 Admin Plaza
 l: Seattle
 st: WA
 postalCode: 98101
-c: US
 preferredLanguage: en-US
 EOF
 ldappasswd -x -H ldap://localhost -D "cn=admin,$LDAP_BASE_DN" -w "$LDAP_ADMIN_PASSWORD" -s "AdminPass789!" "uid=admin-user,ou=users,$LDAP_BASE_DN" 2>/dev/null || true
@@ -153,7 +150,6 @@ street: 321 Visitor Lane
 l: New York
 st: NY
 postalCode: 10001
-c: US
 preferredLanguage: en-US
 EOF
 ldappasswd -x -H ldap://localhost -D "cn=admin,$LDAP_BASE_DN" -w "$LDAP_ADMIN_PASSWORD" -s "GuestPass000!" "uid=guest-user,ou=users,$LDAP_BASE_DN" 2>/dev/null || true
@@ -183,7 +179,6 @@ street: 999 Executive Drive
 l: Los Angeles
 st: CA
 postalCode: 90001
-c: US
 preferredLanguage: en-US
 EOF
 ldappasswd -x -H ldap://localhost -D "cn=admin,$LDAP_BASE_DN" -w "$LDAP_ADMIN_PASSWORD" -s "VipPass111!" "uid=vip-user,ou=users,$LDAP_BASE_DN" 2>/dev/null || true
