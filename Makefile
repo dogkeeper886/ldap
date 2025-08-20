@@ -123,11 +123,15 @@ setup-users-direct:
 	@echo "2. Creating OUs..."
 	@echo "dn: ou=users,$(DOMAIN_DN)\nobjectClass: organizationalUnit\nou: users" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
 	@echo "dn: ou=groups,$(DOMAIN_DN)\nobjectClass: organizationalUnit\nou: groups" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
-	@echo "3. Creating test users..."
-	@echo "dn: uid=test-user-01,ou=users,$(DOMAIN_DN)\nobjectClass: inetOrgPerson\nuid: test-user-01\ncn: John Smith\nsn: Smith\ngivenName: John\ndisplayName: John Smith\nmail: john.smith@example.com\ntelephoneNumber: +1-555-0101\nmobile: +1-555-1001\ntitle: IT Administrator\ndepartment: IT\nuserPassword: TestPass123!" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
-	@echo "dn: uid=test-user-02,ou=users,$(DOMAIN_DN)\nobjectClass: inetOrgPerson\nuid: test-user-02\ncn: Jane Doe\nsn: Doe\ngivenName: Jane\ndisplayName: Jane Doe\nmail: jane.doe@example.com\ntelephoneNumber: +1-555-0102\nmobile: +1-555-1002\ntitle: Network Engineer\ndepartment: IT\nuserPassword: TestPass456!" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
-	@echo "dn: uid=test-user-03,ou=users,$(DOMAIN_DN)\nobjectClass: inetOrgPerson\nuid: test-user-03\ncn: Mike Johnson\nsn: Johnson\ngivenName: Mike\ndisplayName: Mike Johnson\nmail: mike.johnson@example.com\ntelephoneNumber: +1-555-0103\nmobile: +1-555-1003\ntitle: Guest User\ndepartment: Guest\nuserPassword: GuestPass789!" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
-	@echo "4. Creating test group..."
+	@echo "3. Creating test users (without passwords)..."
+	@echo "dn: uid=test-user-01,ou=users,$(DOMAIN_DN)\nobjectClass: inetOrgPerson\nuid: test-user-01\ncn: John Smith\nsn: Smith\ngivenName: John\ndisplayName: John Smith\nmail: john.smith@example.com\ntelephoneNumber: +1-555-0101\nmobile: +1-555-1001\ntitle: IT Administrator\ndepartment: IT" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
+	@echo "dn: uid=test-user-02,ou=users,$(DOMAIN_DN)\nobjectClass: inetOrgPerson\nuid: test-user-02\ncn: Jane Doe\nsn: Doe\ngivenName: Jane\ndisplayName: Jane Doe\nmail: jane.doe@example.com\ntelephoneNumber: +1-555-0102\nmobile: +1-555-1002\ntitle: Network Engineer\ndepartment: IT" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
+	@echo "dn: uid=test-user-03,ou=users,$(DOMAIN_DN)\nobjectClass: inetOrgPerson\nuid: test-user-03\ncn: Mike Johnson\nsn: Johnson\ngivenName: Mike\ndisplayName: Mike Johnson\nmail: mike.johnson@example.com\ntelephoneNumber: +1-555-0103\nmobile: +1-555-1003\ntitle: Guest User\ndepartment: Guest" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
+	@echo "4. Setting passwords with ldappasswd..."
+	@docker exec openldap ldappasswd -x -H ldap://localhost -D "$(ADMIN_DN)" -w "$(PASSWORD)" -s "TestPass123!" "uid=test-user-01,ou=users,$(DOMAIN_DN)" || true
+	@docker exec openldap ldappasswd -x -H ldap://localhost -D "$(ADMIN_DN)" -w "$(PASSWORD)" -s "TestPass456!" "uid=test-user-02,ou=users,$(DOMAIN_DN)" || true
+	@docker exec openldap ldappasswd -x -H ldap://localhost -D "$(ADMIN_DN)" -w "$(PASSWORD)" -s "GuestPass789!" "uid=test-user-03,ou=users,$(DOMAIN_DN)" || true
+	@echo "5. Creating test group..."
 	@echo "dn: cn=testgroup,ou=groups,$(DOMAIN_DN)\nobjectClass: groupOfNames\ncn: testgroup\nmember: uid=test-user-01,ou=users,$(DOMAIN_DN)" | docker exec -i openldap ldapadd -x -D "$(ADMIN_DN)" -w "$(PASSWORD)" || true
 	@echo "Test users setup completed"
 
