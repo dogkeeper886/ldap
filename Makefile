@@ -65,13 +65,13 @@ check-env:
 	@grep -q "LETSENCRYPT_EMAIL=" .env || (echo "ERROR: LETSENCRYPT_EMAIL not set in .env"; exit 1)
 	@echo "✓ Required environment variables are set"
 
-# Complete initial setup
-init: check-env build init-certs deploy setup-users health
+# Complete initial setup (certificates + services only)
+init: check-env build init-certs deploy
 	@echo ""
 	@echo "🎉 Initial setup completed successfully!"
 	@echo ""
-	@echo "Your LDAP server is now ready for WiFi authentication testing."
-	@echo "Run 'make test' to verify everything is working correctly."
+	@echo "Your LDAP server is now ready."
+	@echo "Run 'make setup-users' to add test data."
 
 # Initialize certificates
 init-certs: check-env
