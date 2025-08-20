@@ -37,7 +37,7 @@ check_prerequisites() {
         exit 1
     }
     
-    command -v docker-compose >/dev/null 2>&1 || { 
+    command -v docker compose >/dev/null 2>&1 || { 
         error "Docker Compose is required but not installed"
         exit 1
     }
@@ -107,8 +107,8 @@ check_domain_dns() {
 stop_services() {
     log "Stopping any running services..."
     
-    if docker-compose ps | grep -q "Up"; then
-        docker-compose down
+    if docker compose ps | grep -q "Up"; then
+        docker compose down
     fi
     
     # Stop any process using port 80

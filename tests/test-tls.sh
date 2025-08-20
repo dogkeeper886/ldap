@@ -410,7 +410,7 @@ main() {
     load_environment
     
     # Check if OpenLDAP container is running
-    if ! docker-compose ps openldap | grep -q "Up"; then
+    if ! docker compose ps openldap | grep -q "Up"; then
         error "OpenLDAP container is not running. Start it with: make deploy"
         exit 1
     fi

@@ -87,19 +87,19 @@ copy-certs: check-env
 # Build OpenLDAP with TLS certificates
 build-tls: check-env copy-certs
 	@echo "Building OpenLDAP with TLS certificates..."
-	@docker-compose build openldap
+	@docker compose build openldap
 	@echo "OpenLDAP TLS image built successfully"
 
 # Build custom Docker images
 build: check-env
 	@echo "Building custom Docker images..."
-	@docker-compose build
+	@docker compose build
 	@echo "Docker images built successfully"
 
 # Deploy services
 deploy: check-env build
 	@echo "Deploying LDAP services..."
-	@docker-compose up -d
+	@docker compose up -d
 	@echo "Waiting for services to start..."
 	@sleep 10
 	@echo "Services deployed successfully"
@@ -112,7 +112,7 @@ setup-users:
 # Stop services
 stop:
 	@echo "Stopping LDAP services..."
-	@docker-compose down
+	@docker compose down
 
 # Restart services
 restart: stop deploy
@@ -131,22 +131,22 @@ health-verbose:
 # Show logs
 logs:
 	@echo "Showing service logs..."
-	@docker-compose logs --tail=50
+	@docker compose logs --tail=50
 
 # Follow logs in real-time
 logs-follow:
 	@echo "Following service logs (Ctrl+C to stop)..."
-	@docker-compose logs -f
+	@docker compose logs -f
 
 # Show OpenLDAP logs only
 logs-ldap:
 	@echo "Showing OpenLDAP logs..."
-	@docker-compose logs openldap --tail=50
+	@docker compose logs openldap --tail=50
 
 # Show Certbot logs only
 logs-certbot:
 	@echo "Showing Certbot logs..."
-	@docker-compose logs certbot --tail=50
+	@docker compose logs certbot --tail=50
 
 # Create backup
 backup:
@@ -191,33 +191,33 @@ test-performance:
 # Clean up containers and volumes
 clean:
 	@echo "Cleaning up containers and volumes..."
-	@docker-compose down -v
+	@docker compose down -v
 	@docker system prune -f
 
 # Clean everything including images
 clean-all: clean
 	@echo "Removing Docker images..."
-	@docker-compose down --rmi all -v
+	@docker compose down --rmi all -v
 	@docker system prune -af
 
 # Rebuild images and redeploy
 rebuild: stop
 	@echo "Rebuilding Docker images..."
-	@docker-compose build --no-cache
+	@docker compose build --no-cache
 	@echo "Redeploying services..."
-	@docker-compose up -d
+	@docker compose up -d
 	@echo "Rebuild and redeploy completed"
 
 # Update container images
 update:
 	@echo "Updating base images and rebuilding..."
-	@docker-compose build --pull
-	@docker-compose up -d
+	@docker compose build --pull
+	@docker compose up -d
 
 # Show container status
 status:
 	@echo "Container Status:"
-	@docker-compose ps
+	@docker compose ps
 	@echo ""
 	@echo "Resource Usage:"
 	@docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
@@ -225,29 +225,29 @@ status:
 # Manual certificate renewal
 renew-certs:
 	@echo "Manually renewing certificates..."
-	@docker-compose exec certbot certbot renew --force-renewal
-	@docker-compose restart openldap
+	@docker compose exec certbot certbot renew --force-renewal
+	@docker compose restart openldap
 
 # Force certificate renewal (for testing)
 force-renew-certs:
 	@echo "Force renewing certificates..."
-	@docker-compose exec certbot certbot renew --force-renewal
-	@docker-compose restart openldap
+	@docker compose exec certbot certbot renew --force-renewal
+	@docker compose restart openldap
 
 # Shell access to OpenLDAP container
 shell-ldap:
 	@echo "Opening shell in OpenLDAP container..."
-	@docker-compose exec openldap /bin/bash
+	@docker compose exec openldap /bin/bash
 
 # Shell access to Certbot container
 shell-certbot:
 	@echo "Opening shell in Certbot container..."
-	@docker-compose exec certbot /bin/sh
+	@docker compose exec certbot /bin/sh
 
 # View LDAP database contents
 view-ldap:
 	@echo "Viewing LDAP database contents..."
-	@docker-compose exec openldap ldapsearch -x -H ldap://localhost -D "cn=admin,dc=example,dc=com" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" -b "dc=example,dc=com"
+	@docker compose exec openldap ldapsearch -x -H ldap://localhost -D "cn=admin,dc=example,dc=com" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" -b "dc=example,dc=com"
 
 # Create test environment
 dev-setup: env

@@ -88,8 +88,8 @@ backup_config() {
     
     mkdir -p "$backup_dir/config"
     
-    # Backup docker-compose and environment
-    cp docker-compose.yml "$backup_dir/config/"
+    # Backup docker compose and environment
+    cp docker compose.yml "$backup_dir/config/"
     cp .env "$backup_dir/config/" 2>/dev/null || warn ".env file not found"
     
     # Backup custom configurations
@@ -120,10 +120,10 @@ Environment: ${ENVIRONMENT:-development}
 Backup Type: Full backup (data + config + certificates)
 
 Container Versions:
-$(docker-compose images)
+$(docker compose images)
 
 Docker Compose Version:
-$(docker-compose --version)
+$(docker compose --version)
 
 LDAP Statistics:
 $(docker exec openldap ldapsearch -x -H ldap://localhost -D "cn=admin,dc=${LDAP_DOMAIN%%.*},dc=${LDAP_DOMAIN#*.}" -w "$LDAP_ADMIN_PASSWORD" -b "ou=users,dc=${LDAP_DOMAIN%%.*},dc=${LDAP_DOMAIN#*.}" "objectClass=inetOrgPerson" dn | grep -c "dn:" || echo "Unable to count users")
@@ -231,7 +231,7 @@ main() {
     load_environment
     
     # Check if containers are running
-    if ! docker-compose ps openldap | grep -q "Up"; then
+    if ! docker compose ps openldap | grep -q "Up"; then
         warn "OpenLDAP container is not running - backup may be incomplete"
     fi
     

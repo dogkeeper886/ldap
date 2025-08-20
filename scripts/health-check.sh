@@ -78,14 +78,14 @@ run_check() {
 # Check Docker and Docker Compose
 check_docker() {
     command -v docker >/dev/null 2>&1 && \
-    command -v docker-compose >/dev/null 2>&1 && \
+    command -v docker compose >/dev/null 2>&1 && \
     docker info >/dev/null 2>&1
 }
 
 # Check container status
 check_containers() {
-    docker-compose ps | grep -q "openldap.*Up" && \
-    docker-compose ps | grep -q "certbot.*Up"
+    docker compose ps | grep -q "openldap.*Up" && \
+    docker compose ps | grep -q "certbot.*Up"
 }
 
 # Check LDAP service on plain port
@@ -217,7 +217,7 @@ check_network() {
 # Check log errors
 check_logs() {
     local error_count
-    error_count=$(docker-compose logs --tail=100 openldap 2>/dev/null | grep -c "ERROR\|FATAL" || echo "0")
+    error_count=$(docker compose logs --tail=100 openldap 2>/dev/null | grep -c "ERROR\|FATAL" || echo "0")
     
     if [ "$error_count" -gt 0 ]; then
         warn "Found $error_count error(s) in recent logs"
@@ -256,11 +256,11 @@ generate_report() {
 show_container_info() {
     echo
     info "Container Status:"
-    docker-compose ps
+    docker compose ps
     
     echo
     info "Recent Log Entries:"
-    docker-compose logs --tail=5 openldap 2>/dev/null || warn "Could not retrieve logs"
+    docker compose logs --tail=5 openldap 2>/dev/null || warn "Could not retrieve logs"
 }
 
 # Main function
