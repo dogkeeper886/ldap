@@ -97,14 +97,8 @@ stop_services() {
         docker compose down
     fi
     
-    # Stop any process using port 80
-    local port80_pid
-    port80_pid=$(lsof -ti:80 || echo "")
-    if [ -n "$port80_pid" ]; then
-        warn "Stopping process using port 80 (PID: $port80_pid)"
-        sudo kill "$port80_pid" || true
-        sleep 2
-    fi
+    # Skip port check - Docker will handle port conflicts
+    log "Skipping port 80 check - Docker will handle conflicts"
 }
 
 # Acquire certificate using certbot standalone
