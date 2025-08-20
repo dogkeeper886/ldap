@@ -5,10 +5,4 @@ LABEL maintainer="LDAP Admin <admin@tsengsyu.com>"
 # Certificates will be copied from certbot container during build
 COPY certs/ /container/service/slapd/assets/certs/
 
-# Add automated user initialization for test environment
-COPY bootstrap/custom-init.sh /custom-init.sh
-COPY bootstrap/entrypoint-wrapper.sh /entrypoint-wrapper.sh
-RUN chmod +x /custom-init.sh /entrypoint-wrapper.sh
-
-# Override entrypoint to run our wrapper
-ENTRYPOINT ["/entrypoint-wrapper.sh"]
+# Use standard osixia/openldap entrypoint (no custom user initialization)

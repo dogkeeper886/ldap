@@ -39,15 +39,15 @@ make view-ldap
 Configure your RUCKUS One Access Point:
 - **Server**: `ldap.yourdomain.com`
 - **Port**: `636` (LDAPS)
-- **Base DN**: `dc=example,dc=com`
-- **Bind DN**: `cn=admin,dc=example,dc=com`
+- **Base DN**: `dc=yourdomain,dc=com` (auto-generated from your domain)
+- **Bind DN**: `cn=admin,dc=yourdomain,dc=com`
+- **User Search Base**: `ou=users,dc=yourdomain,dc=com`
+- **User Search Filter**: `(uid=%s)`
 
 **Test Users Ready to Use:**
-- `test-user-01` (IT Department) - Full access
-- `test-user-02` (Guest) - Limited access  
-- `test-user-03` (Admin) - Full privileges
-- `test-user-04` (Contractor) - Standard access
-- `test-user-05` (Executive) - VIP access
+- `test-user-01` (John Smith) - IT Administrator - TestPass123!
+- `test-user-02` (Jane Doe) - Network Engineer - TestPass456!
+- `test-user-03` (Mike Johnson) - Guest User - GuestPass789!
 
 ## 📋 Common Operations
 
@@ -91,10 +91,16 @@ make force-renew-certs
 
 ### Test User Authentication
 ```bash
-# Test specific user
+# Test specific user (John Smith)
 ldapsearch -x -H ldaps://ldap.yourdomain.com:636 \
-  -D "uid=test-user-01,ou=users,dc=example,dc=com" \
+  -D "uid=test-user-01,ou=users,dc=yourdomain,dc=com" \
   -w "TestPass123!" \
+  -b "" -s base
+
+# Test Jane Doe
+ldapsearch -x -H ldaps://ldap.yourdomain.com:636 \
+  -D "uid=test-user-02,ou=users,dc=yourdomain,dc=com" \
+  -w "TestPass456!" \
   -b "" -s base
 ```
 
@@ -102,10 +108,17 @@ ldapsearch -x -H ldaps://ldap.yourdomain.com:636 \
 ```bash
 # Get user attributes for access policies
 ldapsearch -x -H ldaps://ldap.yourdomain.com:636 \
-  -D "cn=admin,dc=example,dc=com" \
+  -D "cn=admin,dc=yourdomain,dc=com" \
   -w "your_admin_password" \
-  -b "uid=test-user-01,ou=users,dc=example,dc=com" \
-  displayName mail telephoneNumber department
+  -b "uid=test-user-01,ou=users,dc=yourdomain,dc=com" \
+  displayName mail telephoneNumber department title givenName sn
+
+# Get all users with full contact info
+ldapsearch -x -H ldaps://ldap.yourdomain.com:636 \
+  -D "cn=admin,dc=yourdomain,dc=com" \
+  -w "your_admin_password" \
+  -b "ou=users,dc=yourdomain,dc=com" \
+  uid cn mail telephoneNumber mobile title department
 ```
 
 ### Test TLS Security
@@ -179,13 +192,11 @@ ENVIRONMENT=production
 ```
 
 ### Test User Details
-| Username | Password | Department | Access Level | Use Case |
-|----------|----------|------------|--------------|----------|
-| test-user-01 | TestPass123! | IT | Standard | Regular employee |
-| test-user-02 | GuestPass789! | Guest | Limited | Guest access |
-| test-user-03 | AdminPass456! | IT | Admin | Administrative |
-| test-user-04 | ContractorPass321! | External | Standard | Contractor |
-| test-user-05 | VipPass654! | Executive | Premium | VIP/Executive |
+| Username | Full Name | Password | Email | Department | Title | Phone | Use Case |
+|----------|-----------|----------|-------|------------|-------|-------|----------|
+| test-user-01 | John Smith | TestPass123! | john.smith@example.com | IT | IT Administrator | +1-555-0101 | Regular admin |
+| test-user-02 | Jane Doe | TestPass456! | jane.doe@example.com | IT | Network Engineer | +1-555-0102 | IT staff |
+| test-user-03 | Mike Johnson | GuestPass789! | mike.johnson@example.com | Guest | Guest User | +1-555-0103 | Guest access |
 
 ## 🚨 Troubleshooting
 
