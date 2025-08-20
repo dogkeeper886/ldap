@@ -85,22 +85,8 @@ check_domain_dns() {
         return 0
     fi
     
-    # Resolve domain
-    local domain_ip
-    domain_ip=$(dig +short "$LDAP_DOMAIN" | tail -n1)
-    
-    if [ "$domain_ip" != "$server_ip" ]; then
-        warn "Domain $LDAP_DOMAIN resolves to $domain_ip but server IP is $server_ip"
-        warn "Certificate acquisition may fail if DNS is not properly configured"
-        
-        read -p "Continue anyway? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            exit 1
-        fi
-    else
-        log "DNS check passed: $LDAP_DOMAIN resolves to $server_ip"
-    fi
+    # Skip DNS validation - Let's Encrypt will validate domain directly
+    log "Skipping DNS validation - proceeding with certificate request"
 }
 
 # Stop any running services
