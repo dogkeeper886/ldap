@@ -54,7 +54,8 @@ mail: wifi-user@$LDAP_DOMAIN
 telephoneNumber: +1-555-0101
 mobile: +1-555-9101
 title: Network Test User
-department: IT Department
+departmentNumber: IT001
+ou: IT Department
 employeeNumber: EMP001
 employeeType: Full-Time
 description: Test user for WiFi authentication
@@ -83,7 +84,8 @@ mail: test-user@$LDAP_DOMAIN
 telephoneNumber: +1-555-0102
 mobile: +1-555-9102
 title: Software Developer
-department: Development Team
+departmentNumber: DEV001
+ou: Development Team
 employeeNumber: EMP002
 employeeType: Full-Time
 description: Test user for development testing
@@ -112,7 +114,8 @@ mail: admin-user@$LDAP_DOMAIN
 telephoneNumber: +1-555-0103
 mobile: +1-555-9103
 title: Senior System Administrator
-department: IT Operations
+departmentNumber: IT002
+ou: IT Operations
 employeeNumber: EMP003
 employeeType: Full-Time
 description: Administrative user with elevated privileges
@@ -141,7 +144,8 @@ mail: guest-user@$LDAP_DOMAIN
 telephoneNumber: +1-555-0104
 mobile: +1-555-9104
 title: Visitor
-department: External
+departmentNumber: EXT001
+ou: External
 employeeNumber: GUEST001
 employeeType: Temporary
 description: Temporary guest access for visitors
@@ -170,7 +174,8 @@ mail: vip-user@$LDAP_DOMAIN
 telephoneNumber: +1-555-0105
 mobile: +1-555-9105
 title: Chief Executive Officer
-department: Executive Management
+departmentNumber: EXEC001
+ou: Executive Management
 employeeNumber: EMP005
 employeeType: Executive
 description: VIP user with premium access privileges
