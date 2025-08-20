@@ -109,6 +109,15 @@ setup-users:
 	@echo "Setting up test users..."
 	@./scripts/setup-users.sh
 
+# Setup users directly via docker exec (alternative method)
+setup-users-direct:
+	@echo "Setting up users directly..."
+	@sleep 5  # Wait for LDAP to be ready
+	@docker exec openldap ldapadd -x -D "cn=admin,dc=example,dc=com" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" -f /ldifs/01-base.ldif || true
+	@docker exec openldap ldapadd -x -D "cn=admin,dc=example,dc=com" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" -f /ldifs/02-users.ldif || true  
+	@docker exec openldap ldapadd -x -D "cn=admin,dc=example,dc=com" -w "$$(grep LDAP_ADMIN_PASSWORD .env | cut -d= -f2)" -f /ldifs/03-groups.ldif || true
+	@echo "Users setup completed"
+
 # Stop services
 stop:
 	@echo "Stopping LDAP services..."
