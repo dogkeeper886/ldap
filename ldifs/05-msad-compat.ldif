@@ -1,0 +1,51 @@
+# Microsoft AD Compatibility Schema Extensions
+# Adds attributes commonly expected by enterprise WiFi access points
+# These attributes enable compatibility with APs configured for MS AD authentication
+
+# Add Microsoft schema attributes to support AD-style authentication
+dn: cn=msad-compat,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: msad-compat
+# sAMAccountName - Windows logon name (pre-Windows 2000)
+olcAttributeTypes: ( 1.2.840.113556.1.4.221
+  NAME 'sAMAccountName'
+  DESC 'Windows NT4 logon name'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+# userPrincipalName - Windows logon name (user@domain format)
+olcAttributeTypes: ( 1.2.840.113556.1.4.656
+  NAME 'userPrincipalName'
+  DESC 'Windows 2000+ logon name'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+# memberOf - Group membership (for RADIUS group-based access)
+olcAttributeTypes: ( 1.2.840.113556.1.2.102
+  NAME 'memberOf'
+  DESC 'Group membership for authorization'
+  EQUALITY distinguishedNameMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )
+# accountExpires - Account expiration (for guest/temporary accounts)
+olcAttributeTypes: ( 1.2.840.113556.1.4.159
+  NAME 'accountExpires'
+  DESC 'Account expiration date'
+  EQUALITY integerMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+  SINGLE-VALUE )
+# userAccountControl - Account flags (enabled/disabled status)
+olcAttributeTypes: ( 1.2.840.113556.1.4.8
+  NAME 'userAccountControl'
+  DESC 'Account control flags'
+  EQUALITY integerMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+  SINGLE-VALUE )
+# Object class to group these attributes
+olcObjectClasses: ( 1.2.840.113556.1.5.9
+  NAME 'msadUser'
+  DESC 'Microsoft AD Compatible User'
+  SUP top AUXILIARY
+  MAY ( sAMAccountName $ userPrincipalName $ memberOf $ 
+        accountExpires $ userAccountControl ) )

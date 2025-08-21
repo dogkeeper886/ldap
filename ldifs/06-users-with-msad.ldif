@@ -1,0 +1,57 @@
+# Users with Microsoft AD-compatible attributes
+# For WiFi AP authentication that expects AD-style attributes
+# Apply after 05-msad-compat.ldif schema is loaded
+
+# Test User 01 - Standard WiFi Access
+dn: uid=test-user-01,ou=users,dc=ldap,dc=tsengsyu,dc=com
+changetype: modify
+add: objectClass
+objectClass: msadUser
+-
+add: sAMAccountName
+sAMAccountName: test-user-01
+-
+add: userPrincipalName
+userPrincipalName: test-user-01@ldap.tsengsyu.com
+-
+add: memberOf
+memberOf: cn=wifi-users,ou=groups,dc=ldap,dc=tsengsyu,dc=com
+-
+add: userAccountControl
+userAccountControl: 512
+
+# Test User 02 - Guest WiFi Access
+dn: uid=test-user-02,ou=users,dc=ldap,dc=tsengsyu,dc=com
+changetype: modify
+add: objectClass
+objectClass: msadUser
+-
+add: sAMAccountName
+sAMAccountName: test-user-02
+-
+add: userPrincipalName
+userPrincipalName: test-user-02@ldap.tsengsyu.com
+-
+add: memberOf
+memberOf: cn=wifi-guests,ou=groups,dc=ldap,dc=tsengsyu,dc=com
+-
+add: userAccountControl
+userAccountControl: 512
+
+# Test User 03 - Admin WiFi Access
+dn: uid=test-user-03,ou=users,dc=ldap,dc=tsengsyu,dc=com
+changetype: modify
+add: objectClass
+objectClass: msadUser
+-
+add: sAMAccountName
+sAMAccountName: test-user-03
+-
+add: userPrincipalName
+userPrincipalName: test-user-03@ldap.tsengsyu.com
+-
+add: memberOf
+memberOf: cn=wifi-admins,ou=groups,dc=ldap,dc=tsengsyu,dc=com
+-
+add: userAccountControl
+userAccountControl: 512

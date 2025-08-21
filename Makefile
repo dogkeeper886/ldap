@@ -16,6 +16,8 @@ help:
 	@echo "  make build-tls     - Copy certificates and build OpenLDAP with TLS"
 	@echo "  make deploy        - Deploy/start all services"
 	@echo "  make setup-users   - Set up test users in LDAP"
+	@echo "  make add-msad-attributes - Add MS AD attributes for WiFi AP compatibility"
+	@echo "  make setup-users-msad    - Setup users with MS AD attributes (combined)"
 	@echo ""
 	@echo "Operations:"
 	@echo "  make stop          - Stop all services"
@@ -108,6 +110,15 @@ deploy: check-env build
 setup-users:
 	@echo "Setting up test users..."
 	@./scripts/setup-users.sh
+
+# Add MS AD compatibility attributes for WiFi AP authentication
+add-msad-attributes:
+	@echo "Adding Microsoft AD compatibility attributes..."
+	@./scripts/add-msad-attributes.sh
+
+# Setup users with MS AD attributes (combined operation)
+setup-users-msad: setup-users add-msad-attributes
+	@echo "Users configured with MS AD attributes for WiFi AP compatibility"
 
 
 # Stop services
