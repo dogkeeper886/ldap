@@ -34,54 +34,50 @@ echo "Base DN: $LDAP_BASE_DN"
 
 # Step 1: Add the schema (requires cn=config access)
 echo -e "\n${YELLOW}Step 1: Adding MS AD compatibility schema...${NC}"
-docker exec -i openldap ldapadd -Y EXTERNAL -H ldapi:/// <<EOF || true
-# Microsoft AD Compatibility Schema Extensions
+# Note: memberOf already exists as an operational attribute, so we don't redefine it
+# Using custom OIDs (1.3.6.1.4.1.99999.*) to avoid conflicts
+cat <<'EOF' | docker exec -i openldap ldapadd -Y EXTERNAL -H ldapi:/// 2>/dev/null || true
 dn: cn=msad-compat,cn=schema,cn=config
 objectClass: olcSchemaConfig
 cn: msad-compat
-olcAttributeTypes: ( 1.2.840.113556.1.4.221
+olcAttributeTypes: ( 1.3.6.1.4.1.99999.1.1
   NAME 'sAMAccountName'
   DESC 'Windows NT4 logon name'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.840.113556.1.4.656
+olcAttributeTypes: ( 1.3.6.1.4.1.99999.1.2
   NAME 'userPrincipalName'
   DESC 'Windows 2000+ logon name'
   EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.840.113556.1.2.102
-  NAME 'memberOf'
-  DESC 'Group membership for authorization'
-  EQUALITY distinguishedNameMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )
-olcAttributeTypes: ( 1.2.840.113556.1.4.159
+olcAttributeTypes: ( 1.3.6.1.4.1.99999.1.3
   NAME 'accountExpires'
   DESC 'Account expiration date'
   EQUALITY integerMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
   SINGLE-VALUE )
-olcAttributeTypes: ( 1.2.840.113556.1.4.8
+olcAttributeTypes: ( 1.3.6.1.4.1.99999.1.4
   NAME 'userAccountControl'
   DESC 'Account control flags'
   EQUALITY integerMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
   SINGLE-VALUE )
-olcObjectClasses: ( 1.2.840.113556.1.5.9
+olcObjectClasses: ( 1.3.6.1.4.1.99999.2.1
   NAME 'msadUser'
   DESC 'Microsoft AD Compatible User'
   SUP top AUXILIARY
-  MAY ( sAMAccountName $ userPrincipalName $ memberOf $ 
+  MAY ( sAMAccountName $ userPrincipalName $ 
         accountExpires $ userAccountControl ) )
 EOF
 
 # Step 2: Create WiFi groups if they don't exist
 echo -e "\n${YELLOW}Step 2: Creating WiFi access groups...${NC}"
 docker exec -i openldap ldapadd -x -H ldap://localhost:389 \
-    -D "cn=admin,${LDAP_BASE_DN}" -w "${LDAP_ADMIN_PASSWORD}" <<EOF || true
+    -D "cn=admin,${LDAP_BASE_DN}" -w "${LDAP_ADMIN_PASSWORD}" <<EOF 2>/dev/null || true
 # WiFi Users Group
 dn: cn=wifi-users,ou=groups,${LDAP_BASE_DN}
 objectClass: top
@@ -122,21 +118,25 @@ for i in {01..03}; do
         03) GROUP="wifi-admins" ;;
     esac
     
-    docker exec -i openldap ldapmodify -x -H ldap://localhost:389 \
-        -D "cn=admin,${LDAP_BASE_DN}" -w "${LDAP_ADMIN_PASSWORD}" <<EOF || true
+    # First add the msadUser objectClass
+    cat <<EOF | docker exec -i openldap ldapmodify -x -H ldap://localhost:389 \
+        -D "cn=admin,${LDAP_BASE_DN}" -w "${LDAP_ADMIN_PASSWORD}" 2>/dev/null || true
 dn: uid=${USER},ou=users,${LDAP_BASE_DN}
 changetype: modify
 add: objectClass
 objectClass: msadUser
--
+EOF
+
+    # Now add the MS AD attributes
+    cat <<EOF | docker exec -i openldap ldapmodify -x -H ldap://localhost:389 \
+        -D "cn=admin,${LDAP_BASE_DN}" -w "${LDAP_ADMIN_PASSWORD}" 2>/dev/null || true
+dn: uid=${USER},ou=users,${LDAP_BASE_DN}
+changetype: modify
 add: sAMAccountName
 sAMAccountName: ${USER}
 -
 add: userPrincipalName
 userPrincipalName: ${USER}@${LDAP_DOMAIN}
--
-add: memberOf
-memberOf: cn=${GROUP},ou=groups,${LDAP_BASE_DN}
 -
 add: userAccountControl
 userAccountControl: 512
@@ -145,11 +145,38 @@ done
 
 # Step 4: Verify the changes
 echo -e "\n${YELLOW}Step 4: Verifying MS AD attributes...${NC}"
-echo -e "\nChecking test-user-01 attributes:"
-docker exec openldap ldapsearch -x -H ldap://localhost:389 \
+echo -e "\nChecking test users attributes:"
+
+for i in {01..03}; do
+    USER="test-user-${i}"
+    echo -e "\n${USER}:"
+    docker exec openldap ldapsearch -x -H ldap://localhost:389 \
+        -D "cn=admin,${LDAP_BASE_DN}" -w "${LDAP_ADMIN_PASSWORD}" \
+        -b "uid=${USER},ou=users,${LDAP_BASE_DN}" \
+        -s base "(objectClass=*)" sAMAccountName userPrincipalName userAccountControl 2>/dev/null | \
+        grep -E "^(sAMAccountName|userPrincipalName|userAccountControl):" || echo "  No MS AD attributes found"
+done
+
+# Test the search filters
+echo -e "\n${YELLOW}Step 5: Testing search filters...${NC}"
+
+echo -e "\nTesting sAMAccountName search for test-user-02:"
+COUNT=$(docker exec openldap ldapsearch -x -H ldap://localhost:389 \
     -D "cn=admin,${LDAP_BASE_DN}" -w "${LDAP_ADMIN_PASSWORD}" \
-    -b "uid=test-user-01,ou=users,${LDAP_BASE_DN}" \
-    "(objectClass=*)" sAMAccountName userPrincipalName memberOf
+    -b "${LDAP_BASE_DN}" "(sAMAccountName=test-user-02)" dn 2>/dev/null | grep -c "^dn:" || echo "0")
+echo "  Found $COUNT user(s)"
+
+echo -e "\nTesting userPrincipalName search for test-user-02:"
+COUNT=$(docker exec openldap ldapsearch -x -H ldap://localhost:389 \
+    -D "cn=admin,${LDAP_BASE_DN}" -w "${LDAP_ADMIN_PASSWORD}" \
+    -b "${LDAP_BASE_DN}" "(userPrincipalName=test-user-02@${LDAP_DOMAIN})" dn 2>/dev/null | grep -c "^dn:" || echo "0")
+echo "  Found $COUNT user(s)"
+
+echo -e "\nTesting combined search (MS AD style) for test-user-02:"
+COUNT=$(docker exec openldap ldapsearch -x -H ldap://localhost:389 \
+    -D "cn=admin,${LDAP_BASE_DN}" -w "${LDAP_ADMIN_PASSWORD}" \
+    -b "${LDAP_BASE_DN}" "(|(sAMAccountName=test-user-02)(userPrincipalName=test-user-02@${LDAP_DOMAIN}))" dn 2>/dev/null | grep -c "^dn:" || echo "0")
+echo "  Found $COUNT user(s)"
 
 echo -e "\n${GREEN}MS AD attributes successfully added!${NC}"
 echo -e "\n${YELLOW}WiFi AP Configuration Guide:${NC}"
@@ -160,9 +187,13 @@ echo "Base DN: ${LDAP_BASE_DN}"
 echo "Bind DN: cn=admin,${LDAP_BASE_DN}"
 echo ""
 echo "User Search Filter Options:"
-echo "  1. By sAMAccountName: (sAMAccountName=%s)"
-echo "  2. By userPrincipalName: (userPrincipalName=%s)"
-echo "  3. Combined (like MS AD): (|(sAMAccountName=%s)(userPrincipalName=%s))"
+echo "  1. By sAMAccountName: (sAMAccountName=%username%)"
+echo "  2. By userPrincipalName: (userPrincipalName=%username%@${LDAP_DOMAIN})"
+echo "  3. Combined (like MS AD): (|(sAMAccountName=%username%)(userPrincipalName=%username%@${LDAP_DOMAIN}))"
+echo ""
+echo "IMPORTANT: If your WiFi AP sends filters with '?' like:"
+echo "  (|(?userPrincipalName=user)(?sAMAccountName=user))"
+echo "This is INCORRECT syntax. Check your AP's LDAP configuration."
 echo ""
 echo "Test Users:"
 echo "  test-user-01 / TestPass123! (Standard Access)"
