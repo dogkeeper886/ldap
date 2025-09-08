@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to copy certificates from external standalone certbot container to OpenLDAP build context
+# Script to copy certificates from external standalone certbot container to FreeRADIUS build context
 
 set -euo pipefail
 
@@ -29,10 +29,10 @@ if [ -f .env ]; then
 fi
 
 # Configuration for external certbot
-EXTERNAL_CERTBOT_CONTAINER="standalone-certbot"
-PRIMARY_DOMAIN=${LDAP_DOMAIN:-ldap.example.com}
+EXTERNAL_CERTBOT_CONTAINER=${EXTERNAL_CERTBOT_CONTAINER:-standalone-certbot}
+PRIMARY_DOMAIN=${RADIUS_DOMAIN:-radius.example.com}
 CERT_SOURCE_DIR="/etc/letsencrypt/live/${PRIMARY_DOMAIN}"
-CERT_DEST_DIR="./docker/openldap/certs"
+CERT_DEST_DIR="./docker/freeradius/certs"
 
 log "Copying certificates from external standalone certbot container..."
 log "Container: $EXTERNAL_CERTBOT_CONTAINER"
@@ -48,7 +48,7 @@ if ! docker ps | grep -q "$EXTERNAL_CERTBOT_CONTAINER"; then
     exit 1
 fi
 
-# Create certs directory in OpenLDAP build context
+# Create certs directory in FreeRADIUS build context
 mkdir -p "$CERT_DEST_DIR"
 
 # Copy certificates from external certbot container
@@ -69,9 +69,13 @@ if [[ -f "$CERT_DEST_DIR/cert.pem" ]] && [[ -f "$CERT_DEST_DIR/privkey.pem" ]] &
     # Show certificate expiration
     log "Certificate expiration info:"
     openssl x509 -in "$CERT_DEST_DIR/cert.pem" -noout -dates
+    
+    # Show certificate domains
+    log "Certificate domains:"
+    openssl x509 -in "$CERT_DEST_DIR/cert.pem" -noout -text | grep -E "DNS:" | head -5
 else
     error "Failed to copy certificates"
     exit 1
 fi
 
-log "Certificates ready for OpenLDAP Docker build"
+log "Certificates ready for FreeRADIUS Docker build"

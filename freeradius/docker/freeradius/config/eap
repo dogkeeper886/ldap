@@ -1,0 +1,105 @@
+# EAP Configuration for FreeRADIUS
+# Supports multiple EAP methods for WiFi authentication
+
+eap {
+    default_eap_type = tls
+    timer_expire = 60
+    ignore_unknown_eap_types = no
+    cisco_accounting_username_bug = no
+    max_sessions = ${max_requests}
+
+    # EAP-MD5
+    md5 {
+    }
+
+    # EAP-TLS
+    tls-config tls-common {
+        private_key_file = ${certdir}/privkey.pem
+        certificate_file = ${certdir}/cert.pem
+        ca_file = ${certdir}/fullchain.pem
+        
+        # TLS configuration
+        cipher_list = "ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS"
+        cipher_server_preference = yes
+        tls_max_version = "1.3"
+        tls_min_version = "1.2"
+        
+        # Certificate verification
+        verify_depth = 0
+        ca_path = ${cadir}
+        pem_file_type = yes
+        include_length = yes
+        
+        # Auto chain discovery
+        auto_chain = yes
+        
+        # OCSP configuration
+        check_crl = no
+        check_all_crl = no
+        allow_expired_crl = no
+        
+        # Session resumption
+        cache {
+            enable = yes
+            lifetime = 24
+            max_entries = 255
+        }
+        
+        # Require client certificates (set to no for WiFi)
+        require_client_cert = no
+        
+        # Random file
+        random_file = /dev/urandom
+    }
+
+    # EAP-TLS
+    tls {
+        tls = tls-common
+        
+        # Virtual server for TLS
+        virtual_server = check-eap-tls
+    }
+
+    # EAP-TTLS
+    ttls {
+        tls = tls-common
+        default_eap_type = md5
+        copy_request_to_tunnel = no
+        use_tunneled_reply = no
+        virtual_server = "inner-tunnel"
+        include_length = yes
+        require_client_cert = no
+    }
+
+    # EAP-PEAP
+    peap {
+        tls = tls-common
+        default_eap_type = mschapv2
+        copy_request_to_tunnel = no
+        use_tunneled_reply = no
+        proxy_tunneled_request_as_eap = yes
+        virtual_server = "inner-tunnel"
+        soh = no
+        require_client_cert = no
+    }
+
+    # EAP-MSCHAPv2
+    mschapv2 {
+        with_ntdomain_hack = no
+        send_error = no
+    }
+
+    # EAP-GTC
+    gtc {
+        challenge = "Password: "
+        auth_type = PAP
+    }
+
+    # EAP-PWD
+    pwd {
+        group = 19
+        server_id = ${RADIUS_DOMAIN}
+        fragment_size = 1020
+        virtual_server = "inner-tunnel"
+    }
+}

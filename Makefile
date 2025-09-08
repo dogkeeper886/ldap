@@ -10,9 +10,9 @@ help:
 	@echo ""
 	@echo "Setup & Deployment:"
 	@echo "  make init          - Complete initial setup (certificates + deployment + users)"
-	@echo "  make init-certs    - Initialize Let's Encrypt certificates"
+	@echo "  make init-certs    - Initialize certificates (requires external certbot)"
 	@echo "  make build         - Build custom Docker images"
-	@echo "  make copy-certs    - Copy certificates from certbot for OpenLDAP build"
+	@echo "  make copy-certs    - Copy certificates from external certbot for OpenLDAP build"
 	@echo "  make build-tls     - Copy certificates and build OpenLDAP with TLS"
 	@echo "  make deploy        - Deploy/start all services"
 	@echo "  make setup-users   - Set up test users in LDAP"
@@ -77,8 +77,10 @@ init: check-env build init-certs deploy
 
 # Initialize certificates
 init-certs: check-env
-	@echo "Initializing Let's Encrypt certificates..."
-	@./scripts/init-certificates.sh
+	@echo "Initializing certificates from external certbot..."
+	@echo "NOTE: This requires the external certbot service to be running."
+	@echo "Start it with: cd ../certbot && make deploy"
+	@./scripts/copy-certs-for-build.sh
 
 # Copy certificates from certbot for OpenLDAP build
 copy-certs: check-env

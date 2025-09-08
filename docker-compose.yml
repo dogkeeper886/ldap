@@ -35,8 +35,6 @@ services:
       - ldap-config:/etc/ldap/slapd.d
     networks:
       - ldap-network
-    depends_on:
-      - certbot
     logging:
       driver: json-file
       options:
@@ -44,49 +42,11 @@ services:
         max-file: "3"
         labels: "service=openldap"
 
-  certbot:
-    build:
-      context: ./docker/certbot
-      dockerfile: Dockerfile
-    image: ldap-certbot:latest
-    container_name: certbot
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "8080:8080"
-    volumes:
-      - certificates:/etc/letsencrypt
-      - certbot-www:/var/www/certbot
-      - certbot-logs:/opt/certbot-logs
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      - DOMAIN=${LDAP_DOMAIN}
-      - EMAIL=${LETSENCRYPT_EMAIL}
-      - ENVIRONMENT=${ENVIRONMENT:-development}
-      - RENEWAL_INTERVAL=${RENEWAL_INTERVAL:-43200}
-      - DRY_RUN=${DRY_RUN:-false}
-      - STAGING=${STAGING:-false}
-    networks:
-      - ldap-network
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=certbot"
 
 volumes:
   ldap-data:
     driver: local
   ldap-config:
-    driver: local
-  certificates:
-    driver: local
-  certbot-www:
-    driver: local
-  ldap-health:
-    driver: local
-  certbot-logs:
     driver: local
 
 networks:

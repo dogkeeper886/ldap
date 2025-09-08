@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  certbot:
+    build:
+      context: ./docker/certbot
+      dockerfile: Dockerfile
+    image: standalone-certbot:latest
+    container_name: standalone-certbot
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - certificates:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+      - certbot-logs:/opt/certbot-logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      # Multi-domain configuration
+      - DOMAINS=${LDAP_DOMAIN:-ldap.example.com},${RADIUS_DOMAIN:-radius.example.com}
+      - EMAIL=${LETSENCRYPT_EMAIL}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - RENEWAL_INTERVAL=${RENEWAL_INTERVAL:-43200}
+      - DRY_RUN=${DRY_RUN:-false}
+      - STAGING=${STAGING:-false}
+    networks:
+      - certbot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=standalone-certbot"
+
+volumes:
+  certificates:
+    driver: local
+  certbot-www:
+    driver: local
+  certbot-logs:
+    driver: local
+
+networks:
+  certbot-network:
+    driver: bridge
