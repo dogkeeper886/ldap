@@ -77,12 +77,11 @@ copy-certs-to-radius:
 logs:
 	docker compose logs -f
 
-# Show certificate status
+# Show container status
 status:
-	@echo "Checking certificate status..."
+	@echo "Checking container status..."
 	@if docker ps | grep -q standalone-certbot; then \
 		echo "✓ Certbot container is running"; \
-		docker compose exec certbot /opt/certbot-scripts/check-certificates.sh; \
 	else \
 		echo "✗ Certbot container is not running"; \
 		echo "Run 'make deploy' to start the service"; \

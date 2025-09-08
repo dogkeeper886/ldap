@@ -34,7 +34,8 @@ info() {
 
 # Global variables
 DOMAINS=${DOMAINS:-${DOMAIN}}  # Support both DOMAINS (multi) and DOMAIN (legacy)
-PRIMARY_DOMAIN=$(echo "$DOMAINS" | cut -d',' -f1)  # First domain is primary
+export PRIMARY_DOMAIN=$(echo "$DOMAINS" | cut -d',' -f1)  # First domain is primary
+export DOMAIN="${PRIMARY_DOMAIN}"  # Alias for backward compatibility  
 CERT_DIR="/etc/letsencrypt/live/${PRIMARY_DOMAIN}"
 RENEWAL_INTERVAL=${RENEWAL_INTERVAL:-43200}  # 12 hours default
 DRY_RUN=${DRY_RUN:-false}
