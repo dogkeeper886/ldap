@@ -106,7 +106,7 @@ TEST_USER_PASSWORD=testpass123
 
 | Service | Ports | Protocol | Purpose |
 |---------|-------|----------|---------|
-| Certbot | 80, 8080 | HTTP | Certificate acquisition & status |
+| Certbot | 80 | HTTP | Certificate acquisition (Let's Encrypt) |
 | LDAP | 389, 636 | LDAP/LDAPS | Directory authentication |
 | FreeRADIUS | 1812, 1813 | UDP | RADIUS Auth/Accounting |
 | FreeRADIUS | 2083 | TCP/TLS | RADIUS over TLS (RadSec) |

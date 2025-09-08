@@ -80,13 +80,17 @@ make copy-certs-to-all
 ### Environment Variables (.env)
 
 ```bash
-# Single Domain Configuration
-LDAP_DOMAIN=ldap.example.com
-RADIUS_DOMAIN=  # Leave empty for single domain
+# Domain Configuration - Three Options Available
 
-# Multiple Domain Configuration
+# Option 1: Direct multi-domain specification (RECOMMENDED)
+DOMAINS=ldap.example.com,radius.example.com,web.example.com
+
+# Option 2: Individual domain variables (backward compatibility)
 LDAP_DOMAIN=ldap.example.com
 RADIUS_DOMAIN=radius.example.com
+
+# Option 3: Single domain only
+DOMAINS=ldap.example.com
 
 # Let's Encrypt Settings
 LETSENCRYPT_EMAIL=admin@example.com
@@ -101,6 +105,11 @@ RENEWAL_INTERVAL=43200          # 12 hours in seconds
 LDAP_PROJECT_PATH=../ldap
 FREERADIUS_PROJECT_PATH=../freeradius
 ```
+
+#### Domain Configuration Behavior:
+- **If `DOMAINS` is set**: Uses the comma-separated list directly
+- **If `DOMAINS` is not set**: Falls back to `${LDAP_DOMAIN},${RADIUS_DOMAIN}`
+- **Supports 1-100 domains**: Let's Encrypt SAN certificate limit
 
 ## 📋 Usage Scenarios
 

@@ -238,28 +238,7 @@ acquire_certificates() {
     fi
 }
 
-# Start HTTP server for certificate sharing
-start_http_server() {
-    log "Starting HTTP certificate server..."
-    
-    # Start HTTP server in background
-    /opt/certbot-scripts/start-http-server.sh start &
-    local http_server_pid=$!
-    
-    log "HTTP server started with PID: $http_server_pid"
-    
-    # Store PID for cleanup
-    echo $http_server_pid > /tmp/http-server.pid
-    
-    # Wait a moment to ensure it started
-    sleep 3
-    
-    if kill -0 $http_server_pid 2>/dev/null; then
-        log "HTTP server is running successfully on port ${HTTP_PORT:-8080}"
-    else
-        warn "HTTP server may have failed to start"
-    fi
-}
+# Note: HTTP server removed - certificates are distributed via docker cp
 
 # Renewal loop
 run_renewal_loop() {
@@ -300,9 +279,7 @@ setup_signal_handlers() {
             rm -f /tmp/http-server.pid
         fi
         
-        # Kill any remaining HTTP server processes
-        pkill -f "python3 -m http.server" >/dev/null 2>&1 || true
-        pkill -f "start-http-server.sh" >/dev/null 2>&1 || true
+        # HTTP server removed - no cleanup needed
         
         # Kill any running certbot processes
         if pgrep certbot >/dev/null; then
@@ -394,8 +371,8 @@ main() {
                 acquire_certificates || warn "Initial certificate acquisition failed, will retry in renewal loop"
             fi
             
-            # Start HTTP server for certificate sharing
-            start_http_server
+            # HTTP server removed - certificates distributed via docker cp
+            log "Certificate distribution via docker cp - no HTTP server needed"
             
             run_renewal_loop
             ;;

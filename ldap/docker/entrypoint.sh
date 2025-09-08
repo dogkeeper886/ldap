@@ -42,27 +42,23 @@ init_logging() {
     log "Base DN: $LDAP_BASE_DN"
 }
 
-# Download and verify certificates
-download_and_verify_certificates() {
+# Verify certificates (copied via docker cp)
+verify_certificates() {
     if [ "${LDAP_TLS:-false}" = "true" ]; then
-        log "TLS enabled, downloading certificates from certbot HTTP server..."
+        log "TLS enabled, checking for certificates copied via docker cp..."
         
-        # Download certificates using our HTTP download script
-        if /opt/ldap-scripts/download-certificates.sh download; then
-            log "Certificate download successful"
+        # Check if certificates exist in the expected location
+        if [ -f "$CERT_DIR/cert.pem" ] && \
+           [ -f "$CERT_DIR/privkey.pem" ] && \
+           [ -f "$CERT_DIR/fullchain.pem" ]; then
+            log "All certificate files found in correct location"
             
-            # Verify certificates are in the correct location for OpenLDAP
-            if [ -f "$CERT_DIR/cert.pem" ] && \
-               [ -f "$CERT_DIR/privkey.pem" ] && \
-               [ -f "$CERT_DIR/fullchain.pem" ]; then
-                log "All certificate files found in correct location"
+            # Verify certificate format and validity
+            if verify_certificate_format; then
+                log "Certificate validation successful"
                 
-                # Verify certificate validity
-                if /opt/ldap-scripts/download-certificates.sh verify; then
-                    log "Certificate validation successful"
-                    
-                    # Show certificate information
-                    /opt/ldap-scripts/download-certificates.sh info
+                # Show certificate information
+                show_certificate_info
                 else
                     warn "Certificate validation failed"
                     if [ "${ENVIRONMENT:-development}" = "production" ]; then
@@ -70,18 +66,10 @@ download_and_verify_certificates() {
                         exit 1
                     fi
                 fi
-            else
-                error "Certificate files not found in expected location: $CERT_DIR"
-                if [ "${ENVIRONMENT:-development}" = "production" ]; then
-                    exit 1
-                else
-                    warn "Continuing without certificates in development mode"
-                fi
-            fi
         else
-            error "Certificate download failed"
+            error "Certificate files not found in expected location: $CERT_DIR"
+            log "Expected certificates to be copied via: make copy-certs (from certbot project)"
             if [ "${ENVIRONMENT:-development}" = "production" ]; then
-                error "Cannot start in production without certificates"
                 exit 1
             else
                 warn "Continuing without certificates in development mode"
@@ -89,6 +77,72 @@ download_and_verify_certificates() {
         fi
     else
         log "TLS disabled, skipping certificate download"
+    fi
+}
+
+# Verify certificate format and validity
+verify_certificate_format() {
+    local cert_file="$CERT_DIR/cert.pem"
+    local key_file="$CERT_DIR/privkey.pem"
+    local chain_file="$CERT_DIR/fullchain.pem"
+    
+    # Check certificate format
+    if ! openssl x509 -in "$cert_file" -noout -text >/dev/null 2>&1; then
+        error "Invalid certificate format: $cert_file"
+        return 1
+    fi
+    
+    # Check private key format
+    if ! openssl rsa -in "$key_file" -noout -text >/dev/null 2>&1; then
+        error "Invalid private key format: $key_file"
+        return 1
+    fi
+    
+    # Check if certificate is not expired
+    if ! openssl x509 -in "$cert_file" -noout -checkend 86400 >/dev/null 2>&1; then
+        warn "Certificate is expired or expires within 24 hours"
+        return 1
+    fi
+    
+    # Check if private key matches certificate
+    local cert_modulus key_modulus
+    cert_modulus=$(openssl x509 -in "$cert_file" -noout -modulus 2>/dev/null || echo "")
+    key_modulus=$(openssl rsa -in "$key_file" -noout -modulus 2>/dev/null || echo "")
+    
+    if [ -n "$cert_modulus" ] && [ -n "$key_modulus" ] && [ "$cert_modulus" = "$key_modulus" ]; then
+        log "Certificate and private key match"
+        return 0
+    else
+        error "Certificate and private key do not match"
+        return 1
+    fi
+}
+
+# Show certificate information
+show_certificate_info() {
+    local cert_file="$CERT_DIR/cert.pem"
+    
+    if [ -f "$cert_file" ]; then
+        log "Certificate Information:"
+        
+        # Subject
+        local subject
+        subject=$(openssl x509 -in "$cert_file" -noout -subject | cut -d= -f2-)
+        log "  Subject: $subject"
+        
+        # Validity dates
+        local not_before not_after
+        not_before=$(openssl x509 -in "$cert_file" -noout -startdate | cut -d= -f2)
+        not_after=$(openssl x509 -in "$cert_file" -noout -enddate | cut -d= -f2)
+        log "  Valid From: $not_before"
+        log "  Valid Until: $not_after"
+        
+        # Subject Alternative Names
+        local san
+        san=$(openssl x509 -in "$cert_file" -noout -text | grep -A1 "Subject Alternative Name" | tail -1 | sed 's/^[[:space:]]*//' || echo "None")
+        log "  SAN: $san"
+    else
+        warn "Certificate file not found: $cert_file"
     fi
 }
 
@@ -251,7 +305,7 @@ main() {
     pre_startup_checks
     configure_logging
     setup_health_monitoring
-    download_and_verify_certificates
+    verify_certificates
     init_ldap_database
     
     log "OpenLDAP container initialization complete"

@@ -11,21 +11,21 @@ HEALTH_CRITICAL=2
 
 # Check if certificates exist
 check_certificate_exists() {
-    local cert_file="/etc/letsencrypt/live/${DOMAIN}/cert.pem"
-    local key_file="/etc/letsencrypt/live/${DOMAIN}/privkey.pem"
-    local chain_file="/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"
+    local cert_file="/etc/letsencrypt/live/${PRIMARY_DOMAIN}/cert.pem"
+    local key_file="/etc/letsencrypt/live/${PRIMARY_DOMAIN}/privkey.pem"
+    local chain_file="/etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem"
     
     if [ -f "$cert_file" ] && [ -f "$key_file" ] && [ -f "$chain_file" ]; then
         return 0
     else
-        echo "CRITICAL: Certificate files missing for $DOMAIN"
+        echo "CRITICAL: Certificate files missing for $PRIMARY_DOMAIN"
         return 2
     fi
 }
 
 # Check certificate validity
 check_certificate_validity() {
-    local cert_file="/etc/letsencrypt/live/${DOMAIN}/cert.pem"
+    local cert_file="/etc/letsencrypt/live/${PRIMARY_DOMAIN}/cert.pem"
     
     if [ ! -f "$cert_file" ]; then
         echo "CRITICAL: Certificate file not found"
@@ -57,7 +57,7 @@ check_certificate_validity() {
 
 # Check certificate domain
 check_certificate_domain() {
-    local cert_file="/etc/letsencrypt/live/${DOMAIN}/cert.pem"
+    local cert_file="/etc/letsencrypt/live/${PRIMARY_DOMAIN}/cert.pem"
     
     if [ ! -f "$cert_file" ]; then
         echo "CRITICAL: Certificate file not found"
@@ -65,7 +65,7 @@ check_certificate_domain() {
     fi
     
     # Check if domain is in certificate
-    if openssl x509 -in "$cert_file" -noout -text | grep -q "$DOMAIN"; then
+    if openssl x509 -in "$cert_file" -noout -text | grep -q "$PRIMARY_DOMAIN"; then
         echo "OK: Certificate domain matches"
         return 0
     else
@@ -117,11 +117,12 @@ check_certbot_process() {
 
 # Show certificate information
 show_certificate_info() {
-    local cert_file="/etc/letsencrypt/live/${DOMAIN}/cert.pem"
+    local cert_file="/etc/letsencrypt/live/${PRIMARY_DOMAIN}/cert.pem"
     
     if [ -f "$cert_file" ]; then
         echo "Certificate Information:"
-        echo "  Domain: $DOMAIN"
+        echo "  Primary Domain: $PRIMARY_DOMAIN"
+        echo "  All Domains: ${DOMAINS:-Not configured}"
         echo "  File: $cert_file"
         
         local subject
@@ -147,7 +148,7 @@ show_certificate_info() {
             echo "  Days remaining: $days_left"
         fi
     else
-        echo "Certificate Information: No certificate found for $DOMAIN"
+        echo "Certificate Information: No certificate found for $PRIMARY_DOMAIN"
     fi
 }
 
@@ -157,7 +158,11 @@ main() {
     local checks_run=0
     local checks_failed=0
     
-    echo "Certbot Health Check for domain: ${DOMAIN}"
+    # Extract first domain from DOMAINS for certificate path (Let's Encrypt uses first domain for filename)
+    local PRIMARY_DOMAIN="${DOMAINS%%,*}"
+    
+    echo "Certbot Health Check for domains: ${DOMAINS:-No domains configured}"
+    echo "Primary domain for certificate paths: ${PRIMARY_DOMAIN:-No primary domain}"
     echo "========================================"
     
     # Run all health checks
@@ -260,7 +265,8 @@ main() {
     cat > /tmp/certbot-health.txt << EOF
 Certbot Health Status
 Last Check: $(date)
-Domain: ${DOMAIN}
+Domains: ${DOMAINS}
+Primary Domain: ${PRIMARY_DOMAIN}
 Status: $([ $overall_status -eq 0 ] && echo "HEALTHY" || [ $overall_status -eq 1 ] && echo "WARNING" || echo "CRITICAL")
 Checks Run: $checks_run
 Checks Failed: $checks_failed

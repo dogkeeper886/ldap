@@ -17,7 +17,6 @@ COPY entrypoint.sh /opt/certbot-scripts/entrypoint.sh
 COPY renew-certificates.sh /opt/certbot-scripts/renew-certificates.sh
 COPY check-certificates.sh /opt/certbot-scripts/check-certificates.sh
 COPY hook-post-renew.sh /opt/certbot-scripts/hook-post-renew.sh
-COPY start-http-server.sh /opt/certbot-scripts/start-http-server.sh
 
 # Make scripts executable
 RUN chmod +x /opt/certbot-scripts/*.sh
