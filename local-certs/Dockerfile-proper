@@ -1,7 +1,0 @@
-FROM osixia/openldap:1.5.0
-LABEL maintainer="LDAP Admin <admin@tsengsyu.com>"
-
-# Add custom TLS certificates using the official recommended approach
-ADD cert.pem /container/service/slapd/assets/certs/
-ADD privkey.pem /container/service/slapd/assets/certs/
-ADD fullchain.pem /container/service/slapd/assets/certs/

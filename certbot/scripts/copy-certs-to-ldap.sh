@@ -13,9 +13,9 @@ fi
 # Configuration
 CERTBOT_CONTAINER_NAME=${CERTBOT_CONTAINER_NAME:-standalone-certbot}
 PRIMARY_DOMAIN=${LDAP_DOMAIN:-ldap.example.com}
-LDAP_PROJECT_PATH=${LDAP_PROJECT_PATH:-../ldap}
+LDAP_PROJECT_PATH=${LDAP_PROJECT_PATH:-../ldap/ldap}
 CERT_SOURCE_DIR="/etc/letsencrypt/live/${PRIMARY_DOMAIN}"
-CERT_DEST_DIR="$LDAP_PROJECT_PATH/docker/openldap/certs"
+CERT_DEST_DIR="$LDAP_PROJECT_PATH/docker/certs"
 
 echo "Copying certificates to LDAP project..."
 echo "Source: $CERTBOT_CONTAINER_NAME:$CERT_SOURCE_DIR"

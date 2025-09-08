@@ -1,7 +1,7 @@
 services:
   openldap:
     build:
-      context: ./docker/openldap
+      context: ./docker
       dockerfile: Dockerfile-tls
     image: ldap-openldap-tls:latest
     container_name: openldap

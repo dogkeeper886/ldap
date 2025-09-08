@@ -41,7 +41,7 @@ fi
 # Configuration
 CERTBOT_CONTAINER_NAME=${CERTBOT_CONTAINER_NAME:-standalone-certbot}
 PRIMARY_DOMAIN=${LDAP_DOMAIN:-ldap.example.com}
-LDAP_PROJECT_PATH=${LDAP_PROJECT_PATH:-../ldap}
+LDAP_PROJECT_PATH=${LDAP_PROJECT_PATH:-../ldap/ldap}
 FREERADIUS_PROJECT_PATH=${FREERADIUS_PROJECT_PATH:-../freeradius}
 
 # Certificate paths in certbot container
@@ -132,7 +132,7 @@ main() {
     
     # Copy to LDAP project
     if [ -d "$LDAP_PROJECT_PATH" ]; then
-        copy_certs_to_project "LDAP" "$LDAP_PROJECT_PATH" "$LDAP_PROJECT_PATH/docker/openldap/certs"
+        copy_certs_to_project "LDAP" "$LDAP_PROJECT_PATH" "$LDAP_PROJECT_PATH/docker/certs"
     else
         warn "LDAP project not found at $LDAP_PROJECT_PATH, skipping"
     fi

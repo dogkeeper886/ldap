@@ -32,7 +32,7 @@ fi
 EXTERNAL_CERTBOT_CONTAINER="standalone-certbot"
 PRIMARY_DOMAIN=${LDAP_DOMAIN:-ldap.example.com}
 CERT_SOURCE_DIR="/etc/letsencrypt/live/${PRIMARY_DOMAIN}"
-CERT_DEST_DIR="./docker/openldap/certs"
+CERT_DEST_DIR="./docker/certs"
 
 log "Copying certificates from external standalone certbot container..."
 log "Container: $EXTERNAL_CERTBOT_CONTAINER"

@@ -157,26 +157,21 @@ logs-ldap:
 	@echo "Showing OpenLDAP logs..."
 	@docker compose logs openldap --tail=50
 
-# Show Certbot logs only
+# Show certbot logs from external container
 logs-certbot:
-	@echo "Showing Certbot logs..."
-	@docker compose logs certbot --tail=50
+	@echo "Showing external Certbot logs..."
+	@docker logs standalone-certbot --tail=50 2>/dev/null || echo "External certbot container not found or not running"
 
 # Create backup
 backup:
 	@echo "Creating backup..."
 	@./scripts/backup-ldap.sh
 
-# Restore from backup
+# Restore from backup (TODO: Create restore-ldap.sh script)
 restore:
-	@if [ -z "$(FILE)" ]; then \
-		echo "ERROR: Please specify backup file with FILE=path/to/backup.tar.gz"; \
-		echo "Available backups:"; \
-		ls -la volumes/backups/*.tar.gz 2>/dev/null || echo "No backups found"; \
-		exit 1; \
-	fi
-	@echo "Restoring from backup: $(FILE)"
-	@./scripts/restore-ldap.sh "$(FILE)"
+	@echo "ERROR: restore-ldap.sh script not yet implemented"
+	@echo "Please restore manually or create the script first"
+	@exit 1
 
 # Run all tests
 test: test-auth test-tls test-attributes
@@ -236,27 +231,30 @@ status:
 	@echo "Resource Usage:"
 	@docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
 
-# Manual certificate renewal
+# Manual certificate renewal (uses external certbot)
 renew-certs:
-	@echo "Manually renewing certificates..."
-	@docker compose exec certbot certbot renew --force-renewal
-	@docker compose restart openldap
+	@echo "Manually renewing certificates from external certbot..."
+	@echo "NOTE: This requires the external certbot service to be running."
+	@echo "Start it with: cd ../certbot && make renew"
+	@echo "Then redistribute certificates with: cd ../certbot && make copy-certs-to-all"
+	@echo "Finally rebuild LDAP service: make build-tls && make restart"
 
-# Force certificate renewal (for testing)
+# Force certificate renewal (for testing) 
 force-renew-certs:
-	@echo "Force renewing certificates..."
-	@docker compose exec certbot certbot renew --force-renewal
-	@docker compose restart openldap
+	@echo "Force renewing certificates from external certbot..."
+	@echo "Run: cd ../certbot && make renew"
+	@echo "Then: cd ../certbot && make copy-certs-to-all"  
+	@echo "Then: make build-tls && make restart"
 
 # Shell access to OpenLDAP container
 shell-ldap:
 	@echo "Opening shell in OpenLDAP container..."
 	@docker compose exec openldap /bin/bash
 
-# Shell access to Certbot container
+# Shell access to external Certbot container
 shell-certbot:
-	@echo "Opening shell in Certbot container..."
-	@docker compose exec certbot /bin/sh
+	@echo "Opening shell in external Certbot container..."
+	@docker exec -it standalone-certbot /bin/sh
 
 # View LDAP database contents
 view-ldap:
@@ -279,18 +277,11 @@ prod-check: check-env
 	@./scripts/health-check.sh
 	@echo "✓ Production readiness check passed"
 
-# Disaster recovery
+# Disaster recovery (TODO: Implement after restore-ldap.sh is created)
 disaster-recovery:
-	@echo "Starting disaster recovery process..."
-	@echo "This will restore the most recent backup"
-	@LATEST_BACKUP=$$(ls -t volumes/backups/backup-*.tar.gz 2>/dev/null | head -1); \
-	if [ -n "$$LATEST_BACKUP" ]; then \
-		echo "Restoring from: $$LATEST_BACKUP"; \
-		$(MAKE) restore FILE="$$LATEST_BACKUP"; \
-	else \
-		echo "ERROR: No backups found for disaster recovery"; \
-		exit 1; \
-	fi
+	@echo "ERROR: Disaster recovery not yet implemented"
+	@echo "Please create restore-ldap.sh script first"
+	@exit 1
 
 # Show help for specific command
 help-%:
