@@ -9,6 +9,9 @@ HEALTH_OK=0
 HEALTH_WARNING=1
 HEALTH_CRITICAL=2
 
+# Extract first domain from DOMAINS for certificate path (Let's Encrypt uses first domain for filename)
+PRIMARY_DOMAIN="${DOMAINS%%,*}"
+
 # Check if certificates exist
 check_certificate_exists() {
     local cert_file="/etc/letsencrypt/live/${PRIMARY_DOMAIN}/cert.pem"
@@ -157,9 +160,6 @@ main() {
     local overall_status=$HEALTH_OK
     local checks_run=0
     local checks_failed=0
-    
-    # Extract first domain from DOMAINS for certificate path (Let's Encrypt uses first domain for filename)
-    local PRIMARY_DOMAIN="${DOMAINS%%,*}"
     
     echo "Certbot Health Check for domains: ${DOMAINS:-No domains configured}"
     echo "Primary domain for certificate paths: ${PRIMARY_DOMAIN:-No primary domain}"
