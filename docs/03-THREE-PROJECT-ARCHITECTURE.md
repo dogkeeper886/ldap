@@ -22,9 +22,7 @@ This repository now implements a **three-project architecture** that separates c
 ├── certbot/                    # Standalone certificate management
 │   ├── docker-compose.yml     # Multi-domain certbot service
 │   ├── scripts/
-│   │   ├── copy-certs-to-all.sh      # Distribute to all projects
-│   │   ├── copy-certs-to-ldap.sh     # LDAP-specific distribution
-│   │   └── copy-certs-to-radius.sh   # FreeRADIUS-specific distribution
+│   │   └── test-certificates.sh      # Certificate validation
 │   └── Makefile               # Certificate management commands
 ├── ldap/                      # Modified LDAP project (no certbot)
 │   ├── docker-compose.yml     # OpenLDAP service only
@@ -57,10 +55,10 @@ make env          # Configure domains and email
 make deploy       # Start certbot service
 ```
 
-### 2. Distribute Certificates
+### 2. Certificates Available
 ```bash
-cd certbot
-make copy-certs-to-all    # Copy to all projects
+# Certificates are available in the running certbot container
+# Each project copies certificates as needed using docker cp
 ```
 
 ### 3. Deploy LDAP Service
@@ -113,10 +111,9 @@ TEST_USER_PASSWORD=testpass123
 
 ## Testing & Validation
 
-### Test Certificate Distribution
+### Test Certificate Acquisition
 ```bash
 cd certbot
-make copy-certs-to-all
 make test  # Validate certificates
 ```
 
@@ -142,7 +139,6 @@ make test-tls  # Test RadSec (RADIUS over TLS)
 cd certbot
 make status        # Check certbot status
 make renew         # Force certificate renewal
-make copy-certs-to-all  # Redistribute certificates
 ```
 
 ### Service Management
@@ -162,11 +158,11 @@ The standalone certbot handles automatic renewal:
 
 1. **Automatic Renewal**: Certbot checks every 12 hours (configurable)
 2. **Manual Renewal**: `cd certbot && make renew`
-3. **Redistribute**: `cd certbot && make copy-certs-to-all`
+3. **Copy Updated Certificates**: Each project copies certificates as needed
 4. **Rebuild Services**: Each service needs rebuild to pick up new certificates
    ```bash
-   cd ldap && make build-tls && make restart
-   cd freeradius && make build-tls && make restart
+   cd ldap && make copy-certs && make build-tls && make restart
+   cd freeradius && make copy-certs && make build-tls && make restart
    ```
 
 ## FreeRADIUS Features
@@ -193,7 +189,7 @@ The FreeRADIUS project includes:
 
 ### Certificate Issues
 - **"Certbot container not running"**: `cd certbot && make deploy`
-- **"Certificate not found"**: `cd certbot && make copy-certs-to-all`
+- **"Certificate not found"**: Check if certbot container is running, then each project should copy certificates
 - **"Permission denied"**: Check certificate file permissions (644 for certs, 640 for keys)
 
 ### LDAP Issues

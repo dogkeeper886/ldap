@@ -33,7 +33,7 @@
 3. Docker CP certificate distribution to avoid cross-container permission issues
 4. Shared certbot project on port 80 serving both services
 5. Certificate copying workflow: Certbot container → Host filesystem → Service build contexts
-6. Make targets for centralized cert distribution: `make copy-certs-to-all`
+6. Each project handles its own certificate copying from certbot container
 7. Individual project Make workflows: `make copy-certs && make build-tls`
 8. Build-time certificate inclusion in Docker images (not runtime volumes)
 9. Independent service deployment and lifecycle management
@@ -130,7 +130,7 @@
   1. Create `/certbot` directory structure
   2. Extract certbot Docker configuration from LDAP reference
   3. Configure multi-domain certificate acquisition
-  4. Create `copy-certs-to-all.sh` distribution script
+  4. Each project implements certificate copying from certbot container
   5. Test multi-domain certificate generation
 - **Resources needed**: LDAP certbot reference, domain configuration
 - **Timeline**: 3-4 hours
@@ -179,7 +179,7 @@
 - **Which FreeRADIUS configuration files need certificate path updates?**
 - **Does FreeRADIUS require container rebuild for certificate updates?**
 - **What is the optimal project directory structure for three independent services?**
-- **How to automate the copy-certs-to-all workflow for certificate renewals?**
+- **How should each project handle certificate copying after renewals?**
 - **Should each project have independent .env files or shared configuration?**
 
 ### Three-Project Architecture
@@ -189,7 +189,7 @@
 ├── certbot/                    # Standalone certificate management
 │   ├── docker-compose.yml     # Port 80, multi-domain acquisition
 │   ├── scripts/
-│   │   └── copy-certs-to-all.sh   # Distribute to all projects
+│   │   └── test-certificates.sh   # Certificate validation
 │   └── Makefile               # Centralized cert management
 ├── ldap/                      # Modified LDAP project
 │   ├── docker-compose.yml     # No certbot service
@@ -206,7 +206,7 @@
 
 ### Deployment Sequence
 1. **Start Certbot**: `cd certbot && make init-certs && docker compose up -d`
-2. **Distribute Certificates**: `cd certbot && make copy-certs-to-all`
+2. **Certificates Available**: Certificates available in certbot container for copying
 3. **Deploy LDAP**: `cd ldap && make copy-certs && make build-tls && make deploy`
 4. **Deploy FreeRADIUS**: `cd freeradius && make copy-certs && make build-tls && make deploy`
 
