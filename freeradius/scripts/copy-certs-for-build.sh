@@ -29,50 +29,51 @@ if [ -f .env ]; then
 fi
 
 # Configuration for external certbot
-EXTERNAL_CERTBOT_CONTAINER=${EXTERNAL_CERTBOT_CONTAINER:-standalone-certbot}
-PRIMARY_DOMAIN=${RADIUS_DOMAIN:-radius.example.com}
-CERT_SOURCE_DIR="/etc/letsencrypt/live/${PRIMARY_DOMAIN}"
-CERT_DEST_DIR="./docker/freeradius/certs"
+CERTBOT_CONTAINER_NAME=${CERTBOT_CONTAINER_NAME:-standalone-certbot}
+# Certificate directory name in certbot (uses first domain from DOMAINS list)
+CERTBOT_CERT_NAME=${LDAP_DOMAIN:-ldap.example.com}
+CERTBOT_CERT_DIR="/etc/letsencrypt/live/${CERTBOT_CERT_NAME}"
+FREERADIUS_CERT_DIR="./docker/freeradius/certs"
 
 log "Copying certificates from external standalone certbot container..."
-log "Container: $EXTERNAL_CERTBOT_CONTAINER"
-log "Domain: $PRIMARY_DOMAIN"
-log "Source: $CERT_SOURCE_DIR"
-log "Destination: $CERT_DEST_DIR"
+log "Certbot container: $CERTBOT_CONTAINER_NAME"
+log "Certificate name: $CERTBOT_CERT_NAME"
+log "Certbot cert path: $CERTBOT_CERT_DIR"
+log "FreeRADIUS dest: $FREERADIUS_CERT_DIR"
 
 # Check if external certbot container is running
-if ! docker ps | grep -q "$EXTERNAL_CERTBOT_CONTAINER"; then
-    error "External certbot container '$EXTERNAL_CERTBOT_CONTAINER' is not running"
+if ! docker ps | grep -q "$CERTBOT_CONTAINER_NAME"; then
+    error "External certbot container '$CERTBOT_CONTAINER_NAME' is not running"
     error "Please start the standalone certbot service first:"
     error "  cd ../certbot && make deploy"
     exit 1
 fi
 
 # Create certs directory in FreeRADIUS build context
-mkdir -p "$CERT_DEST_DIR"
+mkdir -p "$FREERADIUS_CERT_DIR"
 
 # Copy certificates from external certbot container
 log "Copying certificate files..."
-docker cp "$EXTERNAL_CERTBOT_CONTAINER:$CERT_SOURCE_DIR/cert.pem" "$CERT_DEST_DIR/cert.pem"
-docker cp "$EXTERNAL_CERTBOT_CONTAINER:$CERT_SOURCE_DIR/privkey.pem" "$CERT_DEST_DIR/privkey.pem"  
-docker cp "$EXTERNAL_CERTBOT_CONTAINER:$CERT_SOURCE_DIR/fullchain.pem" "$CERT_DEST_DIR/fullchain.pem"
+docker cp "$CERTBOT_CONTAINER_NAME:$CERTBOT_CERT_DIR/cert.pem" "$FREERADIUS_CERT_DIR/cert.pem"
+docker cp "$CERTBOT_CONTAINER_NAME:$CERTBOT_CERT_DIR/privkey.pem" "$FREERADIUS_CERT_DIR/privkey.pem"  
+docker cp "$CERTBOT_CONTAINER_NAME:$CERTBOT_CERT_DIR/fullchain.pem" "$FREERADIUS_CERT_DIR/fullchain.pem"
 
 # Set appropriate permissions
-chmod 644 "$CERT_DEST_DIR/cert.pem" "$CERT_DEST_DIR/fullchain.pem"
-chmod 640 "$CERT_DEST_DIR/privkey.pem"
+chmod 644 "$FREERADIUS_CERT_DIR/cert.pem" "$FREERADIUS_CERT_DIR/fullchain.pem"
+chmod 640 "$FREERADIUS_CERT_DIR/privkey.pem"
 
 # Verify certificates were copied
-if [[ -f "$CERT_DEST_DIR/cert.pem" ]] && [[ -f "$CERT_DEST_DIR/privkey.pem" ]] && [[ -f "$CERT_DEST_DIR/fullchain.pem" ]]; then
+if [[ -f "$FREERADIUS_CERT_DIR/cert.pem" ]] && [[ -f "$FREERADIUS_CERT_DIR/privkey.pem" ]] && [[ -f "$FREERADIUS_CERT_DIR/fullchain.pem" ]]; then
     log "Certificates copied successfully:"
-    ls -la "$CERT_DEST_DIR/"
+    ls -la "$FREERADIUS_CERT_DIR/"
     
     # Show certificate expiration
     log "Certificate expiration info:"
-    openssl x509 -in "$CERT_DEST_DIR/cert.pem" -noout -dates
+    openssl x509 -in "$FREERADIUS_CERT_DIR/cert.pem" -noout -dates
     
     # Show certificate domains
     log "Certificate domains:"
-    openssl x509 -in "$CERT_DEST_DIR/cert.pem" -noout -text | grep -E "DNS:" | head -5
+    openssl x509 -in "$FREERADIUS_CERT_DIR/cert.pem" -noout -text | grep -E "DNS:" | head -5
 else
     error "Failed to copy certificates"
     exit 1

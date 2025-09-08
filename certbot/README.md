@@ -8,18 +8,15 @@ This standalone certbot service:
 
 - **Acquires SSL/TLS certificates** from Let's Encrypt for one or multiple domains
 - **Resolves port conflicts** by running a single certbot instance on port 80
-- **Distributes certificates** automatically to other Docker projects
 - **Handles renewals** automatically with configurable intervals
 - **Manages permissions** correctly for certificate files
 - **Supports staging and production** Let's Encrypt environments
-- **Provides monitoring** and health checks for certificate status
 
 ## 🏗️ Architecture Benefits
 
 ✅ **Single Port 80 Usage** - Eliminates conflicts between multiple services  
 ✅ **Multi-Domain Support** - One certificate for multiple subdomains (SAN)  
 ✅ **Independent Deployment** - Standalone service with no external dependencies  
-✅ **Automated Distribution** - Copies certificates to other project build contexts  
 ✅ **Permission Management** - Handles file permissions automatically  
 ✅ **Production Ready** - Supports both staging and production Let's Encrypt  
 
@@ -36,10 +33,7 @@ certbot/
 │   ├── renew-certificates.sh
 │   ├── check-certificates.sh
 │   └── ...
-└── scripts/                   # Certificate distribution scripts
-    ├── copy-certs-to-all.sh
-    ├── copy-certs-to-ldap.sh
-    ├── copy-certs-to-radius.sh
+└── scripts/                   # Certificate management scripts
     └── test-certificates.sh
 ```
 
@@ -68,11 +62,12 @@ make deploy
 make status
 ```
 
-### 3. Distribute Certificates
+### 3. Access Certificates
 
 ```bash
-# Copy certificates to all configured projects
-make copy-certs-to-all
+# Certificates are available in the running container
+# Other projects can copy them using docker cp commands
+docker cp standalone-certbot:/etc/letsencrypt/live/ldap.example.com/cert.pem ./cert.pem
 ```
 
 ## ⚙️ Configuration
@@ -101,9 +96,6 @@ DRY_RUN=false
 # Certificate Renewal
 RENEWAL_INTERVAL=43200          # 12 hours in seconds
 
-# Project Paths for Certificate Distribution
-LDAP_PROJECT_PATH=../ldap
-FREERADIUS_PROJECT_PATH=../freeradius
 ```
 
 #### Domain Configuration Behavior:
@@ -115,12 +107,11 @@ FREERADIUS_PROJECT_PATH=../freeradius
 
 ### Single Domain Setup
 
-For a single domain (e.g., only LDAP service):
+For a single domain:
 
 1. **Configure .env**:
 ```bash
-LDAP_DOMAIN=ldap.example.com
-RADIUS_DOMAIN=
+DOMAINS=ldap.example.com
 LETSENCRYPT_EMAIL=admin@example.com
 STAGING=true
 ```
@@ -131,19 +122,13 @@ make deploy
 make init-certs
 ```
 
-3. **Copy to LDAP project only**:
-```bash
-make copy-certs-to-ldap
-```
-
 ### Multiple Domain Setup (Recommended)
 
 For multiple domains with SAN certificate:
 
 1. **Configure .env**:
 ```bash
-LDAP_DOMAIN=ldap.example.com
-RADIUS_DOMAIN=radius.example.com
+DOMAINS=ldap.example.com,radius.example.com
 LETSENCRYPT_EMAIL=admin@example.com
 STAGING=true
 ```
@@ -154,19 +139,13 @@ make deploy
 make init-certs
 ```
 
-3. **Distribute to all projects**:
-```bash
-make copy-certs-to-all
-```
-
 ### Production Deployment
 
 For production with real certificates:
 
 1. **Update .env for production**:
 ```bash
-LDAP_DOMAIN=ldap.yourdomain.com
-RADIUS_DOMAIN=radius.yourdomain.com
+DOMAINS=ldap.yourdomain.com,radius.yourdomain.com
 LETSENCRYPT_EMAIL=admin@yourdomain.com
 STAGING=false                   # Use production Let's Encrypt
 ENVIRONMENT=production
@@ -189,12 +168,6 @@ make deploy                     # Start certbot service
 make init-certs                 # Initialize certificates
 ```
 
-### Certificate Distribution
-```bash
-make copy-certs-to-all          # Copy to all configured projects
-make copy-certs-to-ldap         # Copy to LDAP project only
-make copy-certs-to-radius       # Copy to FreeRADIUS project only
-```
 
 ### Operations
 ```bash
@@ -249,16 +222,13 @@ make test
 ```bash
 # Force immediate renewal
 make renew
-
-# Redistribute updated certificates
-make copy-certs-to-all
 ```
 
 ### Renewal Workflow
 1. Certbot checks certificate expiration
 2. Renews if within 30 days of expiration
-3. Copies new certificates to project directories
-4. Optionally triggers service rebuilds
+3. Updated certificates available in container
+4. Other projects can copy updated certificates as needed
 
 ## 🔍 Troubleshooting
 
@@ -274,15 +244,14 @@ make status
 ```bash
 # Initialize certificates first
 make init-certs
-make copy-certs-to-all
 ```
 
 #### "Permission denied on certificate files"
 ```bash
-# Scripts automatically set correct permissions:
+# Certificates have correct permissions in container:
 # 644 for cert.pem and fullchain.pem
 # 640 for privkey.pem
-make copy-certs-to-all
+# Use docker cp to copy with proper permissions
 ```
 
 #### "Let's Encrypt rate limit exceeded"
@@ -318,18 +287,37 @@ netstat -tulpn | grep :80
 - **Log Management**: Configured log rotation and retention
 - **Staging Environment**: Always test with Let's Encrypt staging first
 
+## 📍 Certificate File Locations
+
+When certbot container is running, certificate files are located at:
+
+- **Container path**: `/etc/letsencrypt/live/{DOMAIN}/`
+- **Certificate files**:
+  - `cert.pem` - Certificate file
+  - `privkey.pem` - Private key file  
+  - `fullchain.pem` - Full certificate chain
+- **Docker volume**: `standalone-certbot_letsencrypt`
+
+### Manual Certificate Access
+```bash
+# Copy certificate files manually from running certbot container
+docker cp standalone-certbot:/etc/letsencrypt/live/ldap.example.com/cert.pem ./cert.pem
+docker cp standalone-certbot:/etc/letsencrypt/live/ldap.example.com/privkey.pem ./privkey.pem
+docker cp standalone-certbot:/etc/letsencrypt/live/ldap.example.com/fullchain.pem ./fullchain.pem
+```
+
 ## 🚀 Integration with Other Projects
 
 This certbot service is designed to work with:
 
-- **LDAP Project** (`../ldap/`) - OpenLDAP with TLS support
-- **FreeRADIUS Project** (`../freeradius/`) - RADIUS server with RadSec
+- **LDAP Project** - OpenLDAP with TLS support
+- **FreeRADIUS Project** - RADIUS server with RadSec
 - **Custom Projects** - Any Docker project needing TLS certificates
 
 ### Integration Pattern
 
 1. **Start certbot service**: Acquires and manages certificates
-2. **Copy certificates**: Distributes to project build contexts
+2. **Projects copy certificates**: Each project copies certificates from certbot container
 3. **Build services**: Projects include certificates at build time
 4. **Deploy services**: Services use embedded certificates
 
@@ -341,7 +329,6 @@ This certbot service is designed to work with:
 make env
 # Edit .env: STAGING=true
 make deploy && make init-certs
-make copy-certs-to-all
 ```
 
 ### Production Setup
@@ -350,16 +337,14 @@ make copy-certs-to-all
 make env  
 # Edit .env: STAGING=false, real domains
 make deploy && make init-certs
-make copy-certs-to-all
 ```
 
 ### Adding New Domain
 ```bash
-# Update .env with new domain
-# Edit: RADIUS_DOMAIN=new.example.com
+# Update .env with new domain in DOMAINS list
+# Edit: DOMAINS=ldap.example.com,radius.example.com,new.example.com
 make restart
 make renew
-make copy-certs-to-all
 ```
 
 ## 📚 Related Documentation

@@ -1,7 +1,7 @@
 # Standalone Certbot Makefile
 # Multi-domain certificate management for LDAP + FreeRADIUS projects
 
-.PHONY: help init-certs copy-certs-to-all deploy stop restart clean logs build test
+.PHONY: help init-certs deploy stop restart clean logs build test
 
 # Default target
 help:
@@ -12,11 +12,6 @@ help:
 	@echo "  make init-certs      - Initialize multi-domain certificates"
 	@echo "  make deploy          - Start certbot service"
 	@echo "  make build           - Build certbot Docker image"
-	@echo ""
-	@echo "Certificate Distribution:"
-	@echo "  make copy-certs-to-all    - Copy certificates to all projects"
-	@echo "  make copy-certs-to-ldap   - Copy certificates to LDAP project"
-	@echo "  make copy-certs-to-radius - Copy certificates to FreeRADIUS project"
 	@echo ""
 	@echo "Operations:"
 	@echo "  make stop            - Stop certbot service"
@@ -58,20 +53,6 @@ deploy: build
 	sleep 5
 	@make status
 
-# Copy certificates to all projects
-copy-certs-to-all:
-	@echo "Copying certificates to all projects..."
-	@./scripts/copy-certs-to-all.sh
-
-# Copy certificates to LDAP project
-copy-certs-to-ldap:
-	@echo "Copying certificates to LDAP project..."
-	@./scripts/copy-certs-to-ldap.sh
-
-# Copy certificates to FreeRADIUS project
-copy-certs-to-radius:
-	@echo "Copying certificates to FreeRADIUS project..."
-	@./scripts/copy-certs-to-radius.sh
 
 # Show service logs
 logs:

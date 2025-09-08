@@ -15,7 +15,6 @@ RUN mkdir -p /opt/certbot-scripts     && mkdir -p /opt/certbot-config     && mkd
 # Copy custom scripts
 COPY entrypoint.sh /opt/certbot-scripts/entrypoint.sh
 COPY renew-certificates.sh /opt/certbot-scripts/renew-certificates.sh
-COPY check-certificates.sh /opt/certbot-scripts/check-certificates.sh
 COPY hook-post-renew.sh /opt/certbot-scripts/hook-post-renew.sh
 
 # Make scripts executable
@@ -31,8 +30,6 @@ RUN chown -R certbot:certbot /opt/certbot-logs     && chown -R certbot:certbot /
 # Create log file
 RUN touch /opt/certbot-logs/certbot.log     && chown certbot:certbot /opt/certbot-logs/certbot.log
 
-# Health check
-HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3     CMD /opt/certbot-scripts/check-certificates.sh
 
 # Stay as root for permission management
 # The entrypoint will run certbot commands with proper user

@@ -57,68 +57,20 @@ init_logging() {
 validate_environment() {
     log "Validating environment configuration..."
     
-    local errors=()
-    
-    # Check required variables
+    # Check required variables exist
     if [ -z "${DOMAINS:-}" ]; then
-        errors+=("DOMAINS is required")
+        error "DOMAINS is required"
+        exit 1
     fi
     
     if [ -z "${EMAIL:-}" ]; then
-        errors+=("EMAIL is required")
-    fi
-    
-    # Validate primary domain format
-    if [ -n "${PRIMARY_DOMAIN:-}" ] && [[ ! "${PRIMARY_DOMAIN}" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
-        errors+=("PRIMARY_DOMAIN format is invalid")
-    fi
-    
-    # Validate email format
-    if [ -n "${EMAIL:-}" ] && [[ ! "${EMAIL}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
-        errors+=("EMAIL format is invalid")
-    fi
-    
-    if [ ${#errors[@]} -gt 0 ]; then
-        error "Environment validation failed:"
-        for err in "${errors[@]}"; do
-            error "  - $err"
-        done
+        error "EMAIL is required"
         exit 1
     fi
     
     log "Environment validation passed"
 }
 
-# Check DNS resolution
-check_dns_resolution() {
-    log "Checking DNS resolution for domains: $DOMAINS..."
-    
-    # Check each domain
-    local domain_list
-    IFS=',' read -ra domain_list <<< "$DOMAINS"
-    
-    for domain in "${domain_list[@]}"; do
-        domain=$(echo "$domain" | xargs)  # trim whitespace
-        log "Checking DNS resolution for $domain..."
-        
-        # Try to resolve the domain
-        if nslookup "$domain" >/dev/null 2>&1; then
-            local resolved_ip
-            resolved_ip=$(nslookup "$domain" | grep -A1 "Name:" | tail -1 | awk '{print $2}' || echo "unknown")
-            log "Domain $domain resolves to: $resolved_ip"
-        else
-            warn "DNS resolution failed for $domain"
-            if [ "${ENVIRONMENT:-development}" = "production" ]; then
-                error "DNS resolution is required in production for all domains"
-                return 1
-            else
-                warn "Continuing without DNS resolution in development"
-            fi
-        fi
-    done
-    
-    return 0
-}
 
 # Check if certificates already exist
 check_existing_certificates() {
@@ -298,27 +250,6 @@ setup_signal_handlers() {
     trap shutdown_handler SIGTERM SIGINT SIGQUIT
 }
 
-# Initial certificate acquisition mode
-run_initial_acquisition() {
-    log "Running initial certificate acquisition mode"
-    
-    validate_environment
-    check_dns_resolution
-    
-    if check_existing_certificates; then
-        log "Valid certificates already exist, skipping acquisition"
-        exit 0
-    else
-        log "Acquiring new certificates..."
-        if acquire_certificates; then
-            log "Initial certificate acquisition completed successfully"
-            exit 0
-        else
-            error "Initial certificate acquisition failed"
-            exit 1
-        fi
-    fi
-}
 
 # One-time renewal mode
 run_renewal() {
@@ -359,7 +290,6 @@ main() {
             init_logging
             validate_environment
             setup_signal_handlers
-            check_dns_resolution
             
             # Fix permissions for existing certificates first
             if [ -d "/etc/letsencrypt/live/${PRIMARY_DOMAIN}" ]; then
@@ -372,14 +302,25 @@ main() {
                 acquire_certificates || warn "Initial certificate acquisition failed, will retry in renewal loop"
             fi
             
-            # HTTP server removed - certificates distributed via docker cp
-            log "Certificate distribution via docker cp - no HTTP server needed"
-            
             run_renewal_loop
             ;;
         "acquire")
             init_logging
-            run_initial_acquisition
+            validate_environment
+            
+            if check_existing_certificates; then
+                log "Valid certificates already exist, skipping acquisition"
+                exit 0
+            else
+                log "Acquiring new certificates..."
+                if acquire_certificates; then
+                    log "Initial certificate acquisition completed successfully"
+                    exit 0
+                else
+                    error "Initial certificate acquisition failed"
+                    exit 1
+                fi
+            fi
             ;;
         "renew")
             init_logging
