@@ -1,7 +1,7 @@
 # FreeRADIUS Server Makefile
 # RADIUS server with automated TLS certificate management
 
-.PHONY: help copy-certs build-tls deploy stop restart clean logs test build
+.PHONY: help copy-certs build-tls deploy stop restart clean logs test build setup-users
 
 # Default target
 help:
@@ -20,6 +20,9 @@ help:
 	@echo "  make restart       - Restart FreeRADIUS service"
 	@echo "  make logs          - Show FreeRADIUS logs"
 	@echo "  make logs-follow   - Follow FreeRADIUS logs in real-time"
+	@echo ""
+	@echo "User Management:"
+	@echo "  make setup-users   - Update user passwords (run after make init)"
 	@echo ""
 	@echo "Testing:"
 	@echo "  make test          - Test RADIUS authentication"
@@ -141,6 +144,11 @@ clean:
 	@echo "Cleaning up FreeRADIUS containers and volumes..."
 	docker compose down -v
 	docker system prune -f
+
+# Update user passwords from .env file
+setup-users:
+	@echo "Setting up user passwords..."
+	@./scripts/setup-users.sh
 
 # Show environment configuration
 show-config:
