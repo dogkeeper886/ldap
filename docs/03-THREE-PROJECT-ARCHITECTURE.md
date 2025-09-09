@@ -64,7 +64,8 @@ make deploy       # Start certbot service
 ### 3. Deploy LDAP Service
 ```bash
 cd ldap
-make copy-certs && make build-tls && make deploy
+make init          # Deploy LDAP server with certificates
+make setup-users   # Create test users with passwords
 ```
 
 ### 4. Deploy FreeRADIUS Service
@@ -120,8 +121,9 @@ make test  # Validate certificates
 ### Test LDAP Authentication
 ```bash
 cd ldap
-make test  # Test LDAP authentication
-make test-tls  # Test LDAPS connections
+make setup-users   # Ensure test users are created first
+# Test user authentication manually:
+ldapsearch -x -H ldap://localhost:389 -D "uid=test-user-01,ou=users,dc=yourdomain,dc=com" -w "TestPass123!" -b "" -s base
 ```
 
 ### Test FreeRADIUS Authentication
@@ -161,7 +163,7 @@ The standalone certbot handles automatic renewal:
 3. **Copy Updated Certificates**: Each project copies certificates as needed
 4. **Rebuild Services**: Each service needs rebuild to pick up new certificates
    ```bash
-   cd ldap && make copy-certs && make build-tls && make restart
+   cd ldap && make clean && make init && make setup-users
    cd freeradius && make copy-certs && make build-tls && make restart
    ```
 
@@ -194,7 +196,10 @@ The FreeRADIUS project includes:
 
 ### LDAP Issues
 - **"External certbot required"**: Ensure standalone certbot is running first
+- **"Authentication failed"**: Run `make setup-users` to create test users with correct passwords
+- **"No such object" errors**: Use `make clean && make init && make setup-users` for fresh setup
 - **"TLS handshake failed"**: Check certificate domain matches LDAP_DOMAIN
+- **Intermittent login issues**: Old Docker volumes - use `make clean` before deployment
 
 ### FreeRADIUS Issues
 - **"Authentication failed"**: Verify user passwords in .env file

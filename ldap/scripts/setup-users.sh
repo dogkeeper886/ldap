@@ -1,125 +1,71 @@
 #!/bin/bash
-# Script: setup-users.sh
-# Purpose: Set up test users in LDAP directory
+set -euo pipefail
 
-set -e
+echo "Waiting for LDAP server to be ready..."
+until docker exec openldap ldapsearch -x -H ldap://localhost -b "" -s base >/dev/null 2>&1; do
+    sleep 2
+done
 
-log() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
-}
+echo "LDAP server is ready. Setting up users..."
 
-# Load environment variables
+# Get base DN from environment
 source .env
+base_dn="dc=${LDAP_DOMAIN//./,dc=}"
 
-log "Setting up LDAP test users..."
+# Add MS AD schema first (using EXTERNAL auth for schema)
+echo "Loading MS AD compatibility schema..."
+docker exec openldap ldapadd -Y EXTERNAL -H ldapi:/// -f /ldifs/05-msad-compat.ldif 2>&1 | \
+    grep -v "Duplicate attributeType" || true
 
-# Wait for LDAP to be ready
-log "Waiting for LDAP service..."
-sleep 5
+# Import LDIF files in order (skip MS AD schema and user attributes for now)
+for ldif_file in ldifs/*.ldif; do
+    if [ -f "$ldif_file" ]; then
+        filename=$(basename "$ldif_file")
+        
+        # Skip MS AD files - handle them separately
+        if [[ "$filename" == "05-msad-compat.ldif" || "$filename" == "06-users-with-msad.ldif" ]]; then
+            continue
+        fi
+        
+        echo "Importing $filename..."
+        
+        # Replace example.com with actual domain and import
+        sed "s/dc=example,dc=com/$base_dn/g" "$ldif_file" | \
+            docker exec -i openldap ldapadd -x -H ldap://localhost \
+                -D "cn=admin,$base_dn" \
+                -w "$LDAP_ADMIN_PASSWORD" -c 2>&1 | \
+            grep -v "ldap_add: Already exists" || true
+    fi
+done
 
-# Convert domain to DN (Option 1 approach)
-DOMAIN_DN=$(echo "$LDAP_DOMAIN" | sed 's/\./,dc=/g' | sed 's/^/dc=/')
-ADMIN_DN="cn=admin,$DOMAIN_DN"
+# Set user passwords using ldappasswd
+echo "Setting user passwords..."
+docker exec openldap ldappasswd -x -H ldap://localhost \
+    -D "cn=admin,$base_dn" -w "$LDAP_ADMIN_PASSWORD" \
+    -s "$TEST_USER_PASSWORD" "uid=test-user-01,ou=users,$base_dn"
 
-log "Using domain: $DOMAIN_DN"
+docker exec openldap ldappasswd -x -H ldap://localhost \
+    -D "cn=admin,$base_dn" -w "$LDAP_ADMIN_PASSWORD" \
+    -s "$GUEST_USER_PASSWORD" "uid=test-user-02,ou=users,$base_dn"
 
-# 1. Create base domain
-log "1. Creating base domain..."
-echo "dn: $DOMAIN_DN
-objectClass: top
-objectClass: dcObject
-objectClass: organization
-o: $LDAP_ORG
-dc: $(echo $DOMAIN_DN | cut -d, -f1 | cut -d= -f2)" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+docker exec openldap ldappasswd -x -H ldap://localhost \
+    -D "cn=admin,$base_dn" -w "$LDAP_ADMIN_PASSWORD" \
+    -s "$ADMIN_USER_PASSWORD" "uid=test-user-03,ou=users,$base_dn"
 
-# 2. Create OUs
-log "2. Creating organizational units..."
-echo "dn: ou=users,$DOMAIN_DN
-objectClass: organizationalUnit
-ou: users" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+docker exec openldap ldappasswd -x -H ldap://localhost \
+    -D "cn=admin,$base_dn" -w "$LDAP_ADMIN_PASSWORD" \
+    -s "$CONTRACTOR_PASSWORD" "uid=test-user-04,ou=users,$base_dn"
 
-echo "dn: ou=groups,$DOMAIN_DN
-objectClass: organizationalUnit
-ou: groups" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
+docker exec openldap ldappasswd -x -H ldap://localhost \
+    -D "cn=admin,$base_dn" -w "$LDAP_ADMIN_PASSWORD" \
+    -s "$VIP_PASSWORD" "uid=test-user-05,ou=users,$base_dn"
 
-# 3. Create test users (without passwords)
-log "3. Creating test users..."
+# Apply MS AD compatibility attributes
+echo "Adding MS AD compatibility attributes..."
+sed "s/dc=example,dc=com/$base_dn/g" ldifs/06-users-with-msad.ldif | \
+    docker exec -i openldap ldapmodify -x -H ldap://localhost \
+        -D "cn=admin,$base_dn" \
+        -w "$LDAP_ADMIN_PASSWORD" -c 2>&1 | \
+    grep -v "Type or value exists" || true
 
-# John Smith - IT Administrator
-echo "dn: uid=test-user-01,ou=users,$DOMAIN_DN
-objectClass: inetOrgPerson
-uid: test-user-01
-cn: John Smith
-sn: Smith
-givenName: John
-displayName: John Smith
-mail: john.smith@example.com
-telephoneNumber: +1-555-0101
-mobile: +1-555-1001
-title: IT Administrator
-ou: IT" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
-
-# Jane Doe - Network Engineer
-echo "dn: uid=test-user-02,ou=users,$DOMAIN_DN
-objectClass: inetOrgPerson
-uid: test-user-02
-cn: Jane Doe
-sn: Doe
-givenName: Jane
-displayName: Jane Doe
-mail: jane.doe@example.com
-telephoneNumber: +1-555-0102
-mobile: +1-555-1002
-title: Network Engineer
-ou: IT" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
-
-# Mike Johnson - Guest User
-echo "dn: uid=test-user-03,ou=users,$DOMAIN_DN
-objectClass: inetOrgPerson
-uid: test-user-03
-cn: Mike Johnson
-sn: Johnson
-givenName: Mike
-displayName: Mike Johnson
-mail: mike.johnson@example.com
-telephoneNumber: +1-555-0103
-mobile: +1-555-1003
-title: Guest User
-ou: Guest" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
-
-# 4. Set passwords with ldappasswd
-log "4. Setting passwords..."
-sleep 2  # Wait for users to be fully created
-docker exec openldap ldappasswd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" -s "TestPass123!" "uid=test-user-01,ou=users,$DOMAIN_DN"
-docker exec openldap ldappasswd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" -s "TestPass456!" "uid=test-user-02,ou=users,$DOMAIN_DN"
-docker exec openldap ldappasswd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" -s "GuestPass789!" "uid=test-user-03,ou=users,$DOMAIN_DN"
-
-# 5. Create groups
-log "5. Creating groups..."
-
-# IT group
-echo "dn: cn=it-staff,ou=groups,$DOMAIN_DN
-objectClass: groupOfNames
-cn: it-staff
-member: uid=test-user-01,ou=users,$DOMAIN_DN
-member: uid=test-user-02,ou=users,$DOMAIN_DN" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
-
-# Guest group
-echo "dn: cn=guests,ou=groups,$DOMAIN_DN
-objectClass: groupOfNames
-cn: guests
-member: uid=test-user-03,ou=users,$DOMAIN_DN" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
-
-# All users group
-echo "dn: cn=all-users,ou=groups,$DOMAIN_DN
-objectClass: groupOfNames
-cn: all-users
-member: uid=test-user-01,ou=users,$DOMAIN_DN
-member: uid=test-user-02,ou=users,$DOMAIN_DN
-member: uid=test-user-03,ou=users,$DOMAIN_DN" | docker exec -i openldap ldapadd -x -H ldap://localhost -D "$ADMIN_DN" -w "$LDAP_ADMIN_PASSWORD" || true
-
-log "LDAP users setup completed successfully!"
-log "Test users:"
-log "  test-user-01 (John Smith) - TestPass123!"
-log "  test-user-02 (Jane Doe) - TestPass456!"
-log "  test-user-03 (Mike Johnson) - GuestPass789!"
+echo "User setup complete!"

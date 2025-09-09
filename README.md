@@ -57,18 +57,13 @@ make setup-users
 # This creates three test users ready for authentication testing
 ```
 
-### 4. Add Microsoft AD Compatibility (Optional but Recommended)
+### 4. Microsoft AD Compatibility (Automatic)
+MS AD attributes are **automatically added** during user setup:
+- `sAMAccountName` - Windows-style username
+- `userPrincipalName` - UPN format (user@domain.com)  
+- Compatible with enterprise WiFi APs expecting MS AD
 
-```bash
-# Add MS AD attributes for compatibility with enterprise APs
-make add-msad-attributes
-
-# Or do both steps at once:
-make setup-users-msad
-
-# This adds sAMAccountName, userPrincipalName, and memberOf attributes
-# Required for access points expecting Microsoft Active Directory
-```
+No additional commands needed - included in `make setup-users`
 
 ## 👥 Test Users
 
@@ -116,7 +111,7 @@ Search Filter Options:
 - **Search Filter**: Use `uid=%s` for standard LDAP or MS AD filters above
 - **Key Attribute**: Leave empty to avoid filter conflicts
 - **User Search Base**: The entire directory is searched from Base DN
-- **MS AD Attributes**: Run `make add-msad-attributes` to enable AD compatibility
+- **MS AD Attributes**: Automatically enabled with `make setup-users`
 
 ## 📁 Project Structure
 
@@ -172,12 +167,10 @@ make restart
 ```
 
 ### MS AD Compatibility
+MS AD attributes are automatically included in the standard workflow:
 ```bash
-# Add Microsoft AD attributes to existing users
-make add-msad-attributes
-
-# Setup users with MS AD attributes in one command
-make setup-users-msad
+# Standard setup includes MS AD attributes
+make setup-users
 ```
 
 ### Backup and Restore
@@ -203,7 +196,7 @@ ldapwhoami -x -H ldaps://your-domain.com:636 \
   -D "uid=test-user-01,ou=users,dc=your,dc=domain,dc=com" \
   -w "TestPass123!"
 
-# Test MS AD style authentication (after running make add-msad-attributes)
+# Test MS AD style authentication (automatically enabled)
 ldapsearch -x -H ldaps://your-domain.com:636 \
   -D "cn=admin,dc=your,dc=domain,dc=com" -w "admin-password" \
   -b "dc=your,dc=domain,dc=com" \
@@ -234,7 +227,7 @@ docker exec openldap slapcat -n 0 | grep olcLogLevel
 - Verify the domain name in your Base DN matches your LDAP_DOMAIN
 - Ensure you're using the correct password (check for special characters)
 - Verify the user exists: `make view-ldap`
-- For APs expecting MS AD: Run `make add-msad-attributes` to add required attributes
+- For APs expecting MS AD: MS AD attributes are automatically enabled with `make setup-users`
 - Check if AP is searching for sAMAccountName or userPrincipalName instead of uid
 
 **Certificate Issues**
