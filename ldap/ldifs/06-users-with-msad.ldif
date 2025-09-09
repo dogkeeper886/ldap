@@ -3,7 +3,7 @@
 # Apply after 05-msad-compat.ldif schema is loaded
 
 # Test User 01 - Standard WiFi Access
-dn: uid=test-user-01,ou=users,dc=ldap,dc=tsengsyu,dc=com
+dn: uid=test-user-01,ou=users,dc=example,dc=com
 changetype: modify
 add: objectClass
 objectClass: msadUser
@@ -12,16 +12,16 @@ add: sAMAccountName
 sAMAccountName: test-user-01
 -
 add: userPrincipalName
-userPrincipalName: test-user-01@ldap.tsengsyu.com
+userPrincipalName: test-user-01@example.com
 -
 add: memberOf
-memberOf: cn=wifi-users,ou=groups,dc=ldap,dc=tsengsyu,dc=com
+memberOf: cn=wifi-users,ou=groups,dc=example,dc=com
 -
 add: userAccountControl
 userAccountControl: 512
 
 # Test User 02 - Guest WiFi Access
-dn: uid=test-user-02,ou=users,dc=ldap,dc=tsengsyu,dc=com
+dn: uid=test-user-02,ou=users,dc=example,dc=com
 changetype: modify
 add: objectClass
 objectClass: msadUser
@@ -30,16 +30,16 @@ add: sAMAccountName
 sAMAccountName: test-user-02
 -
 add: userPrincipalName
-userPrincipalName: test-user-02@ldap.tsengsyu.com
+userPrincipalName: test-user-02@example.com
 -
 add: memberOf
-memberOf: cn=wifi-guests,ou=groups,dc=ldap,dc=tsengsyu,dc=com
+memberOf: cn=wifi-guests,ou=groups,dc=example,dc=com
 -
 add: userAccountControl
 userAccountControl: 512
 
 # Test User 03 - Admin WiFi Access
-dn: uid=test-user-03,ou=users,dc=ldap,dc=tsengsyu,dc=com
+dn: uid=test-user-03,ou=users,dc=example,dc=com
 changetype: modify
 add: objectClass
 objectClass: msadUser
@@ -48,10 +48,46 @@ add: sAMAccountName
 sAMAccountName: test-user-03
 -
 add: userPrincipalName
-userPrincipalName: test-user-03@ldap.tsengsyu.com
+userPrincipalName: test-user-03@example.com
 -
 add: memberOf
-memberOf: cn=wifi-admins,ou=groups,dc=ldap,dc=tsengsyu,dc=com
+memberOf: cn=wifi-admins,ou=groups,dc=example,dc=com
+-
+add: userAccountControl
+userAccountControl: 512
+
+# Test User 04 - Contractor WiFi Access
+dn: uid=test-user-04,ou=users,dc=example,dc=com
+changetype: modify
+add: objectClass
+objectClass: msadUser
+-
+add: sAMAccountName
+sAMAccountName: test-user-04
+-
+add: userPrincipalName
+userPrincipalName: test-user-04@example.com
+-
+add: memberOf
+memberOf: cn=external-users,ou=groups,dc=example,dc=com
+-
+add: userAccountControl
+userAccountControl: 512
+
+# Test User 05 - VIP WiFi Access
+dn: uid=test-user-05,ou=users,dc=example,dc=com
+changetype: modify
+add: objectClass
+objectClass: msadUser
+-
+add: sAMAccountName
+sAMAccountName: test-user-05
+-
+add: userPrincipalName
+userPrincipalName: test-user-05@example.com
+-
+add: memberOf
+memberOf: cn=executives,ou=groups,dc=example,dc=com
 -
 add: userAccountControl
 userAccountControl: 512
