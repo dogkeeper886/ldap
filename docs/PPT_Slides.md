@@ -131,8 +131,9 @@ make setup-users
 ## Slide 8: Step 4 - Add Enterprise Compatibility
 **Make It Work with Enterprise Access Points**
 
+MS AD attributes are **automatically included** with:
 ```bash
-make add-msad-attributes
+make setup-users
 ```
 
 **Adds Microsoft Active Directory features:**

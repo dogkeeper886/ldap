@@ -48,11 +48,11 @@ Each user includes **standard LDAP attributes**:
 - `department` - Department/organizational unit
 - `employeeType` - Employee type (Full-Time, Contractor, etc.)
 
-### Microsoft AD Compatibility (Optional)
+### Microsoft AD Compatibility
 For systems expecting Active Directory attributes:
-```bash
-./scripts/add-msad-attributes.sh  # Adds sAMAccountName, userPrincipalName
-```
+- **Automatically enabled** via `make setup-users`
+- Adds `sAMAccountName` and `userPrincipalName` to all users
+- Compatible with WiFi APs expecting MS AD authentication
 
 ## Available Commands
 

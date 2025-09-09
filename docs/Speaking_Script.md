@@ -141,8 +141,9 @@ make setup-users
 
 **Many enterprise access points expect Microsoft Active Directory attributes.** Let me add those so our LDAP server works with more equipment.
 
+MS AD attributes are **automatically included** with:
 ```bash
-make add-msad-attributes
+make setup-users
 ```
 
 **This adds important attributes:**

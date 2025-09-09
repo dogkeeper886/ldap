@@ -22,12 +22,7 @@ olcAttributeTypes: ( 1.2.840.113556.1.4.656
   SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
   SINGLE-VALUE )
-# memberOf - Group membership (for RADIUS group-based access)
-olcAttributeTypes: ( 1.2.840.113556.1.2.102
-  NAME 'memberOf'
-  DESC 'Group membership for authorization'
-  EQUALITY distinguishedNameMatch
-  SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )
+# memberOf already exists in OpenLDAP core schema - skip to avoid duplicate
 # accountExpires - Account expiration (for guest/temporary accounts)
 olcAttributeTypes: ( 1.2.840.113556.1.4.159
   NAME 'accountExpires'
@@ -47,5 +42,5 @@ olcObjectClasses: ( 1.2.840.113556.1.5.9
   NAME 'msadUser'
   DESC 'Microsoft AD Compatible User'
   SUP top AUXILIARY
-  MAY ( sAMAccountName $ userPrincipalName $ memberOf $ 
+  MAY ( sAMAccountName $ userPrincipalName $ 
         accountExpires $ userAccountControl ) )

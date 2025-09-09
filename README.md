@@ -1,152 +1,90 @@
-# LDAP Authentication Server with Certificate Management
+# LDAP Authentication Server for WiFi Testing
 
-Complete LDAP server solution for WiFi authentication testing with automatic SSL/TLS certificate management.
+A production-ready LDAP server designed specifically for testing WiFi authentication with enterprise access points (RUCKUS One, Cisco, Aruba, etc.). Deploy a fully functional LDAP server with TLS support and test users in minutes.
 
-## What This Is
+## 🎯 Project Goal
 
-- **Two-project architecture**: Certificate management + LDAP server
-- **Automatic certificates**: Let's Encrypt SSL/TLS certificates with auto-renewal
-- **LDAP server** with TLS support (LDAPS on port 636)
-- **Standard LDAP attributes** for user authentication
-- **Microsoft AD compatibility** (optional)
-- **5 test users** with different roles and departments
+Provide a simple, reliable LDAP authentication backend for:
+- **WiFi WPA2/WPA3 Enterprise authentication testing**
+- **802.1X EAP authentication development**
+- **Network access control (NAC) testing**
+- **RADIUS server integration testing**
+- **Enterprise access point configuration validation**
 
-## Project Structure
-
-```
-ldap/
-├── certbot/              # Certificate management (port 80)
-│   └── README.md         # Certificate management documentation
-├── ldap/                 # LDAP server (ports 389, 636)
-│   └── README.md         # LDAP server documentation
-└── README.md             # This overview
-```
-
-## Quick Start
+## ⚡ Quick Start
 
 ### Prerequisites
-- Linux server with Docker and Docker Compose
+- Linux server with Docker and Docker Compose v2
 - Domain name pointing to your server
-- Ports 80, 389, and 636 available
+- Ports 389, 636, and 80 available
 
-### 1. Setup Certificate Management
+### 1. Clone and Configure
 
 ```bash
-cd certbot
+# Clone the repository
+git clone https://github.com/dogkeeper886/ldap.git
+cd ldap
 
 # Create environment configuration
-make env
+cp .env.example .env
 
-# Edit .env with your domain and email
+# Edit .env with your settings:
+# - LDAP_DOMAIN (your domain, e.g., ldap.example.com)
+# - LDAP_ADMIN_PASSWORD (admin password)
+# - LETSENCRYPT_EMAIL (for SSL certificates)
 nano .env
-# Set: DOMAINS=ldap.example.com
-#      LETSENCRYPT_EMAIL=admin@example.com
-#      STAGING=true (for testing)
-
-# Deploy certificate service
-make deploy
 ```
 
-### 2. Setup LDAP Server
+### 2. Deploy LDAP Server
 
 ```bash
-cd ../ldap
-
-# Create environment configuration
-make env
-
-# Edit .env with your LDAP settings
-nano .env
-# Set: LDAP_DOMAIN=ldap.example.com
-#      LDAP_ADMIN_PASSWORD=your-secure-password
-
-# Deploy LDAP server with certificates
+# Initialize and start the LDAP server with TLS certificates
 make init
 
-# Create test users
+# This command will:
+# 1. Build Docker images
+# 2. Obtain Let's Encrypt certificates
+# 3. Start OpenLDAP with TLS support
+# 4. Configure the directory structure
+```
+
+### 3. Add Test Users
+
+```bash
+# Create test users and groups
 make setup-users
+
+# This creates three test users ready for authentication testing
 ```
 
-### 3. Server Ready for Authentication
+### 4. Microsoft AD Compatibility (Automatic)
+MS AD attributes are **automatically added** during user setup:
+- `sAMAccountName` - Windows-style username
+- `userPrincipalName` - UPN format (user@domain.com)  
+- Compatible with enterprise WiFi APs expecting MS AD
 
-Your LDAP server is now ready with:
-- **LDAPS**: Port 636 (secure, recommended)
-- **LDAP**: Port 389 (unencrypted)
-- **SSL certificates**: Automatically renewed
-- **Test users**: 5 users with different roles
+No additional commands needed - included in `make setup-users`
 
-## Architecture
+## 👥 Test Users
 
-### Certificate Management (`certbot/`)
-- **Purpose**: Provides SSL/TLS certificates for LDAP server
-- **Technology**: Official certbot Docker image
-- **Renewal**: Automatic every 12 hours
-- **Domains**: Supports multiple domains with SAN certificates
-- **Port**: 80 (HTTP challenge for Let's Encrypt)
+After running `make setup-users`, the following test accounts are available:
 
-### LDAP Server (`ldap/`)
-- **Purpose**: Directory authentication server
-- **Technology**: OpenLDAP with TLS support
-- **Certificates**: Uses certificates from certbot service
-- **Ports**: 389 (LDAP), 636 (LDAPS)
-- **Users**: 5 pre-configured test users
+| Username | Password | Full Name | Role | Department |
+|----------|----------|-----------|------|------------|
+| `test-user-01` | `TestPass123!` | John Smith | IT Administrator | IT |
+| `test-user-02` | `TestPass456!` | Jane Doe | Network Engineer | IT |
+| `test-user-03` | `GuestPass789!` | Mike Johnson | Guest User | Guest |
 
-### Certificate Distribution
-1. Certbot acquires certificates and stores them in Docker volume
-2. LDAP server copies certificates from certbot container during build
-3. OpenLDAP uses certificates for TLS/SSL connections
-4. Certificates renew automatically without manual intervention
+### User Attributes
+Each user has complete attributes for policy testing:
+- **Email**: `firstname.lastname@example.com`
+- **Phone**: Unique numbers for each user
+- **Groups**: IT staff, guests, or all-users
+- **Department**: IT or Guest (stored in `ou` attribute)
 
-## Test Users
+## 🔧 Access Point Configuration
 
-| Username | Password | Department | Role | Use Case |
-|----------|----------|------------|------|----------|
-| test-user-01 | TestPass123! | IT Department | Full-Time | Standard employee |
-| test-user-02 | GuestPass789! | External | Temporary | Guest access |
-| test-user-03 | AdminPass456! | IT Operations | Full-Time | Administrator |
-| test-user-04 | ContractorPass321! | Professional Services | Contractor | External contractor |
-| test-user-05 | VipPass654! | Executive Management | Executive | VIP user |
-
-## LDAP Server Configuration
-
-### Connection Settings
-- **LDAP Server**: `ldap.yourdomain.com`
-- **Port**: 636 (LDAPS recommended) or 389 (LDAP)
-- **Base DN**: `dc=yourdomain,dc=com` (auto-generated from LDAP_DOMAIN)
-- **Bind DN**: `cn=admin,dc=yourdomain,dc=com`
-- **Bind Password**: Your LDAP_ADMIN_PASSWORD
-
-### User Search Filters
-```bash
-# Primary username lookup (most common)
-(uid=%username%)
-
-# Alternative lookups
-(cn=%username%)
-(|(uid=%username%)(cn=%username%))
-
-# Microsoft AD compatible (if AD attributes enabled)
-(|(sAMAccountName=%username%)(userPrincipalName=%username%@yourdomain.com))
-```
-
-## Microsoft AD Compatibility
-
-For access points expecting Active Directory attributes:
-
-```bash
-cd ldap
-./scripts/add-msad-attributes.sh
-```
-
-This adds:
-- `sAMAccountName` - Windows-style usernames
-- `userPrincipalName` - user@domain.com format
-- `userAccountControl` - Account status
-- `memberOf` - Group membership
-
-## WiFi Access Point Configuration
-
-### RUCKUS One
+### RUCKUS One Configuration
 ```
 Server Type: LDAP/LDAPS
 Server: your-domain.com
@@ -155,109 +93,176 @@ Base DN: dc=your,dc=domain,dc=com
 Admin DN: cn=admin,dc=your,dc=domain,dc=com
 Admin Password: [your admin password]
 Search Filter: uid=%s
+Key Attribute: [leave empty]
 ```
 
-### Microsoft AD Compatible APs
+### Microsoft AD Compatible Configuration
+For access points expecting Active Directory attributes:
 ```
 Search Filter Options:
-- Standard: (uid=%s)
+- Standard LDAP: uid=%s
 - MS AD Style: (sAMAccountName=%s)
 - UPN Style: (userPrincipalName=%s)
 - Combined: (|(sAMAccountName=%s)(userPrincipalName=%s))
 ```
 
-## Common Operations
+### Important Configuration Notes
+- **Base DN**: Automatically derived from your domain (example.com → dc=example,dc=com)
+- **Search Filter**: Use `uid=%s` for standard LDAP or MS AD filters above
+- **Key Attribute**: Leave empty to avoid filter conflicts
+- **User Search Base**: The entire directory is searched from Base DN
+- **MS AD Attributes**: Automatically enabled with `make setup-users`
 
-### Certificate Management
-```bash
-cd certbot
-make logs        # Check certificate service
-make stop        # Stop certificate service
-make clean       # Remove certificates and containers
+## 📁 Project Structure
+
+```
+ldap/
+├── docker-compose.yml      # Service orchestration
+├── Makefile               # Management commands
+├── .env.example           # Environment template
+├── docker/
+│   ├── openldap/         # OpenLDAP container configuration
+│   └── certbot/          # Let's Encrypt automation
+├── scripts/
+│   ├── setup-users.sh    # User creation script
+│   └── init-certificates.sh  # Certificate initialization
+└── tests/                # Testing scripts
 ```
 
-### LDAP Server Management
-```bash
-cd ldap
-make logs        # View LDAP server logs
-make stop        # Stop LDAP server
-make clean       # Clean containers and volumes
-make backup      # Export LDAP data
-```
+## 🔐 Security Features
+
+- **TLS/SSL Encryption**: Automatic Let's Encrypt certificates
+- **SSHA Password Hashing**: Secure password storage
+- **Network Isolation**: Docker network security
+- **Access Control**: LDAP ACLs for data protection
+- **Certificate Auto-Renewal**: Automated certificate updates
+
+## 🛠️ Common Operations
 
 ### View LDAP Directory
 ```bash
-cd ldap
-make view-ldap   # Show all users and groups
+# Show all users and groups
+make view-ldap
 ```
 
-## Testing Authentication
-
-### Command Line Testing
+### Check Service Health
 ```bash
-# Test LDAPS connection (secure, recommended)
+# Verify services are running correctly
+make health
+```
+
+### View Logs
+```bash
+# Check recent logs
+make logs
+
+# Follow logs in real-time
+make logs-follow
+```
+
+### Restart Services
+```bash
+# Restart LDAP server
+make restart
+```
+
+### MS AD Compatibility
+MS AD attributes are automatically included in the standard workflow:
+```bash
+# Standard setup includes MS AD attributes
+make setup-users
+```
+
+### Backup and Restore
+```bash
+# Create backup
+make backup
+
+# Restore from backup
+make restore FILE=backup-file.tar.gz
+```
+
+## 🧪 Testing Authentication
+
+### From Command Line
+```bash
+# Test LDAP authentication (port 389)
+ldapwhoami -x -H ldap://your-domain.com:389 \
+  -D "uid=test-user-01,ou=users,dc=your,dc=domain,dc=com" \
+  -w "TestPass123!"
+
+# Test LDAPS authentication (port 636)
 ldapwhoami -x -H ldaps://your-domain.com:636 \
   -D "uid=test-user-01,ou=users,dc=your,dc=domain,dc=com" \
   -w "TestPass123!"
 
-# Test LDAP connection (unencrypted)
-ldapwhoami -x -H ldap://your-domain.com:389 \
-  -D "uid=test-user-01,ou=users,dc=your,dc=domain,dc=com" \
-  -w "TestPass123!"
+# Test MS AD style authentication (automatically enabled)
+ldapsearch -x -H ldaps://your-domain.com:636 \
+  -D "cn=admin,dc=your,dc=domain,dc=com" -w "admin-password" \
+  -b "dc=your,dc=domain,dc=com" \
+  "(|(sAMAccountName=test-user-01)(userPrincipalName=test-user-01@your-domain.com))"
 ```
 
 ### WiFi Client Testing
-1. Configure device for WPA2/WPA3 Enterprise
-2. Choose EAP method (PEAP or EAP-TTLS)
-3. Username: `test-user-01`
-4. Password: `TestPass123!`
-5. Accept certificate if prompted
+1. Configure your device for WPA2/WPA3 Enterprise
+2. Choose EAP method (usually PEAP or EAP-TTLS)
+3. Enter username: `test-user-01`
+4. Enter password: `TestPass123!`
+5. Accept the certificate (if prompted)
 
-## Troubleshooting
+## 🔍 Troubleshooting
 
-### Certificate Issues
+### Enable Debug Logging
 ```bash
-cd certbot
-make logs        # Check certificate acquisition
+# Check current logs
+docker logs openldap --tail 50
+
+# Enable verbose logging for troubleshooting
+docker exec openldap slapcat -n 0 | grep olcLogLevel
 ```
 
-Common certificate problems:
-- **Domain not pointing to server**: Verify DNS configuration
-- **Port 80 blocked**: Ensure firewall allows HTTP traffic
-- **Rate limits**: Use `STAGING=true` for testing
+### Common Issues
 
-### LDAP Issues
-```bash
-cd ldap
-make logs        # Check LDAP server logs
-```
+**Authentication Fails**
+- Verify the domain name in your Base DN matches your LDAP_DOMAIN
+- Ensure you're using the correct password (check for special characters)
+- Verify the user exists: `make view-ldap`
+- For APs expecting MS AD: MS AD attributes are automatically enabled with `make setup-users`
+- Check if AP is searching for sAMAccountName or userPrincipalName instead of uid
 
-Common LDAP problems:
-- **Authentication failed**: Run `make setup-users` to recreate users
-- **TLS connection failed**: Restart with `make clean && make init`
-- **No such object**: Use `make clean && make init && make setup-users`
+**Certificate Issues**
+- Check certificate status: `make health`
+- Verify DNS points to your server
+- Ensure port 80 is open for Let's Encrypt validation
 
-### Port Conflicts
-- **Certbot requires port 80** for Let's Encrypt HTTP challenge
-- **LDAP uses ports 389, 636** for directory queries
-- **Cannot run multiple certbot instances** on same server
+**Connection Refused**
+- Check firewall rules for ports 389, 636
+- Verify containers are running: `docker ps`
+- Check bind address in docker-compose.yml
 
-## Security Notes
+## 🚀 Advanced Configuration
 
-- **Test environment only** - Not hardened for production use
-- **Default passwords** - Change all passwords in .env files
-- **Certificate staging** - Uses Let's Encrypt staging by default
-- **Network access** - Ports exposed for authentication testing
-- **Automatic renewal** - Certificates renew 30 days before expiration
+### Custom Users
+Edit `scripts/setup-users.sh` to add your own users with specific attributes.
 
-## Support
+### Custom Schema
+Add custom LDAP schemas in `docker/openldap/schema/` for specialized attributes.
 
-For component-specific documentation:
-- **Certificate management**: See `certbot/README.md`
-- **LDAP server**: See `ldap/README.md`
+### Replication
+Configure LDAP replication for high availability in production environments.
 
-For issues and questions, open an issue on GitHub.
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit pull requests.
+
+## 📮 Support
+
+For issues, questions, or suggestions, please open an issue on GitHub.
 
 ---
 
-**Complete LDAP authentication solution with automatic certificate management** 🔒
+**Ready for Enterprise WiFi Authentication Testing!** 🔒📡
