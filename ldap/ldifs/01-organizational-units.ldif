@@ -1,15 +1,6 @@
-# Base LDAP directory structure
-# Purpose: Creates the root organization and organizational units
-# Dependencies: None (must be imported first)
-
-# Organization root
-dn: dc=example,dc=com
-objectClass: top
-objectClass: dcObject
-objectClass: organization
-o: Example Organization
-dc: example
-description: LDAP directory for WiFi authentication testing
+# Organizational units for LDAP directory
+# Purpose: Creates organizational units (osixia already creates the base DN)
+# Dependencies: Base DN must exist (created automatically by osixia/openldap)
 
 # Users organizational unit
 dn: ou=users,dc=example,dc=com

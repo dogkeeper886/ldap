@@ -1,14 +1,15 @@
 # LDAP WiFi Authentication Server - Simple Makefile
 
-.PHONY: help env deploy stop logs clean init copy-certs build-tls backup
+.PHONY: help env deploy stop logs clean init copy-certs build-tls backup setup-users
 
 help:
 	@echo "LDAP WiFi Authentication Server"
 	@echo "==============================="
 	@echo ""
 	@echo "  make env           - Create .env from template"
-	@echo "  make init          - Complete setup (certs + deploy)"
+	@echo "  make init          - Complete setup (certs + deploy + users)"
 	@echo "  make deploy        - Start LDAP service"
+	@echo "  make setup-users   - Create test users"
 	@echo "  make stop          - Stop LDAP service"
 	@echo "  make logs          - Show logs"
 	@echo "  make clean         - Clean containers and volumes"
@@ -41,6 +42,10 @@ deploy: build-tls
 
 init: env deploy
 	@echo "LDAP server ready!"
+
+setup-users:
+	@echo "Setting up test users..."
+	@./scripts/setup-users.sh
 
 stop:
 	@docker compose down

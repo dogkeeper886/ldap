@@ -33,6 +33,7 @@ services:
     volumes:
       - ldap-data:/var/lib/ldap
       - ldap-config:/etc/ldap/slapd.d
+      - ./ldifs:/ldifs:ro
     networks:
       - ldap-network
     logging:
