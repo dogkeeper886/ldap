@@ -19,10 +19,13 @@ make env
 # 2. Start external certbot (required for TLS certificates)
 cd ../certbot && make deploy
 
-# 3. Deploy LDAP server with certificates and test users
+# 3. Deploy LDAP server with certificates
 make init
 
-# 4. Server is ready for LDAP queries
+# 4. Create test users
+make setup-users
+
+# 5. Server is ready for LDAP queries
 ```
 
 ## Architecture
@@ -66,7 +69,7 @@ For systems expecting Active Directory attributes:
 ```bash
 # Setup
 make env           # Create .env file
-make init          # Complete setup (certificates + deployment + users)
+make init          # Complete setup (certificates + deployment)
 
 # Deployment  
 make deploy        # Start LDAP service
@@ -79,7 +82,7 @@ make copy-certs    # Copy certificates from external certbot
 make build-tls     # Build OpenLDAP with TLS certificates
 
 # User Management  
-make setup-users   # Create test users
+make setup-users   # Create test users (run after make init)
 
 # Maintenance
 make backup        # Export LDAP data to LDIF file
@@ -142,8 +145,17 @@ ldapsearch -x -H ldap://localhost:389 \
 
 ### Common Issues
 - **"External certbot container not running"**: Start certbot first: `cd ../certbot && make deploy`
-- **"Authentication failed"**: Check user passwords in .env file
+- **"Authentication failed"**: Run `make setup-users` to create test users with correct passwords
+- **"No such object" errors**: Use `make clean && make init && make setup-users` for fresh setup
 - **"TLS connection failed"**: Verify certificates copied correctly: `make copy-certs && make build-tls`
+
+### Persistent Volume Issues
+If users authenticate inconsistently, old Docker volumes may contain stale data:
+```bash
+make clean          # Removes old volumes completely
+make init           # Fresh LDAP server deployment  
+make setup-users    # Create users with current .env passwords
+```
 
 ### Logs and Debugging
 ```bash
@@ -156,22 +168,19 @@ docker compose ps            # Check container status
 ```
 ldap/
 ├── docker/
-│   ├── Dockerfile-tls        # OpenLDAP with TLS support
-│   ├── entrypoint.sh         # Simplified startup script
-│   ├── health-check.sh       # Basic LDAP connectivity check  
-│   └── init-ldap.sh          # Initialize users and data
+│   └── Dockerfile-tls        # OpenLDAP with TLS support
 ├── ldifs/
-│   ├── 01-base.ldif          # Base directory structure
-│   ├── 02-users.ldif         # Test users
+│   ├── 01-organizational-units.ldif  # Organizational units (ou=users, ou=groups)
+│   ├── 02-users.ldif         # Test users (without passwords)
 │   ├── 03-groups.ldif        # User groups
-│   └── 05-msad-compat.ldif   # Microsoft AD compatibility
+│   ├── 05-msad-compat.ldif   # Microsoft AD compatibility
+│   └── 06-users-with-msad.ldif  # AD attributes for users
 ├── scripts/
-│   ├── setup-users.sh        # Create test users
+│   ├── setup-users.sh        # Create test users with passwords
 │   ├── copy-certs-for-build.sh  # Certificate management
-│   ├── add-msad-attributes.sh   # AD compatibility setup
 │   └── backup-ldap.sh        # Simple LDIF export
 ├── docker-compose.yml        # Service definition
-├── Makefile                 # Simplified build commands
+├── Makefile                 # Build commands
 └── .env.example             # Environment template
 ```
 
