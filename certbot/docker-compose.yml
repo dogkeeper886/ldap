@@ -3,15 +3,17 @@ version: '3.8'
 services:
   certbot:
     image: certbot/certbot
-    container_name: standalone-certbot
+    container_name: certbot
     ports:
       - "80:80"
     volumes:
       - certificates:/etc/letsencrypt
+    entrypoint: sh
     command: >
-      sh -c 'certbot certonly --standalone --non-interactive --agree-tos
+      -c 'certbot certonly --standalone --non-interactive --agree-tos
       --email $${EMAIL} --domains $${DOMAINS}
-      $${STAGING:+--staging} $${DRY_RUN:+--dry-run} &&
+      $$([ "$${STAGING}" = "true" ] && echo "--staging")
+      $$([ "$${DRY_RUN}" = "true" ] && echo "--dry-run") &&
       trap exit TERM; while :; do certbot renew --quiet; sleep 43200 & wait $$!; done'
     environment:
       - DOMAINS=${DOMAINS:-ldap.example.com,radius.example.com}

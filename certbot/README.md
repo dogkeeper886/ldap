@@ -36,8 +36,8 @@ make deploy
 ```bash
 DOMAINS=ldap.example.com,radius.example.com
 LETSENCRYPT_EMAIL=admin@example.com
-STAGING=true      # Use false for production
-DRY_RUN=false     # Use true for testing
+STAGING=false     # Set to "true" for Let's Encrypt staging
+DRY_RUN=false     # Set to "true" for testing without issuing certs
 ```
 
 ## Certificate Access
@@ -46,9 +46,9 @@ Certificates are stored in the `certificates` Docker volume. Access them from ot
 
 ```bash
 # Copy certificates from running container
-docker cp standalone-certbot:/etc/letsencrypt/live/your-domain/cert.pem ./
-docker cp standalone-certbot:/etc/letsencrypt/live/your-domain/privkey.pem ./
-docker cp standalone-certbot:/etc/letsencrypt/live/your-domain/fullchain.pem ./
+docker cp certbot:/etc/letsencrypt/live/your-domain/cert.pem ./
+docker cp certbot:/etc/letsencrypt/live/your-domain/privkey.pem ./
+docker cp certbot:/etc/letsencrypt/live/your-domain/fullchain.pem ./
 ```
 
 ## Notes
