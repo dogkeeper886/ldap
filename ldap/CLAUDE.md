@@ -51,14 +51,16 @@ add: userAccountControl
 userAccountControl: 512
 ```
 
-**Add user to `scripts/setup-users.sh`:**
-- Add user creation block
-- Add password setting with `ldappasswd`
-- Add to group membership
-
-**Add password to `.env.example`:**
+**Add user password to `.env.example`:**
 ```bash
-NEW_USER_PASSWORD=SecurePass123!
+NEW_USER_06_PASSWORD=SecurePass123!
+```
+
+**Add user to `scripts/setup-users.sh`:**
+```bash
+docker exec openldap ldappasswd -x -H ldap://localhost \
+    -D "cn=admin,$base_dn" -w "$LDAP_ADMIN_PASSWORD" \
+    -s "$NEW_USER_06_PASSWORD" "uid=test-user-06,ou=users,$base_dn"
 ```
 
 ## Adding New Groups
@@ -72,28 +74,69 @@ cn: group-name
 member: uid=test-user-01,ou=users,dc=example,dc=com
 ```
 
-**Add group to `scripts/setup-users.sh`:**
-- Add group creation block
+**Add user to new group:**
+```ldif
+dn: uid=test-user-01,ou=users,dc=example,dc=com
+changetype: modify
+add: memberOf
+memberOf: cn=group-name,ou=groups,dc=example,dc=com
+```
 
-**Add WiFi group to `scripts/add-msad-attributes.sh`:**
-- Add group creation in WiFi groups section
+**Note:** Groups are automatically imported by `scripts/setup-users.sh` from LDIF files
 
 ## Adding New Attributes
 
 **Add schema to `ldifs/05-msad-compat.ldif`:**
 ```ldif
-olcAttributeTypes: ( 1.3.6.1.4.1.99999.1.X
+olcAttributeTypes: ( 1.2.840.113556.1.4.X
   NAME 'attributeName'
   DESC 'Description'
   EQUALITY caseIgnoreMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+olcObjectClasses: ( 1.2.840.113556.1.5.X
+  NAME 'customUser'
+  SUP top AUXILIARY
+  MAY ( attributeName ) )
 ```
 
-**Add to `scripts/add-msad-attributes.sh`:**
-- Add schema installation
-- Add attribute application to users
+**Apply new attribute to existing users:**
+```ldif
+dn: uid=test-user-01,ou=users,dc=example,dc=com
+changetype: modify
+add: objectClass
+objectClass: customUser
+-
+add: attributeName
+attributeName: value
+```
+
+## File Structure
+
+- `01-organizational-units.ldif` - Creates ou=users and ou=groups
+- `02-users.ldif` - User definitions
+- `03-groups.ldif` - Group definitions  
+- `05-msad-compat.ldif` - MS AD schema extensions
+- `06-users-with-msad.ldif` - Applies MS AD attributes to users
+
+## Group Names
+
+Available groups in `06-users-with-msad.ldif`:
+- `wifi-users` - Standard access
+- `wifi-guests` - Guest access
+- `wifi-admins` - Admin access
+- `external-users` - Contractor access
+- `executives` - VIP access
 
 ## File Dependencies
 
 - `06-users-with-msad.ldif` requires `05-msad-compat.ldif` to be applied first
-- WiFi groups (`wifi-users`, `wifi-guests`, `wifi-admins`) must exist before adding `memberOf` attributes
+- Groups must exist before adding `memberOf` attributes
+- `memberOf` is manually assigned via `ldapmodify` commands (not auto-managed)
+
+## Script Automation
+
+`scripts/setup-users.sh` automatically:
+- Loads MS AD schema (`05-msad-compat.ldif`)
+- Imports all LDIF files with domain replacement
+- Sets passwords for all users via `ldappasswd`
+- Applies MS AD attributes (`06-users-with-msad.ldif`)
