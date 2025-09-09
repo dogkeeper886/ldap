@@ -16,24 +16,14 @@ Simple LDAP server with test users for authentication testing.
 make env
 # Edit .env with your domain and passwords
 
-# 2. Start external certbot (required for TLS certificates)
-cd ../certbot && make deploy
-
-# 3. Deploy LDAP server with certificates
+# 2. Deploy LDAP server with certificates
 make init
 
-# 4. Create test users
+# 3. Create test users
 make setup-users
 
-# 5. Server is ready for LDAP queries
+# 4. Server is ready for LDAP queries
 ```
-
-## Architecture
-
-This LDAP server is part of a **three-project architecture**:
-- `../certbot/` - Certificate management for TLS (port 80)  
-- `../ldap/` - **This LDAP server** (ports 389, 636)
-- `../freeradius/` - RADIUS server (separate project)
 
 ## Test Users
 
@@ -112,11 +102,11 @@ make backup        # Export LDAP data to LDIF file
 
 ## Certificate Requirements
 
-This project requires **external certificate management**:
+This project uses **automatic certificate management**:
 
-1. **Start certbot first**: `cd ../certbot && make deploy`
-2. **Copy certificates**: Handled automatically by `make copy-certs`
-3. **TLS support**: LDAPS on port 636 with Let's Encrypt certificates
+1. **Certificate acquisition**: Handled automatically during `make init`
+2. **TLS support**: LDAPS on port 636 with Let's Encrypt certificates
+3. **Certificate renewal**: Automatic renewal via integrated certificate management
 
 ## Testing LDAP Server
 
@@ -144,10 +134,10 @@ ldapsearch -x -H ldap://localhost:389 \
 ## Troubleshooting
 
 ### Common Issues
-- **"External certbot container not running"**: Start certbot first: `cd ../certbot && make deploy`
+- **"Certificate acquisition failed"**: Check domain DNS configuration and firewall settings
 - **"Authentication failed"**: Run `make setup-users` to create test users with correct passwords
 - **"No such object" errors**: Use `make clean && make init && make setup-users` for fresh setup
-- **"TLS connection failed"**: Verify certificates copied correctly: `make copy-certs && make build-tls`
+- **"TLS connection failed"**: Restart with `make clean && make init` to refresh certificates
 
 ### Persistent Volume Issues
 If users authenticate inconsistently, old Docker volumes may contain stale data:
@@ -193,4 +183,4 @@ ldap/
 
 ---
 
-This LDAP server provides a simple enterprisewith standard LDAPattributes and 802.1X standardsoptional Microsoft AD compatibility.
+This LDAP server provides a simple enterprise solution with standard LDAP attributes and 802.1X standards, with optional Microsoft AD compatibility.
