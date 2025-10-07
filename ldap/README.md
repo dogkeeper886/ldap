@@ -27,13 +27,13 @@ make setup-users
 
 ## Test Users
 
-| Username | Password | Department | Role | Use Case |
-|----------|----------|------------|------|----------|
-| test-user-01 | TestPass123! | IT Department | Full-Time | Standard employee |
-| test-user-02 | GuestPass789! | External | Temporary | Guest access |
-| test-user-03 | AdminPass456! | IT Operations | Full-Time | Administrator |
-| test-user-04 | ContractorPass321! | Professional Services | Contractor | External contractor |
-| test-user-05 | VipPass654! | Executive Management | Executive | VIP user |
+| Username | Password | Department | Job Title | Employment Type | Use Case |
+|----------|----------|------------|-----------|-----------------|----------|
+| test-user-01 | TestPass123! | IT Department | IT Support Specialist | Full-Time | Standard employee |
+| test-user-02 | GuestPass789! | External | Visitor | Temporary | Guest access |
+| test-user-03 | AdminPass456! | IT Operations | Senior System Administrator | Full-Time | Administrator |
+| test-user-04 | ContractorPass321! | Professional Services | Technical Consultant | Contractor | External contractor |
+| test-user-05 | VipPass654! | Executive Management | Chief Technology Officer | Executive | VIP user |
 
 ## LDAP Attributes
 
@@ -41,17 +41,31 @@ Each user includes **standard LDAP attributes**:
 
 ### Core Attributes
 - `uid` - Primary username
-- `cn` - Common name  
+- `cn` - Common name
+- `givenName` - First name
+- `sn` - Last name (surname)
 - `displayName` - User's display name
 - `mail` - Email address
 - `telephoneNumber` - Phone number
-- `department` - Department/organizational unit
-- `employeeType` - Employee type (Full-Time, Contractor, etc.)
+- `mobile` - Mobile phone number
+- `title` - Job title
+- `ou` - Organizational unit (department)
+- `departmentNumber` - Department identifier
+- `employeeNumber` - Employee identifier
+- `employeeType` - Employment type (Full-Time, Contractor, Temporary, Executive)
+- `description` - User description
+- `street` - Street address
+- `l` - Locality/city
+- `st` - State/province
+- `postalCode` - Postal/ZIP code
+- `preferredLanguage` - Preferred language (e.g., en-US)
 
 ### Microsoft AD Compatibility
 For systems expecting Active Directory attributes:
 - **Automatically enabled** via `make setup-users`
 - Adds `sAMAccountName` and `userPrincipalName` to all users
+- Adds `memberOf` for group memberships
+- Adds `userAccountControl` for account status
 - Compatible with WiFi APs expecting MS AD authentication
 
 ## Available Commands
