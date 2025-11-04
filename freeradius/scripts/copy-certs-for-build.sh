@@ -29,7 +29,7 @@ if [ -f .env ]; then
 fi
 
 # Configuration for external certbot
-CERTBOT_CONTAINER_NAME=${CERTBOT_CONTAINER_NAME:-standalone-certbot}
+CERTBOT_CONTAINER_NAME=${EXTERNAL_CERTBOT_CONTAINER:-certbot}
 # Certificate directory name in certbot (uses first domain from DOMAINS list)
 CERTBOT_CERT_NAME=${LDAP_DOMAIN:-ldap.example.com}
 CERTBOT_CERT_DIR="/etc/letsencrypt/live/${CERTBOT_CERT_NAME}"
@@ -55,7 +55,7 @@ mkdir -p "$FREERADIUS_CERT_DIR"
 # Copy certificates from external certbot container
 log "Copying certificate files..."
 docker cp "$CERTBOT_CONTAINER_NAME:$CERTBOT_CERT_DIR/cert.pem" "$FREERADIUS_CERT_DIR/cert.pem"
-docker cp "$CERTBOT_CONTAINER_NAME:$CERTBOT_CERT_DIR/privkey.pem" "$FREERADIUS_CERT_DIR/privkey.pem"  
+docker cp "$CERTBOT_CONTAINER_NAME:$CERTBOT_CERT_DIR/privkey.pem" "$FREERADIUS_CERT_DIR/privkey.pem"
 docker cp "$CERTBOT_CONTAINER_NAME:$CERTBOT_CERT_DIR/fullchain.pem" "$FREERADIUS_CERT_DIR/fullchain.pem"
 
 # Set appropriate permissions
@@ -66,11 +66,11 @@ chmod 640 "$FREERADIUS_CERT_DIR/privkey.pem"
 if [[ -f "$FREERADIUS_CERT_DIR/cert.pem" ]] && [[ -f "$FREERADIUS_CERT_DIR/privkey.pem" ]] && [[ -f "$FREERADIUS_CERT_DIR/fullchain.pem" ]]; then
     log "Certificates copied successfully:"
     ls -la "$FREERADIUS_CERT_DIR/"
-    
+
     # Show certificate expiration
     log "Certificate expiration info:"
     openssl x509 -in "$FREERADIUS_CERT_DIR/cert.pem" -noout -dates
-    
+
     # Show certificate domains
     log "Certificate domains:"
     openssl x509 -in "$FREERADIUS_CERT_DIR/cert.pem" -noout -text | grep -E "DNS:" | head -5
