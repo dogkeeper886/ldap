@@ -2,14 +2,14 @@
 
 A comprehensive authentication testing platform for enterprise WiFi environments. This project provides a complete solution with three independent authentication services: certificate management, LDAP directory services, and RADIUS authentication.
 
-**Current Status**: Development in progress - certbot and LDAP components complete, FreeRADIUS implementation in development.
+**Current Status**: All components complete - certbot, LDAP, and FreeRADIUS are fully functional.
 
 ## 🎯 Project Overview
 
 This platform provides authentication testing with:
 - **Let's Encrypt certificate management** for TLS/SSL automation
 - **LDAP directory authentication** with test users and Microsoft AD compatibility  
-- **RADIUS authentication server** with EAP protocol support *(FreeRADIUS in development)*
+- **RADIUS authentication server** with EAP protocol support
 
 ## 🏗️ Three-Project Architecture
 
@@ -27,7 +27,7 @@ This repository contains **three independent sub-projects** that work together t
 - **Ports**: 389 (LDAP), 636 (LDAPS)
 - **Function**: Directory authentication backend for enterprise WiFi
 
-### 3. **RADIUS Authentication Service** (`freeradius/`) *(In Development)*
+### 3. **RADIUS Authentication Service** (`freeradius/`)
 - **Purpose**: FreeRADIUS server with EAP protocol support
 - **Technology**: FreeRADIUS with TLS/RadSec capabilities
 - **Ports**: 1812/1813 (RADIUS), 2083 (RadSec)
@@ -49,8 +49,8 @@ To understand and deploy this authentication platform, please read the documenta
 - Configure test users and Microsoft AD compatibility
 - Understand LDAP integration with WiFi access points
 
-### Step 3: RADIUS Authentication Service *(Coming Soon)*
-**Read third**: [`freeradius/README.md`](freeradius/README.md) *(In Development)*
+### Step 3: RADIUS Authentication Service
+**Read third**: [`freeradius/README.md`](freeradius/README.md)
 - Deploy FreeRADIUS with EAP protocol support
 - Configure RadSec (RADIUS over TLS)
 - Test enterprise WiFi authentication flows
