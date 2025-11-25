@@ -38,10 +38,6 @@ RUN chmod +x /opt/radius-scripts/*.sh
 RUN chmod 600 /etc/raddb/certs/*.pem || true \
     && chmod 644 /etc/raddb/certs/cert.pem /etc/raddb/certs/fullchain.pem || true
 
-# Health check
-HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD /opt/bin/radtest test testpass123 localhost 0 testing123 || exit 1
-
 # Custom entrypoint
 ENTRYPOINT ["/opt/radius-scripts/entrypoint.sh"]
 

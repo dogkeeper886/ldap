@@ -112,6 +112,13 @@ setup_test_users() {
     else
         warn "Users file not found at $users_file"
     fi
+
+    # Update clients.conf with RADIUS_SECRET
+    local clients_file="$CONFIG_DIR/clients.conf"
+    if [ -f "$clients_file" ]; then
+        sed -i "s/{{RADIUS_SECRET}}/${RADIUS_SECRET:-testing123}/g" "$clients_file"
+        log "✓ RADIUS client secret configured"
+    fi
 }
 
 # Signal handlers for graceful shutdown
