@@ -16,8 +16,8 @@ warn() {
     echo -e "${YELLOW}[TLS-Setup][$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
 }
 
-# Configuration
-CONFIG_DIR="/etc/freeradius/3.0"
+# Configuration (Alpine uses /etc/raddb/)
+CONFIG_DIR="/etc/raddb"
 CERT_DIR="$CONFIG_DIR/certs"
 TLS_CERT_FILE=${TLS_CERT_FILE:-cert.pem}
 TLS_KEY_FILE=${TLS_KEY_FILE:-privkey.pem}
@@ -29,17 +29,21 @@ log "Certificate file: $TLS_CERT_FILE"
 log "Private key file: $TLS_KEY_FILE"
 log "CA file: $TLS_CA_FILE"
 
-# Update EAP module configuration for TLS
-EAP_CONFIG="$CONFIG_DIR/mods-available/eap"
+# Update EAP module configuration for TLS (use mods-enabled symlink)
+EAP_CONFIG="$CONFIG_DIR/mods-enabled/eap"
 
 if [ -f "$EAP_CONFIG" ]; then
     log "Updating EAP configuration for TLS certificates..."
-    
-    # Update certificate paths in EAP configuration
-    sed -i "s|certificate_file = .*|certificate_file = \${certdir}/$TLS_CERT_FILE|g" "$EAP_CONFIG"
-    sed -i "s|private_key_file = .*|private_key_file = \${certdir}/$TLS_KEY_FILE|g" "$EAP_CONFIG"
-    sed -i "s|ca_file = .*|ca_file = \${certdir}/$TLS_CA_FILE|g" "$EAP_CONFIG"
-    
+
+    # Replace default certificate paths with our Let's Encrypt certificates
+    # Default uses: ${certdir}/server.pem and ${cadir}/ca.pem
+    sed -i "s|private_key_file = \${certdir}/server.pem|private_key_file = \${certdir}/$TLS_KEY_FILE|g" "$EAP_CONFIG"
+    sed -i "s|certificate_file = \${certdir}/server.pem|certificate_file = \${certdir}/$TLS_CERT_FILE|g" "$EAP_CONFIG"
+    sed -i "s|ca_file = \${cadir}/ca.pem|ca_file = \${certdir}/$TLS_CA_FILE|g" "$EAP_CONFIG"
+
+    # Remove private_key_password since Let's Encrypt keys are not encrypted
+    sed -i "s|private_key_password = .*|#private_key_password = \"\"|g" "$EAP_CONFIG"
+
     log "✓ EAP configuration updated"
 else
     warn "EAP configuration file not found at $EAP_CONFIG"
@@ -47,7 +51,7 @@ fi
 
 # Set proper permissions on certificate files
 log "Setting certificate file permissions..."
-chmod 600 "$CERT_DIR"/*.pem || true
-chmod 644 "$CERT_DIR/$TLS_CERT_FILE" "$CERT_DIR/$TLS_CA_FILE" || true
+chmod 600 "$CERT_DIR"/*.pem 2>/dev/null || true
+chmod 644 "$CERT_DIR/$TLS_CERT_FILE" "$CERT_DIR/$TLS_CA_FILE" 2>/dev/null || true
 
 log "TLS configuration setup completed"

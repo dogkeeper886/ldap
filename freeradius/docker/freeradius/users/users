@@ -3,37 +3,25 @@
 
 # Test user for basic authentication
 test    Cleartext-Password := "{{TEST_USER_PASSWORD}}"
-        Reply-Message := "Hello test user",
-        Framed-IP-Address = 192.168.100.10,
-        Framed-IP-Netmask = 255.255.255.0
+        Reply-Message := "Hello test user"
 
 # Guest user with limited access
 guest   Cleartext-Password := "{{GUEST_USER_PASSWORD}}"
         Reply-Message := "Welcome guest user",
-        Framed-IP-Address = 192.168.200.10,
-        Framed-IP-Netmask = 255.255.255.0,
         Session-Timeout = 3600
 
 # Admin user with full access
 admin   Cleartext-Password := "{{ADMIN_USER_PASSWORD}}"
-        Reply-Message := "Admin access granted",
-        Framed-IP-Address = 192.168.10.10,
-        Framed-IP-Netmask = 255.255.255.0,
-        Service-Type = Administrative-User
+        Reply-Message := "Admin access granted"
 
 # Contractor user with time-limited access
 contractor Cleartext-Password := "{{CONTRACTOR_PASSWORD}}"
         Reply-Message := "Contractor access",
-        Framed-IP-Address = 192.168.150.10,
-        Framed-IP-Netmask = 255.255.255.0,
         Session-Timeout = 28800
 
 # VIP user with priority access
 vip     Cleartext-Password := "{{VIP_PASSWORD}}"
-        Reply-Message := "VIP access granted",
-        Framed-IP-Address = 192.168.50.10,
-        Framed-IP-Netmask = 255.255.255.0,
-        Framed-Priority = 1
+        Reply-Message := "VIP access granted"
 
 # Default user (fallback)
 DEFAULT Auth-Type := Reject

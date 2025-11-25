@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   freeradius:
     build:
@@ -33,7 +31,6 @@ services:
       - VIP_PASSWORD=${VIP_PASSWORD:-vippass123}
     volumes:
       - radius-data:/var/log/freeradius
-      - radius-config:/etc/freeradius/3.0
     networks:
       - radius-network
     logging:
@@ -41,12 +38,9 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-        labels: "service=freeradius"
 
 volumes:
   radius-data:
-    driver: local
-  radius-config:
     driver: local
 
 networks:
