@@ -17,7 +17,11 @@ RUN apk add --no-cache \
 RUN mkdir -p /opt/radius-scripts \
     && mkdir -p /var/log/freeradius
 
-# Copy certificates to container (Alpine uses /etc/raddb/certs)
+# Copy configuration files (Alpine uses /etc/raddb)
+COPY config/radiusd.conf /etc/raddb/radiusd.conf
+COPY config/clients.conf /etc/raddb/clients.conf
+
+# Copy certificates to container
 COPY certs/*.pem /etc/raddb/certs/
 
 # Copy test users (overwrites authorize file)
