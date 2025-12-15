@@ -23,3 +23,7 @@ google_compute_engine*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Mail server sensitive files
+mail/config/postfix-accounts.cf
+mail/docker/certs/

@@ -2,18 +2,19 @@
 
 A comprehensive authentication testing platform for enterprise WiFi environments. This project provides a complete solution with three independent authentication services: certificate management, LDAP directory services, and RADIUS authentication.
 
-**Current Status**: All components complete - certbot, LDAP, and FreeRADIUS are fully functional.
+**Current Status**: All components complete - certbot, LDAP, FreeRADIUS, and Mail server are fully functional.
 
 ## 🎯 Project Overview
 
 This platform provides authentication testing with:
 - **Let's Encrypt certificate management** for TLS/SSL automation
-- **LDAP directory authentication** with test users and Microsoft AD compatibility  
+- **LDAP directory authentication** with test users and Microsoft AD compatibility
 - **RADIUS authentication server** with EAP protocol support
+- **Mail server** for receiving email (SMTP/IMAP)
 
-## 🏗️ Three-Project Architecture
+## 🏗️ Four-Project Architecture
 
-This repository contains **three independent sub-projects** that work together to provide a complete authentication testing environment:
+This repository contains **four independent sub-projects** that work together to provide a complete authentication testing environment:
 
 ### 1. **Certificate Management** (`certbot/`)
 - **Purpose**: Standalone multi-domain SSL/TLS certificate management
@@ -32,6 +33,12 @@ This repository contains **three independent sub-projects** that work together t
 - **Technology**: FreeRADIUS with TLS/RadSec capabilities
 - **Ports**: 1812/1813 (RADIUS), 2083 (RadSec)
 - **Function**: RADIUS authentication for WiFi access points
+
+### 4. **Mail Server** (`mail/`)
+- **Purpose**: Receive-only mail server
+- **Technology**: docker-mailserver with Postfix/Dovecot
+- **Ports**: 25 (SMTP), 993 (IMAPS)
+- **Function**: Receive emails via IMAP
 
 ## 📖 Getting Started - Reading Order
 
@@ -69,15 +76,10 @@ To understand and deploy this authentication platform, please read the documenta
 ldap/
 ├── README.md              # This overview document
 ├── certbot/               # Certificate management project
-│   └── README.md         # Certificate deployment guide
-├── ldap/                 # LDAP authentication project  
-│   └── README.md         # LDAP deployment guide
-├── freeradius/           # RADIUS authentication project
-│   └── README.md         # RADIUS deployment guide
-└── docs/                 # Architecture documentation
-    ├── 01-brainstorming-session-results.md
-    ├── 02-PRD.md
-    └── 03-THREE-PROJECT-ARCHITECTURE.md
+├── ldap/                  # LDAP authentication project
+├── freeradius/            # RADIUS authentication project
+├── mail/                  # Mail server project
+└── docs/                  # Architecture documentation
 ```
 
 ## 🚀 Use Cases
@@ -96,7 +98,7 @@ Before starting, ensure you have:
 - Linux server with Docker and Docker Compose v2
 - Domain names for your services (e.g., ldap.example.com, radius.example.com)
 - DNS records pointing to your server
-- Required ports available (80, 389, 636, 1812, 1813, 2083)
+- Required ports available (25, 80, 389, 636, 993, 1812, 1813, 2083)
 
 ## 📄 License
 

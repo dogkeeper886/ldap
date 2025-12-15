@@ -1,0 +1,36 @@
+services:
+  mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:latest
+    container_name: mailserver
+    hostname: ${MAIL_DOMAIN}
+    ports:
+      - "25:25"
+      - "993:993"
+    volumes:
+      - mail-data:/var/mail
+      - mail-state:/var/mail-state
+      - mail-logs:/var/log/mail
+      - ./config/:/tmp/docker-mailserver/
+      - ./docker/certs:/tmp/ssl:ro
+    environment:
+      - OVERRIDE_HOSTNAME=${MAIL_DOMAIN}
+      - SSL_TYPE=manual
+      - SSL_CERT_PATH=/tmp/ssl/fullchain.pem
+      - SSL_KEY_PATH=/tmp/ssl/privkey.pem
+      - ENABLE_IMAP=1
+      - ENABLE_POP3=0
+      - ENABLE_CLAMAV=0
+      - ENABLE_SPAMASSASSIN=0
+      - ENABLE_FAIL2BAN=0
+      - ENABLE_POSTGREY=0
+      - SMTP_ONLY=0
+      - PERMIT_DOCKER=none
+      - ONE_DIR=1
+      - POSTMASTER_ADDRESS=${POSTMASTER_ADDRESS}
+    restart: unless-stopped
+    stop_grace_period: 1m
+
+volumes:
+  mail-data:
+  mail-state:
+  mail-logs:
