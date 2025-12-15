@@ -122,6 +122,10 @@ This project uses **automatic certificate management**:
 2. **TLS support**: LDAPS on port 636 with Let's Encrypt certificates
 3. **Certificate renewal**: Automatic renewal via integrated certificate management
 
+### Certificate Renewal
+
+You'll need to run `make deploy` in this directory before certs expire (every ~60-90 days). Let's Encrypt certs are valid for 90 days, and certbot auto-renews them when they're within 30 days of expiry. The `make deploy` command copies the renewed certificates from the certbot container and rebuilds the OpenLDAP image.
+
 ## Testing LDAP Server
 
 ### Manual LDAP Queries
