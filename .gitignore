@@ -26,4 +26,5 @@ Thumbs.db
 
 # Mail server sensitive files
 mail/config/postfix-accounts.cf
+mail/config/postfix-virtual.cf
 mail/docker/certs/

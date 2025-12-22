@@ -1,0 +1,11 @@
+# Virtual alias mappings for email forwarding
+# Format: source_address destination_address
+#
+# Example: Forward guest emails to a main account
+# guest0001@mail.example.com user@mail.example.com
+# guest0002@mail.example.com user@mail.example.com
+#
+# To generate 1000 guest forwards:
+# for i in $(seq -w 1 1000); do
+#   echo "guest${i}@${MAIL_DOMAIN} ${MAIL_USER}@${MAIL_DOMAIN}"
+# done > postfix-virtual.cf
