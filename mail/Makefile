@@ -1,4 +1,4 @@
-.PHONY: help env deploy stop logs clean copy-certs add-user del-user update-password list-users
+.PHONY: help env deploy stop logs clean copy-certs add-user del-user update-password list-users read-guest-mail clean-mail
 
 help:
 	@echo "Mail Server (Receive Only)"
@@ -17,6 +17,10 @@ help:
 	@echo ""
 	@echo "Certificate Management:"
 	@echo "  make copy-certs    - Copy certificates from certbot"
+	@echo ""
+	@echo "Guest Mail:"
+	@echo "  make read-guest-mail  - Read guest credential emails"
+	@echo "  make clean-mail       - Delete all mail"
 	@echo ""
 
 env:
@@ -53,3 +57,10 @@ del-user:
 
 update-password:
 	@docker exec -it mailserver setup email update
+
+read-guest-mail:
+	@docker cp scripts/read-guest-mail.sh mailserver:/tmp/read-guest-mail.sh
+	@. ./.env && docker exec -e MAIL_DOMAIN=$$MAIL_DOMAIN -e MAIL_USER=$$MAIL_USER mailserver bash /tmp/read-guest-mail.sh
+
+clean-mail:
+	@. ./.env && docker exec mailserver sh -c "rm -f /var/mail/$$MAIL_DOMAIN/$$MAIL_USER/new/* /var/mail/$$MAIL_DOMAIN/$$MAIL_USER/cur/*"
