@@ -28,3 +28,6 @@ Thumbs.db
 mail/config/postfix-accounts.cf
 mail/config/postfix-virtual.cf
 mail/docker/certs/
+
+# Keycloak certificates
+keycloak/docker/certs/

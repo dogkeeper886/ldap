@@ -1,0 +1,47 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    container_name: keycloak
+    hostname: ${KEYCLOAK_DOMAIN:-keycloak.example.com}
+    restart: unless-stopped
+    command: start
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      - KC_HOSTNAME=${KEYCLOAK_DOMAIN:-keycloak.example.com}
+      - KC_HOSTNAME_STRICT=false
+      - KC_PROXY_HEADERS=xforwarded
+      - KC_HTTP_ENABLED=true
+      - KC_HTTPS_CERTIFICATE_FILE=/opt/keycloak/conf/certs/fullchain.pem
+      - KC_HTTPS_CERTIFICATE_KEY_FILE=/opt/keycloak/conf/certs/privkey.pem
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      # LDAP federation variables
+      - LDAP_HOST=${LDAP_HOST:-openldap}
+      - LDAP_PORT=${LDAP_PORT:-636}
+      - LDAP_DOMAIN=${LDAP_DOMAIN:-ldap.example.com}
+      - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./docker/certs:/opt/keycloak/conf/certs:ro
+      - ./config:/opt/keycloak/data/import:ro
+    networks:
+      - keycloak-network
+      - ldap-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  keycloak-data:
+    driver: local
+
+networks:
+  keycloak-network:
+    driver: bridge
+  ldap-network:
+    external: true
+    name: ldap_ldap-network

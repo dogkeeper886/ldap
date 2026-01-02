@@ -1,0 +1,51 @@
+{
+  "realm": "saml-test",
+  "enabled": true,
+  "displayName": "SAML Test Realm",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "Standard user role"
+      },
+      {
+        "name": "admin",
+        "description": "Administrator role"
+      },
+      {
+        "name": "guest",
+        "description": "Guest access role"
+      }
+    ]
+  },
+  "defaultRoles": ["user"],
+  "groups": [
+    {
+      "name": "wifi-users",
+      "path": "/wifi-users"
+    },
+    {
+      "name": "wifi-admins",
+      "path": "/wifi-admins"
+    },
+    {
+      "name": "wifi-guests",
+      "path": "/wifi-guests"
+    },
+    {
+      "name": "external-users",
+      "path": "/external-users"
+    },
+    {
+      "name": "executives",
+      "path": "/executives"
+    }
+  ]
+}

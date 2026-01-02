@@ -1,8 +1,8 @@
 # Enterprise Authentication Testing Platform
 
-A comprehensive authentication testing platform for enterprise WiFi environments. This project provides a complete solution with three independent authentication services: certificate management, LDAP directory services, and RADIUS authentication.
+A comprehensive authentication testing platform for enterprise WiFi environments. This project provides a complete solution with independent authentication services: certificate management, LDAP directory services, RADIUS authentication, and SAML identity provider.
 
-**Current Status**: All components complete - certbot, LDAP, FreeRADIUS, and Mail server are fully functional.
+**Current Status**: All components complete - certbot, LDAP, FreeRADIUS, Mail server, and Keycloak SAML IdP are fully functional.
 
 ## 🎯 Project Overview
 
@@ -10,11 +10,12 @@ This platform provides authentication testing with:
 - **Let's Encrypt certificate management** for TLS/SSL automation
 - **LDAP directory authentication** with test users and Microsoft AD compatibility
 - **RADIUS authentication server** with EAP protocol support
+- **SAML 2.0 Identity Provider** with LDAP user federation
 - **Mail server** for receiving email (SMTP/IMAP)
 
-## 🏗️ Four-Project Architecture
+## 🏗️ Five-Project Architecture
 
-This repository contains **four independent sub-projects** that work together to provide a complete authentication testing environment:
+This repository contains **five independent sub-projects** that work together to provide a complete authentication testing environment:
 
 ### 1. **Certificate Management** (`certbot/`)
 - **Purpose**: Standalone multi-domain SSL/TLS certificate management
@@ -34,7 +35,13 @@ This repository contains **four independent sub-projects** that work together to
 - **Ports**: 1812/1813 (RADIUS), 2083 (RadSec)
 - **Function**: RADIUS authentication for WiFi access points
 
-### 4. **Mail Server** (`mail/`)
+### 4. **SAML Identity Provider** (`keycloak/`)
+- **Purpose**: SAML 2.0 Identity Provider with LDAP user federation
+- **Technology**: Keycloak with LDAP backend integration
+- **Ports**: 8080 (HTTP), 8443 (HTTPS)
+- **Function**: SAML SSO authentication for web applications
+
+### 5. **Mail Server** (`mail/`)
 - **Purpose**: Receive-only mail server
 - **Technology**: docker-mailserver with Postfix/Dovecot
 - **Ports**: 25 (SMTP), 993 (IMAPS)
@@ -62,6 +69,12 @@ To understand and deploy this authentication platform, please read the documenta
 - Configure RadSec (RADIUS over TLS)
 - Test enterprise WiFi authentication flows
 
+### Step 4: SAML Identity Provider
+**Read fourth**: [`keycloak/README.md`](keycloak/README.md)
+- Deploy Keycloak SAML 2.0 Identity Provider
+- Configure LDAP user federation
+- Set up SAML authentication for web applications
+
 ## 🔧 Architecture Benefits
 
 ✅ **Independent Deployment** - Each service deploys and scales independently  
@@ -78,6 +91,7 @@ ldap/
 ├── certbot/               # Certificate management project
 ├── ldap/                  # LDAP authentication project
 ├── freeradius/            # RADIUS authentication project
+├── keycloak/              # SAML Identity Provider project
 ├── mail/                  # Mail server project
 └── docs/                  # Architecture documentation
 ```
@@ -87,8 +101,9 @@ ldap/
 This platform supports various enterprise authentication testing scenarios:
 
 - **WiFi Access Point Testing**: Validate AP configurations with real authentication backends
-- **802.1X Development**: Test EAP protocols and certificate-based authentication  
+- **802.1X Development**: Test EAP protocols and certificate-based authentication
 - **Network Access Control**: Integrate with NAC systems requiring LDAP/RADIUS
+- **SAML SSO Integration**: Test SAML 2.0 authentication for web applications
 - **Enterprise Migration**: Test authentication flows before production deployment
 - **Security Validation**: Verify TLS configurations and authentication policies
 
@@ -96,9 +111,9 @@ This platform supports various enterprise authentication testing scenarios:
 
 Before starting, ensure you have:
 - Linux server with Docker and Docker Compose v2
-- Domain names for your services (e.g., ldap.example.com, radius.example.com)
+- Domain names for your services (e.g., ldap.example.com, radius.example.com, keycloak.example.com)
 - DNS records pointing to your server
-- Required ports available (25, 80, 389, 636, 993, 1812, 1813, 2083)
+- Required ports available (25, 80, 389, 636, 993, 1812, 1813, 2083, 8080, 8443)
 
 ## 📄 License
 
