@@ -2,18 +2,42 @@
 
 RADIUS authentication server with TLS/EAP support using Let's Encrypt certificates.
 
-## Architecture
+## User Flow
 
 ```
+Step 1: Certificate Setup
 ┌─────────────────┐     ┌─────────────────┐
 │    Certbot      │────▶│   FreeRADIUS    │
-│  (certificates) │     │   (RADIUS)      │
+│  (Port 80)      │     │  (build time)   │
 └─────────────────┘     └─────────────────┘
         │                       │
         ▼                       ▼
-  ldap.tsengsyu.com      Ports: 1812/udp (auth)
-  radius.tsengsyu.com           1813/udp (acct)
-  (SAN certificate)             2083/tcp (RadSec)
+   Let's Encrypt          certs copied to
+   certificates           /etc/raddb/certs/
+
+Step 2: WiFi Client Authentication
+┌──────┐    ┌─────────┐    ┌─────────────┐
+│ User │───▶│ WiFi AP │───▶│ FreeRADIUS  │
+└──────┘    └─────────┘    │ (1812/UDP)  │
+                           └─────────────┘
+                                 │
+                                 ▼
+                           ┌───────────┐
+                           │ Access    │
+                           │ Granted   │
+                           └───────────┘
+
+Step 3: RadSec (RADIUS over TLS)
+┌─────────────┐    ┌─────────────┐
+│ NAS/Client  │───▶│ FreeRADIUS  │
+│ (TLS)       │    │ (2083/TCP)  │
+└─────────────┘    └─────────────┘
+                         │
+                         ▼
+                   ┌───────────┐
+                   │ Secure    │
+                   │ Auth Done │
+                   └───────────┘
 ```
 
 ## Prerequisites
