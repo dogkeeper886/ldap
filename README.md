@@ -1,19 +1,43 @@
 # Enterprise Authentication Testing Platform
 
-A comprehensive authentication testing platform for enterprise WiFi environments. This project provides a complete solution with independent authentication services: certificate management, LDAP directory services, RADIUS authentication, and SAML identity provider.
+Authentication testing platform for enterprise WiFi and SAML SSO. Five independent services: certbot, LDAP, FreeRADIUS, Keycloak, and Mail server.
 
-**Current Status**: All components complete - certbot, LDAP, FreeRADIUS, Mail server, and Keycloak SAML IdP are fully functional.
+## Architecture
 
-## 🎯 Project Overview
+```
+┌─────────────┐
+│   Certbot   │──► Let's Encrypt Certificates
+│  (Port 80)  │           │
+└─────────────┘           │
+        ┌─────────────────┼─────────────────┬─────────────┐
+        ▼                 ▼                 ▼             ▼
+┌─────────────┐   ┌─────────────┐   ┌─────────────┐ ┌───────────┐
+│   OpenLDAP  │◄──│  Keycloak   │   │ FreeRADIUS  │ │Mail Server│
+│ (389, 636)  │   │(8080, 8443) │   │(1812-13,2083)│ │ (25, 993) │
+└─────────────┘   └─────────────┘   └─────────────┘ └───────────┘
+                  User Federation
+```
 
-This platform provides authentication testing with:
-- **Let's Encrypt certificate management** for TLS/SSL automation
-- **LDAP directory authentication** with test users and Microsoft AD compatibility
-- **RADIUS authentication server** with EAP protocol support
-- **SAML 2.0 Identity Provider** with LDAP user federation
-- **Mail server** for receiving email (SMTP/IMAP)
+## Quick Start
 
-## 🏗️ Five-Project Architecture
+```bash
+# 1. Deploy certificates
+cd certbot && make env && make deploy && cd ..
+
+# 2. Deploy LDAP
+cd ldap && make env && make init && make setup-users && cd ..
+
+# 3. Deploy FreeRADIUS
+cd freeradius && make env && make init && cd ..
+
+# 4. Deploy Keycloak
+cd keycloak && make env && make init && cd ..
+
+# 5. Deploy Mail server
+cd mail && make env && make deploy && cd ..
+```
+
+## Services
 
 This repository contains **five independent sub-projects** that work together to provide a complete authentication testing environment:
 
@@ -47,82 +71,25 @@ This repository contains **five independent sub-projects** that work together to
 - **Ports**: 25 (SMTP), 993 (IMAPS)
 - **Function**: Receive emails via IMAP
 
-## 📖 Getting Started - Reading Order
+## Documentation
 
-To understand and deploy this authentication platform, please read the documentation in this specific sequence:
+| Order | Service | README |
+|-------|---------|--------|
+| 1 | Certificates | [`certbot/README.md`](certbot/README.md) |
+| 2 | LDAP | [`ldap/README.md`](ldap/README.md) |
+| 3 | FreeRADIUS | [`freeradius/README.md`](freeradius/README.md) |
+| 4 | Keycloak | [`keycloak/README.md`](keycloak/README.md) |
+| 5 | Mail | [`mail/README.md`](mail/README.md) |
 
-### Step 1: Certificate Foundation
-**Read first**: [`certbot/README.md`](certbot/README.md)
-- Understand certificate management architecture
-- Learn multi-domain certificate acquisition
-- Set up the certificate foundation for all services
+## Prerequisites
 
-### Step 2: LDAP Directory Service
-**Read second**: [`ldap/README.md`](ldap/README.md)
-- Deploy OpenLDAP authentication server
-- Configure test users and Microsoft AD compatibility
-- Understand LDAP integration with WiFi access points
-
-### Step 3: RADIUS Authentication Service
-**Read third**: [`freeradius/README.md`](freeradius/README.md)
-- Deploy FreeRADIUS with EAP protocol support
-- Configure RadSec (RADIUS over TLS)
-- Test enterprise WiFi authentication flows
-
-### Step 4: SAML Identity Provider
-**Read fourth**: [`keycloak/README.md`](keycloak/README.md)
-- Deploy Keycloak SAML 2.0 Identity Provider
-- Configure LDAP user federation
-- Set up SAML authentication for web applications
-
-## 🔧 Architecture Benefits
-
-✅ **Independent Deployment** - Each service deploys and scales independently  
-✅ **Shared Certificate Lifecycle** - Single certificate management for all services  
-✅ **Port Conflict Resolution** - No conflicts between services  
-✅ **Modular Testing** - Test LDAP and RADIUS separately or together  
-✅ **Production Ready** - Proper TLS encryption and security practices  
-
-## 📁 Project Structure
-
-```
-ldap/
-├── README.md              # This overview document
-├── certbot/               # Certificate management project
-├── ldap/                  # LDAP authentication project
-├── freeradius/            # RADIUS authentication project
-├── keycloak/              # SAML Identity Provider project
-├── mail/                  # Mail server project
-└── docs/                  # Architecture documentation
-```
-
-## 🚀 Use Cases
-
-This platform supports various enterprise authentication testing scenarios:
-
-- **WiFi Access Point Testing**: Validate AP configurations with real authentication backends
-- **802.1X Development**: Test EAP protocols and certificate-based authentication
-- **Network Access Control**: Integrate with NAC systems requiring LDAP/RADIUS
-- **SAML SSO Integration**: Test SAML 2.0 authentication for web applications
-- **Enterprise Migration**: Test authentication flows before production deployment
-- **Security Validation**: Verify TLS configurations and authentication policies
-
-## 📋 Prerequisites
-
-Before starting, ensure you have:
 - Linux server with Docker and Docker Compose v2
-- Domain names for your services (e.g., ldap.example.com, radius.example.com, keycloak.example.com)
-- DNS records pointing to your server
-- Required ports available (25, 80, 389, 636, 993, 1812, 1813, 2083, 8080, 8443)
+- Domain names pointing to your server
+- Ports available: 25, 80, 389, 636, 993, 1812, 1813, 2083, 8080, 8443
 
-## 📄 License
+## Use Cases
 
-MIT License - See LICENSE file for details
-
-## 🤝 Contributing
-
-Contributions are welcome! Each sub-project accepts pull requests independently.
-
----
-
-**Start with [`certbot/README.md`](certbot/README.md) to begin your authentication testing journey!** 🔒
+- WiFi access point testing with LDAP/RADIUS backends
+- 802.1X and EAP protocol development
+- SAML SSO integration testing
+- Enterprise authentication migration validation

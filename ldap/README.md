@@ -2,12 +2,48 @@
 
 Simple LDAP server with test users for authentication testing.
 
-## What This Is
+## User Flow
 
-- **LDAP server** with TLS support (LDAPS on port 636)
-- **Standard LDAP attributes** for user authentication
-- **Microsoft AD compatibility** (optional)
-- **5 test users** with different roles and departments
+```
+Step 1: Certificate Setup
+┌─────────────────┐     ┌─────────────────┐
+│    Certbot      │────▶│    OpenLDAP     │
+│   (Port 80)     │     │  (build time)   │
+└─────────────────┘     └─────────────────┘
+        │                       │
+        ▼                       ▼
+   Let's Encrypt          certs copied to
+   certificates           /etc/ldap/certs/
+
+Step 2: LDAP Authentication
+┌──────┐    ┌─────────┐    ┌──────────┐
+│ User │───▶│ Client  │───▶│ OpenLDAP │
+└──────┘    │(ldapsearch)  │(389/636) │
+            └─────────┘    └──────────┘
+                                │
+                                ▼
+                          ┌──────────┐
+                          │ User     │
+                          │ Verified │
+                          └──────────┘
+
+Step 3: Service Integration
+┌─────────────┐    ┌──────────┐
+│  Keycloak   │───▶│ OpenLDAP │
+│ (federation)│    │ (636)    │
+└─────────────┘    └──────────┘
+                        │
+                        ▼
+                  ┌──────────┐
+                  │ Users    │
+                  │ Synced   │
+                  └──────────┘
+```
+
+## Prerequisites
+
+- Certbot container running with certificates
+- Docker and Docker Compose v2
 
 ## Quick Start
 

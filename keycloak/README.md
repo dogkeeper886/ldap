@@ -2,17 +2,48 @@
 
 SAML 2.0 Identity Provider with LDAP user federation for enterprise authentication testing.
 
-## Architecture
+## User Flow
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│    Certbot      │────▶│    Keycloak     │────▶│    OpenLDAP     │
-│  (certificates) │     │   (SAML IdP)    │     │  (user store)   │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │
-        ▼                       ▼                       ▼
-  ldap.tsengsyu.com      Ports: 8080 (HTTP)      Ports: 389 (LDAP)
-  (SAN certificate)             8443 (HTTPS)            636 (LDAPS)
+Step 1: Certificate Setup
+┌─────────────────┐     ┌─────────────────┐
+│    Certbot      │────▶│    Keycloak     │
+│   (Port 80)     │     │  (build time)   │
+└─────────────────┘     └─────────────────┘
+        │                       │
+        ▼                       ▼
+   Let's Encrypt          certs copied to
+   certificates           /opt/keycloak/conf/
+
+Step 2: LDAP User Federation
+┌─────────────────┐     ┌─────────────────┐
+│    Keycloak     │────▶│    OpenLDAP     │
+│   (Port 8443)   │     │   (Port 636)    │
+└─────────────────┘     └─────────────────┘
+        │                       │
+        ▼                       ▼
+   User lookup            Users synced
+   via LDAPS              to Keycloak
+
+Step 3: SAML SSO Authentication
+┌──────┐    ┌─────────┐    ┌───────────┐    ┌──────────┐
+│ User │───▶│ Web App │───▶│ Keycloak  │───▶│ OpenLDAP │
+└──────┘    │  (SP)   │    │   (IdP)   │    └──────────┘
+            └─────────┘    │  (:8443)  │         │
+                           └───────────┘         │
+                                 │               ▼
+                                 │         ┌──────────┐
+                                 ▼         │ User     │
+                           ┌──────────┐    │ Verified │
+                           │ SAML     │◄───└──────────┘
+                           │ Assertion│
+                           └──────────┘
+                                 │
+                                 ▼
+                           ┌──────────┐
+                           │ User     │
+                           │ Logged In│
+                           └──────────┘
 ```
 
 ## Prerequisites
