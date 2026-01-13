@@ -1,7 +1,7 @@
 # FreeRADIUS Server Makefile
 # RADIUS server with automated TLS certificate management
 
-.PHONY: help copy-certs build-tls deploy stop restart clean logs test build setup-users \
+.PHONY: help copy-certs copy-client-ca build-tls deploy stop restart clean logs test build setup-users \
        sql-auth sql-acct sql-by-mac sql-clear sql-detail
 
 # Default target
@@ -11,7 +11,8 @@ help:
 	@echo ""
 	@echo "Setup & Deployment:"
 	@echo "  make init          - Complete initial setup (certificates + deployment)"
-	@echo "  make copy-certs    - Copy certificates from external certbot"
+	@echo "  make copy-certs    - Copy server certificates from external certbot"
+	@echo "  make copy-client-ca - Copy client CA for EAP-TLS (requires CLIENT_CA_FILE)"
 	@echo "  make build-tls     - Copy certificates and build FreeRADIUS with TLS"
 	@echo "  make build         - Build FreeRADIUS Docker image"
 	@echo "  make deploy        - Deploy/start FreeRADIUS service"
@@ -46,10 +47,23 @@ env:
 		echo ".env file already exists"; \
 	fi
 
-# Copy certificates from external certbot
+# Copy server certificates from external certbot
 copy-certs:
-	@echo "Copying certificates from external certbot..."
+	@echo "Copying server certificates from external certbot..."
 	@./scripts/copy-certs-for-build.sh
+
+# Copy client CA for EAP-TLS client verification
+copy-client-ca:
+	@if [ -z "$(CLIENT_CA_FILE)" ]; then \
+		echo "Usage: make copy-client-ca CLIENT_CA_FILE=/path/to/ca.pem"; \
+		echo "Or set CLIENT_CA_FILE in .env file"; \
+		exit 1; \
+	fi
+	@echo "Copying client CA from $(CLIENT_CA_FILE)..."
+	@mkdir -p ./docker/freeradius/certs/ca
+	@cp "$(CLIENT_CA_FILE)" ./docker/freeradius/certs/ca/client-ca.pem
+	@chmod 644 ./docker/freeradius/certs/ca/client-ca.pem
+	@echo "Client CA copied successfully"
 
 # Build FreeRADIUS with TLS certificates
 build-tls: copy-certs build

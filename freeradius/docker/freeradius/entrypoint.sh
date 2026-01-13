@@ -33,7 +33,7 @@ RADIUS_DOMAIN=${RADIUS_DOMAIN:-radius.example.com}
 ENABLE_TLS=${ENABLE_TLS:-true}
 TLS_CERT_FILE=${TLS_CERT_FILE:-cert.pem}
 TLS_KEY_FILE=${TLS_KEY_FILE:-privkey.pem}
-TLS_CA_FILE=${TLS_CA_FILE:-fullchain.pem}
+CLIENT_CA_FILE=${CLIENT_CA_FILE:-client-ca.pem}
 FREERADIUS_LOG_LEVEL=${FREERADIUS_LOG_LEVEL:-info}
 
 # Database configuration
@@ -46,6 +46,8 @@ POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-radiuspass123}
 # Paths (Alpine uses /etc/raddb/)
 CONFIG_DIR="/etc/raddb"
 CERT_DIR="$CONFIG_DIR/certs"
+SERVER_CERT_DIR="$CERT_DIR/server"
+CA_CERT_DIR="$CERT_DIR/ca"
 LOG_DIR="/var/log/freeradius"
 
 # Initialize logging
@@ -62,24 +64,41 @@ check_certificates() {
     if [ "$ENABLE_TLS" = "true" ]; then
         log "Checking TLS certificates..."
 
-        local cert_files=("$TLS_CERT_FILE" "$TLS_KEY_FILE" "$TLS_CA_FILE")
-        for cert_file in "${cert_files[@]}"; do
-            if [ ! -f "$CERT_DIR/$cert_file" ]; then
-                error "Certificate file not found: $CERT_DIR/$cert_file"
+        # Check server certificates
+        local server_cert_files=("$TLS_CERT_FILE" "$TLS_KEY_FILE")
+        for cert_file in "${server_cert_files[@]}"; do
+            if [ ! -f "$SERVER_CERT_DIR/$cert_file" ]; then
+                error "Server certificate file not found: $SERVER_CERT_DIR/$cert_file"
                 error "Please ensure certificates are copied to the build context"
                 return 1
             fi
         done
 
+        # Check client CA certificate
+        if [ ! -f "$CA_CERT_DIR/$CLIENT_CA_FILE" ]; then
+            error "Client CA file not found: $CA_CERT_DIR/$CLIENT_CA_FILE"
+            error "Please ensure the client CA is copied to the build context"
+            return 1
+        fi
+
         log "✓ All certificate files are present"
 
-        # Check certificate validity
-        if openssl x509 -in "$CERT_DIR/$TLS_CERT_FILE" -noout -checkend 0 >/dev/null 2>&1; then
+        # Check server certificate validity
+        if openssl x509 -in "$SERVER_CERT_DIR/$TLS_CERT_FILE" -noout -checkend 0 >/dev/null 2>&1; then
             local expiry_date
-            expiry_date=$(openssl x509 -in "$CERT_DIR/$TLS_CERT_FILE" -noout -enddate | cut -d= -f2)
-            log "✓ Certificate is valid until: $expiry_date"
+            expiry_date=$(openssl x509 -in "$SERVER_CERT_DIR/$TLS_CERT_FILE" -noout -enddate | cut -d= -f2)
+            log "✓ Server certificate is valid until: $expiry_date"
         else
-            warn "Certificate may be expired or invalid"
+            warn "Server certificate may be expired or invalid"
+        fi
+
+        # Check client CA certificate validity
+        if openssl x509 -in "$CA_CERT_DIR/$CLIENT_CA_FILE" -noout -checkend 0 >/dev/null 2>&1; then
+            local ca_expiry_date
+            ca_expiry_date=$(openssl x509 -in "$CA_CERT_DIR/$CLIENT_CA_FILE" -noout -enddate | cut -d= -f2)
+            log "✓ Client CA is valid until: $ca_expiry_date"
+        else
+            warn "Client CA may be expired or invalid"
         fi
     else
         info "TLS is disabled, skipping certificate checks"

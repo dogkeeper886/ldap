@@ -19,15 +19,18 @@ warn() {
 # Configuration (Alpine uses /etc/raddb/)
 CONFIG_DIR="/etc/raddb"
 CERT_DIR="$CONFIG_DIR/certs"
+SERVER_CERT_DIR="$CERT_DIR/server"
+CA_CERT_DIR="$CERT_DIR/ca"
 TLS_CERT_FILE=${TLS_CERT_FILE:-cert.pem}
 TLS_KEY_FILE=${TLS_KEY_FILE:-privkey.pem}
-TLS_CA_FILE=${TLS_CA_FILE:-fullchain.pem}
+CLIENT_CA_FILE=${CLIENT_CA_FILE:-client-ca.pem}
 
 log "Configuring FreeRADIUS TLS settings"
-log "Certificate directory: $CERT_DIR"
-log "Certificate file: $TLS_CERT_FILE"
-log "Private key file: $TLS_KEY_FILE"
-log "CA file: $TLS_CA_FILE"
+log "Server certificate directory: $SERVER_CERT_DIR"
+log "CA certificate directory: $CA_CERT_DIR"
+log "Server certificate file: $TLS_CERT_FILE"
+log "Server private key file: $TLS_KEY_FILE"
+log "Client CA file: $CLIENT_CA_FILE"
 
 # Update EAP module configuration for TLS (use mods-enabled symlink)
 EAP_CONFIG="$CONFIG_DIR/mods-enabled/eap"
@@ -51,7 +54,8 @@ fi
 
 # Set proper permissions on certificate files
 log "Setting certificate file permissions..."
-chmod 600 "$CERT_DIR"/*.pem 2>/dev/null || true
-chmod 644 "$CERT_DIR/$TLS_CERT_FILE" "$CERT_DIR/$TLS_CA_FILE" 2>/dev/null || true
+chmod 600 "$SERVER_CERT_DIR"/*.pem 2>/dev/null || true
+chmod 644 "$SERVER_CERT_DIR/$TLS_CERT_FILE" 2>/dev/null || true
+chmod 644 "$CA_CERT_DIR"/*.pem 2>/dev/null || true
 
 log "TLS configuration setup completed"
