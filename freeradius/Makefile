@@ -2,7 +2,7 @@
 # RADIUS server with automated TLS certificate management
 
 .PHONY: help copy-certs build-tls deploy stop restart clean logs test build setup-users \
-       sql-auth sql-acct sql-by-mac sql-clear
+       sql-auth sql-acct sql-by-mac sql-clear sql-detail
 
 # Default target
 help:
@@ -194,3 +194,17 @@ sql-clear:
 	@echo "Clearing auth and accounting tables..."
 	@docker exec radius-postgres psql -U radius -d radius -c "TRUNCATE radpostauth, radacct RESTART IDENTITY;"
 	@echo "Tables cleared."
+
+sql-detail:
+	@if [ -z "$(MAC)" ]; then \
+		echo "Usage: make sql-detail MAC=B6-64-89-61-87-E5"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "=== Latest Auth Record for $(MAC) ==="
+	@docker exec radius-postgres psql -U radius -d radius -t -c "\x" -c \
+		"SELECT * FROM radpostauth WHERE callingstationid ILIKE '%$(MAC)%' ORDER BY authdate DESC LIMIT 1;"
+	@echo ""
+	@echo "=== Latest Accounting Record for $(MAC) ==="
+	@docker exec radius-postgres psql -U radius -d radius -t -c "\x" -c \
+		"SELECT * FROM radacct WHERE callingstationid ILIKE '%$(MAC)%' ORDER BY acctstarttime DESC LIMIT 1;"
