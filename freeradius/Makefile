@@ -66,7 +66,7 @@ copy-client-ca:
 	@echo "Client CA copied successfully"
 
 # Build FreeRADIUS with TLS certificates
-build-tls: copy-certs build
+build-tls: copy-certs copy-client-ca build
 	@echo "FreeRADIUS TLS image built successfully"
 
 # Build FreeRADIUS Docker image
@@ -75,7 +75,7 @@ build:
 	docker compose build
 
 # Complete initial setup
-init: env copy-certs build deploy
+init: env copy-certs copy-client-ca build deploy
 	@echo "FreeRADIUS server initialization completed"
 	@echo "Testing basic authentication..."
 	@sleep 10

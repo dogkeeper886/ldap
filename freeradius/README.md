@@ -153,6 +153,39 @@ Received Access-Accept Id 222 from 127.0.0.1:714 to 127.0.0.1:33448 length 37
 
 ## How It Works
 
+### Makefile Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              make init                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. make env              2. make copy-certs       3. make copy-client-ca   │
+│      │                         │                         │                  │
+│      ▼                         ▼                         ▼                  │
+│  ┌────────┐             ┌─────────────┐           ┌─────────────┐          │
+│  │ Create │             │   Certbot   │           │ Private CA  │          │
+│  │  .env  │             │  Container  │           │   File      │          │
+│  └────────┘             └──────┬──────┘           └──────┬──────┘          │
+│                                │                         │                  │
+│                                ▼                         ▼                  │
+│                         certs/server/              certs/ca/                │
+│                         ├── cert.pem               └── client-ca.pem       │
+│                         ├── privkey.pem                                     │
+│                         └── fullchain.pem                                   │
+│                                                                             │
+│  4. make build                              5. make deploy                  │
+│      │                                           │                          │
+│      ▼                                           ▼                          │
+│  ┌────────────────────────────┐          ┌────────────────────┐            │
+│  │     Dockerfile             │          │  docker compose up │            │
+│  │  COPY certs/server/ ───────┼──────────┼─► /etc/raddb/certs/│            │
+│  │  COPY certs/ca/    ────────┼──────────┼─► server/ + ca/    │            │
+│  └────────────────────────────┘          └────────────────────┘            │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
 ### Container Startup Flow
 
 1. **Entrypoint** (`entrypoint.sh`):
