@@ -1,6 +1,12 @@
 # FreeRADIUS Server Makefile
 # RADIUS server with automated TLS certificate management
 
+# Load .env file if it exists
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
 .PHONY: help copy-certs copy-client-ca build-tls deploy stop restart clean logs test build setup-users \
        sql-auth sql-acct sql-by-mac sql-clear sql-detail
 
