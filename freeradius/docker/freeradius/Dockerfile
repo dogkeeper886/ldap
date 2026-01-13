@@ -22,6 +22,10 @@ RUN mkdir -p /opt/radius-scripts \
 COPY config/radiusd.conf /etc/raddb/radiusd.conf
 COPY config/clients.conf /etc/raddb/clients.conf
 COPY config/eap /etc/raddb/mods-enabled/eap
+COPY config/policy.d/filter /etc/raddb/policy.d/filter
+
+# Enable check-eap-tls virtual server for EAP-TLS certificate-based auth
+RUN ln -sf ../sites-available/check-eap-tls /etc/raddb/sites-enabled/check-eap-tls
 
 # Copy SQL module configuration
 COPY config/sql/sql /etc/raddb/mods-available/sql

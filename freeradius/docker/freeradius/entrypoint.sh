@@ -35,6 +35,7 @@ TLS_CERT_FILE=${TLS_CERT_FILE:-cert.pem}
 TLS_KEY_FILE=${TLS_KEY_FILE:-privkey.pem}
 CLIENT_CA_FILE=${CLIENT_CA_FILE:-client-ca.pem}
 FREERADIUS_LOG_LEVEL=${FREERADIUS_LOG_LEVEL:-info}
+DEBUG_MODE=${DEBUG_MODE:-false}
 
 # Database configuration
 POSTGRES_HOST=${POSTGRES_HOST:-radius-postgres}
@@ -227,10 +228,15 @@ main() {
     wait_for_postgres
 
     log "FreeRADIUS server initialization completed successfully"
-    log "Starting FreeRADIUS server..."
 
-    # Execute the command passed to the container
-    exec "$@"
+    # Check if debug mode is enabled
+    if [ "$DEBUG_MODE" = "true" ]; then
+        log "Starting FreeRADIUS server in DEBUG mode (-X)..."
+        exec /opt/sbin/radiusd -X
+    else
+        log "Starting FreeRADIUS server..."
+        exec "$@"
+    fi
 }
 
 # Run main function with all arguments
