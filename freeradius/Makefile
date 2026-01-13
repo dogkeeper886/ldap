@@ -1,7 +1,8 @@
 # FreeRADIUS Server Makefile
 # RADIUS server with automated TLS certificate management
 
-.PHONY: help copy-certs build-tls deploy stop restart clean logs test build setup-users
+.PHONY: help copy-certs build-tls deploy stop restart clean logs test build setup-users \
+       sql-auth sql-acct sql-by-mac
 
 # Default target
 help:
@@ -159,3 +160,32 @@ show-config:
 	else \
 		echo "No .env file found. Run 'make env' to create one."; \
 	fi
+
+# SQL Logging Queries
+sql-auth:
+	@echo "Recent Authentication Attempts (last 20):"
+	@echo "=========================================="
+	@docker exec radius-postgres psql -U radius -d radius -c \
+		"SELECT authdate, username, reply, nasidentifier, callingstationid FROM radpostauth ORDER BY authdate DESC LIMIT 20;"
+
+sql-acct:
+	@echo "Recent Accounting Sessions (last 20):"
+	@echo "======================================"
+	@docker exec radius-postgres psql -U radius -d radius -c \
+		"SELECT acctstarttime, username, nasidentifier, callingstationid, acctstoptime, acctterminatecause FROM radacct ORDER BY acctstarttime DESC LIMIT 20;"
+
+sql-by-mac:
+	@if [ -z "$(MAC)" ]; then \
+		echo "Usage: make sql-by-mac MAC=C6-AD-50-7C-41-04"; \
+		exit 1; \
+	fi
+	@echo "Auth and Accounting for MAC: $(MAC)"
+	@echo "===================================="
+	@echo ""
+	@echo "Authentication:"
+	@docker exec radius-postgres psql -U radius -d radius -c \
+		"SELECT authdate, username, reply, nasidentifier FROM radpostauth WHERE callingstationid ILIKE '%$(MAC)%' ORDER BY authdate DESC LIMIT 10;"
+	@echo ""
+	@echo "Accounting:"
+	@docker exec radius-postgres psql -U radius -d radius -c \
+		"SELECT acctstarttime, username, nasidentifier, acctstoptime, acctterminatecause FROM radacct WHERE callingstationid ILIKE '%$(MAC)%' ORDER BY acctstarttime DESC LIMIT 10;"
