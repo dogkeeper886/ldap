@@ -56,6 +56,7 @@
 - Complex logging or debugging infrastructure
 - Different patterns for the same type of problem
 - Code that tries to "be safe" instead of being correct
+- Files containing private information (passwords, API keys, tokens, credentials, internal URLs)
 
 ## Review Checklist
 
@@ -65,6 +66,7 @@
 4. **Is validation necessary?** Remove checks that duplicate language/framework validation
 5. **Can any code be deleted?** Less code is better code
 6. **Is logging/debugging simple?** No complex debug infrastructure
+7. **No private information?** Check for passwords, API keys, tokens, internal URLs, or credentials
 
 ## Examples
 
