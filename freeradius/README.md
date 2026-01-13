@@ -49,52 +49,6 @@ freeradius/
     └── test-all-users.sh        # Test all users
 ```
 
-## EAP-TLS Authentication Flow
-
-EAP-TLS provides mutual certificate-based authentication between clients and the RADIUS server.
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                         EAP-TLS Handshake                                │
-├──────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│   WiFi Client                              FreeRADIUS Server             │
-│   (Supplicant)                                                           │
-│                                                                          │
-│   1. EAP-Identity ─────────────────────────────────────────────────────► │
-│                                                                          │
-│   ◄───────────────────────────────────────────────── 2. EAP-TLS Start    │
-│                                                                          │
-│   3. Client Hello ─────────────────────────────────────────────────────► │
-│                                                                          │
-│   ◄─────────────────────────────────── 4. Server Hello + Server Cert     │
-│                                           (Let's Encrypt certificate)   │
-│                                                                          │
-│   5. Client verifies server cert                                         │
-│      (using system trust store - Let's Encrypt is already trusted)      │
-│                                                                          │
-│   6. Client Cert ──────────────────────────────────────────────────────► │
-│      (signed by Private CA)                                              │
-│                                                                          │
-│   7. Server verifies client cert ◄───────────────────────────────────    │
-│      (using ca/client-ca.pem)                                            │
-│                                                                          │
-│   ◄───────────────────────────────────────────────── 8. EAP-Success      │
-│                                                                          │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-### Two Separate Trust Chains
-
-| Direction | Certificate | Signed By | Verified By |
-|-----------|-------------|-----------|-------------|
-| Server → Client | `server/cert.pem` | Let's Encrypt | Client's OS trust store |
-| Client → Server | Client certificate | Your Private CA | FreeRADIUS (`ca/client-ca.pem`) |
-
-This separation allows:
-- Clients to trust the server without extra configuration (Let's Encrypt is universally trusted)
-- You to control which clients can authenticate (only those with certs signed by your CA)
-
 ## Setup
 
 ### Step 1: Configure Environment
