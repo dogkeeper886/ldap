@@ -104,9 +104,9 @@ test:
 	@echo "Testing RADIUS authentication..."
 	@echo "Testing test user..."
 	@if command -v radtest >/dev/null 2>&1; then \
-		radtest test $${TEST_USER_PASSWORD:-testpass123} localhost 1812 testing123; \
+		radtest test $${TEST_USER_PASSWORD:-testpass123} localhost 1812 $${RADIUS_SECRET:-testing123}; \
 	else \
-		docker exec freeradius-server radtest test $${TEST_USER_PASSWORD:-testpass123} localhost 1812 testing123; \
+		docker exec freeradius-server /opt/bin/radtest test $${TEST_USER_PASSWORD:-testpass123} localhost 1812 $${RADIUS_SECRET:-testing123}; \
 	fi
 
 # Test all configured users
