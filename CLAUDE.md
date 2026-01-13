@@ -32,6 +32,14 @@
 - Trust your dependencies to work or fail appropriately
 - Remove code that checks for "impossible" conditions
 
+## New Feature Guidelines
+
+### Design Documents Required
+- Before implementing a new feature, create a design document in `/docs`
+- Document the original design intent, architecture decisions, and rationale
+- This preserves context for future maintenance and prevents design drift
+- Keep design docs simple: problem statement, proposed solution, key decisions
+
 ## What to Look For
 
 ### ✅ Approve
