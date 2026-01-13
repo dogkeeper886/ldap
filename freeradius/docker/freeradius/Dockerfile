@@ -21,6 +21,7 @@ RUN mkdir -p /opt/radius-scripts \
 # Copy configuration files (Alpine uses /etc/raddb)
 COPY config/radiusd.conf /etc/raddb/radiusd.conf
 COPY config/clients.conf /etc/raddb/clients.conf
+COPY config/eap /etc/raddb/mods-enabled/eap
 
 # Copy SQL module configuration
 COPY config/sql/sql /etc/raddb/mods-available/sql
