@@ -9,10 +9,15 @@
 - One responsibility per function/class
 
 ### Fail Fast, Fail Loud
-- No defensive programming or extensive validation
 - Let the code fail immediately when inputs are invalid
 - Use language built-ins for type checking
 - Crash early rather than propagate bad state
+- Don't catch exceptions just to log and re-throw
+
+### Validate at Boundaries
+- Validate user input and external API responses (security requirement)
+- Don't re-validate data passed between internal functions
+- Trust internal interfaces, verify external ones
 
 ### Consistency Over Cleverness
 - Same patterns for same problems
@@ -20,17 +25,18 @@
 - Consistent naming conventions throughout the codebase
 - Follow existing code style in the file you're editing
 
-### No Complex Debug/Logging
-- Avoid complicated logging infrastructure
-- No elaborate debug systems or verbose error messages
-- Simple console output when absolutely necessary
-- Trust stack traces for debugging
+### Appropriate Logging
+- Use structured logging with log levels (debug, info, warn, error)
+- Log at system boundaries: incoming requests, outgoing calls, errors
+- Don't log inside tight loops or internal helper functions
+- Include context (request ID, user ID) for traceability
+- Avoid logging sensitive data (passwords, tokens, PII)
 
-### No Health Checks or Redundant Validation
-- Don't validate inputs that the language/framework already validates
-- No "health check" endpoints or status monitoring code
-- Trust your dependencies to work or fail appropriately
-- Remove code that checks for "impossible" conditions
+### Production Readiness
+- Health checks are required for containerized services (Kubernetes, Docker)
+- Include liveness and readiness probes where applicable
+- Handle external service failures gracefully (timeouts, retries)
+- Don't over-engineer: start simple, add resilience when needed
 
 ## New Feature Guidelines
 
@@ -42,42 +48,58 @@
 
 ## What to Look For
 
-### ✅ Approve
+### Approve
 - Direct, obvious implementations
 - Code that follows existing patterns in the codebase
 - Minimal abstractions
 - Clear, descriptive variable/function names
 - Removal of unnecessary code
+- Validation at system boundaries
+- Appropriate logging at entry/exit points
 
-### ❌ Request Changes
+### Request Changes
 - Over-abstraction (interfaces with single implementations)
-- Defensive validation of already-validated inputs
-- Health checks, status endpoints, or monitoring code
-- Complex logging or debugging infrastructure
+- Re-validation of already-validated internal data
+- Logging inside loops or performance-critical paths
 - Different patterns for the same type of problem
-- Code that tries to "be safe" instead of being correct
+- Catching exceptions only to log and re-throw
 - Files containing private information (passwords, API keys, tokens, credentials, internal URLs)
 
 ## Review Checklist
 
 1. **Is this the simplest approach?** Can it be done with fewer lines/files/abstractions?
 2. **Does it follow existing patterns?** Look for similar code elsewhere in the codebase
-3. **Does it fail fast?** No graceful degradation or fallback logic
-4. **Is validation necessary?** Remove checks that duplicate language/framework validation
+3. **Does it fail fast?** No swallowing errors or silent failures
+4. **Is boundary validation present?** User input and external APIs should be validated
 5. **Can any code be deleted?** Less code is better code
-6. **Is logging/debugging simple?** No complex debug infrastructure
+6. **Is logging appropriate?** At boundaries, not inside loops, with proper levels
 7. **No private information?** Check for passwords, API keys, tokens, internal URLs, or credentials
 
 ## Examples
 
-### Good
+### Good: Clean with Boundary Validation
 ```javascript
 function createUser(email, password) {
+  // Validate at API boundary
+  if (!email || !password) {
+    throw new Error('Email and password required');
+  }
   return db.users.create({ email, password });
 }
 ```
 
-### Bad
+### Good: Appropriate Logging
+```javascript
+async function processOrder(orderId) {
+  log.info('Processing order', { orderId });
+  const order = await db.orders.get(orderId);
+  const result = await paymentService.charge(order);
+  log.info('Order processed', { orderId, status: result.status });
+  return result;
+}
+```
+
+### Bad: Over-Logging and Redundant Validation
 ```javascript
 function createUser(email, password) {
   logger.debug('Creating user', { email });
@@ -105,6 +127,6 @@ function createUser(email, password) {
 ## Remember
 - Code should be boring and predictable
 - When in doubt, delete it
-- Trust your tools and dependencies
+- Trust internal code, verify external input
 - Consistency beats perfection
-- Simple failures are better than complex success handling
+- Simple code with good logging beats complex defensive code

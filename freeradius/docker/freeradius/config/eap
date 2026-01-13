@@ -14,40 +14,43 @@ eap {
 
     # EAP-TLS
     tls-config tls-common {
-        private_key_file = ${certdir}/privkey.pem
-        certificate_file = ${certdir}/cert.pem
-        ca_file = ${certdir}/fullchain.pem
-        
+        # Server certificate (Let's Encrypt - for server identity)
+        private_key_file = ${certdir}/server/privkey.pem
+        certificate_file = ${certdir}/server/cert.pem
+
+        # Client CA (Private CA - for verifying client certificates)
+        ca_file = ${certdir}/ca/client-ca.pem
+
         # TLS configuration
         cipher_list = "ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS"
         cipher_server_preference = yes
         tls_max_version = "1.3"
         tls_min_version = "1.2"
-        
+
         # Certificate verification
-        verify_depth = 0
+        verify_depth = 2
         ca_path = ${cadir}
         pem_file_type = yes
         include_length = yes
-        
+
         # Auto chain discovery
         auto_chain = yes
-        
+
         # OCSP configuration
         check_crl = no
         check_all_crl = no
         allow_expired_crl = no
-        
+
         # Session resumption
         cache {
             enable = yes
             lifetime = 24
             max_entries = 255
         }
-        
-        # Require client certificates (set to no for WiFi)
-        require_client_cert = no
-        
+
+        # Require client certificates for EAP-TLS
+        require_client_cert = yes
+
         # Random file
         random_file = /dev/urandom
     }
@@ -55,7 +58,7 @@ eap {
     # EAP-TLS
     tls {
         tls = tls-common
-        
+
         # Virtual server for TLS
         virtual_server = check-eap-tls
     }
