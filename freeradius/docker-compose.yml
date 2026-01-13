@@ -41,6 +41,7 @@ services:
             - ENVIRONMENT=${ENVIRONMENT:-development}
             - FREERADIUS_LOG_LEVEL=${FREERADIUS_LOG_LEVEL:-info}
             - ENABLE_TLS=${ENABLE_TLS:-true}
+            - DEBUG_MODE=${DEBUG_MODE:-false}
             - TLS_CERT_FILE=cert.pem
             - TLS_KEY_FILE=privkey.pem
             - TLS_CA_FILE=fullchain.pem

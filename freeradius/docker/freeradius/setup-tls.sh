@@ -42,7 +42,7 @@ if [ -f "$EAP_CONFIG" ]; then
     # Default uses: ${certdir}/server.pem and ${cadir}/ca.pem
     sed -i "s|private_key_file = \${certdir}/server.pem|private_key_file = \${certdir}/$TLS_KEY_FILE|g" "$EAP_CONFIG"
     sed -i "s|certificate_file = \${certdir}/server.pem|certificate_file = \${certdir}/$TLS_CERT_FILE|g" "$EAP_CONFIG"
-    sed -i "s|ca_file = \${cadir}/ca.pem|ca_file = \${certdir}/$TLS_CA_FILE|g" "$EAP_CONFIG"
+    sed -i "s|ca_file = \${cadir}/ca.pem|ca_file = \${certdir}/$CLIENT_CA_FILE|g" "$EAP_CONFIG"
 
     # Remove private_key_password since Let's Encrypt keys are not encrypted
     sed -i "s|private_key_password = .*|#private_key_password = \"\"|g" "$EAP_CONFIG"

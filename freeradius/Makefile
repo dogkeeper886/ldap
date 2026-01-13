@@ -8,7 +8,7 @@ ifneq (,$(wildcard ./.env))
 endif
 
 .PHONY: help copy-certs copy-client-ca build-tls deploy stop restart clean logs test build setup-users \
-       sql-auth sql-acct sql-by-mac sql-clear sql-detail
+       sql-auth sql-acct sql-by-mac sql-clear sql-detail debug debug-stop
 
 # Default target
 help:
@@ -28,6 +28,8 @@ help:
 	@echo "  make restart       - Restart FreeRADIUS service"
 	@echo "  make logs          - Show FreeRADIUS logs"
 	@echo "  make logs-follow   - Follow FreeRADIUS logs in real-time"
+	@echo "  make debug         - Run FreeRADIUS in debug mode (-X)"
+	@echo "  make debug-stop    - Stop debug mode and return to normal"
 	@echo ""
 	@echo "User Management:"
 	@echo "  make setup-users   - Update user passwords (run after make init)"
@@ -228,3 +230,21 @@ sql-detail:
 	@echo "=== Latest Accounting Record for $(MAC) ==="
 	@docker exec radius-postgres psql -U radius -d radius -t -c "\x" -c \
 		"SELECT * FROM radacct WHERE callingstationid ILIKE '%$(MAC)%' ORDER BY acctstarttime DESC LIMIT 1;"
+
+# Debug mode - run FreeRADIUS with -X flag for verbose output
+debug:
+	@echo "Starting FreeRADIUS in debug mode..."
+	@docker compose stop freeradius
+	DEBUG_MODE=true docker compose up -d freeradius
+	@sleep 5
+	@echo "FreeRADIUS running in debug mode."
+	@echo "Use 'make logs-follow' to view debug output."
+	@echo "Use 'make debug-stop' to return to normal mode."
+
+# Stop debug mode and return to normal
+debug-stop:
+	@echo "Stopping debug mode and restarting normal service..."
+	@docker compose stop freeradius
+	DEBUG_MODE=false docker compose up -d freeradius
+	@sleep 5
+	@make status

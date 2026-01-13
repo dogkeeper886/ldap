@@ -23,6 +23,7 @@ contractor Cleartext-Password := "{{CONTRACTOR_PASSWORD}}"
 vip     Cleartext-Password := "{{VIP_PASSWORD}}"
         Reply-Message := "VIP access granted"
 
-# Default user (fallback)
-DEFAULT Auth-Type := Reject
+# Default user (fallback) - only reject non-EAP requests
+# EAP requests have EAP-Message attribute and are handled by the eap module
+DEFAULT Auth-Type := Reject, EAP-Message !* ANY
         Reply-Message := "Authentication denied"

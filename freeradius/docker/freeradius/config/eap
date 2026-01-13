@@ -101,7 +101,7 @@ eap {
     # EAP-PWD
     pwd {
         group = 19
-        server_id = ${RADIUS_DOMAIN}
+        server_id = radius
         fragment_size = 1020
         virtual_server = "inner-tunnel"
     }
