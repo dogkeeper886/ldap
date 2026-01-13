@@ -2,7 +2,7 @@
 # RADIUS server with automated TLS certificate management
 
 .PHONY: help copy-certs build-tls deploy stop restart clean logs test build setup-users \
-       sql-auth sql-acct sql-by-mac
+       sql-auth sql-acct sql-by-mac sql-clear
 
 # Default target
 help:
@@ -189,3 +189,8 @@ sql-by-mac:
 	@echo "Accounting:"
 	@docker exec radius-postgres psql -U radius -d radius -c \
 		"SELECT acctstarttime, username, nasidentifier, acctstoptime, acctterminatecause FROM radacct WHERE callingstationid ILIKE '%$(MAC)%' ORDER BY acctstarttime DESC LIMIT 10;"
+
+sql-clear:
+	@echo "Clearing auth and accounting tables..."
+	@docker exec radius-postgres psql -U radius -d radius -c "TRUNCATE radpostauth, radacct RESTART IDENTITY;"
+	@echo "Tables cleared."
