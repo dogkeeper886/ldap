@@ -466,6 +466,139 @@ curl -G -s "http://localhost:3100/loki/api/v1/query" \
 
 ---
 
+## Alternative: SQL Module Approach
+
+FreeRADIUS has a built-in SQL module (`rlm_sql`) that can log both authentication and accounting to a database. This is an alternative to the linelog + Loki approach.
+
+### SQL Module Capabilities
+
+| Feature | Supported | Table |
+|---------|-----------|-------|
+| Accounting | Yes | `radacct` |
+| Post-Auth Logging | Yes | `radpostauth` |
+| User Authorization | Yes | `radcheck`, `radreply` |
+
+### Default Table Schemas
+
+**radacct (Accounting)**
+
+The `radacct` table captures comprehensive session data:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `radacctid` | bigint | Primary key |
+| `acctsessionid` | varchar(64) | Session identifier |
+| `acctuniqueid` | varchar(32) | Unique session ID |
+| `username` | varchar(64) | User-Name |
+| `nasipaddress` | varchar(15) | NAS-IP-Address |
+| `nasportid` | varchar(32) | NAS-Port-Id |
+| `nasporttype` | varchar(32) | NAS-Port-Type |
+| `acctstarttime` | datetime | Session start |
+| `acctstoptime` | datetime | Session end |
+| `acctsessiontime` | int | Duration in seconds |
+| `acctinputoctets` | bigint | Bytes received |
+| `acctoutputoctets` | bigint | Bytes sent |
+| `calledstationid` | varchar(50) | Called-Station-Id (AP MAC) |
+| `callingstationid` | varchar(50) | Calling-Station-Id (Client MAC) |
+| `acctterminatecause` | varchar(32) | Why session ended |
+| `framedipaddress` | varchar(15) | Client IP assigned |
+
+**radpostauth (Authentication Logging)**
+
+The default `radpostauth` table is minimal:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | int | Primary key |
+| `username` | varchar(64) | User-Name |
+| `pass` | varchar(64) | Password (can be masked) |
+| `reply` | varchar(32) | Access-Accept or Access-Reject |
+| `authdate` | timestamp | When auth occurred |
+| `class` | varchar(64) | Class attribute |
+
+### NAS-Identifier Gap
+
+**Important:** Neither default table includes `NAS-Identifier`. The `radacct` table has `nasipaddress` but not `NAS-Identifier`.
+
+To capture NAS-Identifier, you must:
+
+1. Add column to table:
+```sql
+ALTER TABLE radacct ADD COLUMN nasidentifier VARCHAR(64) DEFAULT '';
+ALTER TABLE radpostauth ADD COLUMN nasidentifier VARCHAR(64) DEFAULT '';
+```
+
+2. Modify queries in `queries.conf`:
+```sql
+-- In accounting INSERT
+..., '%{NAS-Identifier}', ...
+
+-- In post-auth INSERT  
+INSERT INTO radpostauth (username, pass, reply, authdate, nasidentifier)
+VALUES ('%{User-Name}', '%{User-Password}', '%{reply:Packet-Type}', NOW(), '%{NAS-Identifier}')
+```
+
+### Enabling SQL Logging
+
+In `sites-available/default`:
+
+```
+# Authorization (optional - for user lookup from DB)
+authorize {
+    ...
+    sql
+}
+
+# Accounting (writes to radacct)
+accounting {
+    sql
+}
+
+# Post-Auth (writes to radpostauth)
+post-auth {
+    sql
+    
+    Post-Auth-Type REJECT {
+        sql
+    }
+}
+```
+
+### Comparison: SQL vs Linelog + Loki
+
+| Aspect | SQL Module | Linelog + Loki |
+|--------|------------|----------------|
+| **Setup Complexity** | Requires database server | Requires Loki/Promtail/Grafana |
+| **Query Language** | SQL | LogQL |
+| **NAS-Identifier** | Requires schema modification | Native in log format |
+| **Dashboards** | Need separate tool (Grafana + SQL datasource) | Grafana built-in |
+| **Retention** | Database management | Loki retention policies |
+| **Existing Infra** | Good if you have MySQL/PostgreSQL | Good for log aggregation |
+| **Real-time** | Query-based | Stream-based |
+
+### Recommendation
+
+**Use SQL if:**
+- You already have a MySQL/PostgreSQL database
+- You need to correlate with other SQL data
+- You prefer SQL queries over LogQL
+- You want daloRADIUS or similar web UI
+
+**Use Linelog + Loki if:**
+- You want a self-contained monitoring stack
+- You prefer log-based observability
+- You want Grafana dashboards out of the box
+- You don't want to manage a database
+
+### References
+
+- [FreeRADIUS SQL Module](https://wiki.freeradius.org/modules/Rlm_sql)
+- [SQL HOWTO for FreeRADIUS 3.x](https://wiki.freeradius.org/guide/SQL-HOWTO-for-freeradius-3.x-on-Debian-Ubuntu)
+- [MySQL Schema](https://github.com/FreeRADIUS/freeradius-server/blob/master/raddb/mods-config/sql/main/mysql/schema.sql)
+- [PostgreSQL Schema](https://github.com/FreeRADIUS/freeradius-server/blob/master/raddb/mods-config/sql/main/postgresql/schema.sql)
+
+---
+
 ## Next Steps
 
 1. [ ] Review and approve this design
