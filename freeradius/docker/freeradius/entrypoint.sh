@@ -36,6 +36,13 @@ TLS_KEY_FILE=${TLS_KEY_FILE:-privkey.pem}
 TLS_CA_FILE=${TLS_CA_FILE:-fullchain.pem}
 FREERADIUS_LOG_LEVEL=${FREERADIUS_LOG_LEVEL:-info}
 
+# Database configuration
+POSTGRES_HOST=${POSTGRES_HOST:-radius-postgres}
+POSTGRES_PORT=${POSTGRES_PORT:-5432}
+POSTGRES_DB=${POSTGRES_DB:-radius}
+POSTGRES_USER=${POSTGRES_USER:-radius}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-radiuspass123}
+
 # Paths (Alpine uses /etc/raddb/)
 CONFIG_DIR="/etc/raddb"
 CERT_DIR="$CONFIG_DIR/certs"
@@ -121,6 +128,50 @@ setup_test_users() {
     fi
 }
 
+# Configure SQL module
+configure_sql() {
+    log "Configuring SQL module..."
+
+    local sql_file="$CONFIG_DIR/mods-available/sql"
+    if [ -f "$sql_file" ]; then
+        sed -i "s/{{POSTGRES_HOST}}/${POSTGRES_HOST}/g" "$sql_file"
+        sed -i "s/{{POSTGRES_PORT}}/${POSTGRES_PORT}/g" "$sql_file"
+        sed -i "s/{{POSTGRES_DB}}/${POSTGRES_DB}/g" "$sql_file"
+        sed -i "s/{{POSTGRES_USER}}/${POSTGRES_USER}/g" "$sql_file"
+        sed -i "s/{{POSTGRES_PASSWORD}}/${POSTGRES_PASSWORD}/g" "$sql_file"
+        log "✓ SQL module configured"
+    else
+        warn "SQL module config not found at $sql_file"
+    fi
+
+    # Enable SQL module by creating symlink
+    if [ ! -L "$CONFIG_DIR/mods-enabled/sql" ]; then
+        ln -sf ../mods-available/sql "$CONFIG_DIR/mods-enabled/sql"
+        log "✓ SQL module enabled"
+    fi
+}
+
+# Wait for PostgreSQL to be ready
+wait_for_postgres() {
+    log "Waiting for PostgreSQL at $POSTGRES_HOST:$POSTGRES_PORT..."
+
+    local max_attempts=30
+    local attempt=1
+
+    while [ $attempt -le $max_attempts ]; do
+        if pg_isready -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" >/dev/null 2>&1; then
+            log "✓ PostgreSQL is ready"
+            return 0
+        fi
+        info "Attempt $attempt/$max_attempts - PostgreSQL not ready, waiting..."
+        sleep 2
+        attempt=$((attempt + 1))
+    done
+
+    error "PostgreSQL did not become ready in time"
+    return 1
+}
+
 # Signal handlers for graceful shutdown
 setup_signal_handlers() {
     log "Setting up signal handlers..."
@@ -153,6 +204,8 @@ main() {
     check_certificates
     configure_tls
     setup_test_users
+    configure_sql
+    wait_for_postgres
 
     log "FreeRADIUS server initialization completed successfully"
     log "Starting FreeRADIUS server..."

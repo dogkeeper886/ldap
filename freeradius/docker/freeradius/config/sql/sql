@@ -1,0 +1,42 @@
+# SQL module configuration for PostgreSQL
+# This file configures the sql module to connect to PostgreSQL
+
+sql {
+    dialect = "postgresql"
+    driver = "rlm_sql_${dialect}"
+
+    # Connection parameters from environment variables
+    # These are set via entrypoint.sh
+    server = "{{POSTGRES_HOST}}"
+    port = {{POSTGRES_PORT}}
+    login = "{{POSTGRES_USER}}"
+    password = "{{POSTGRES_PASSWORD}}"
+    radius_db = "{{POSTGRES_DB}}"
+
+    # Table names
+    acct_table1 = "radacct"
+    acct_table2 = "radacct"
+    postauth_table = "radpostauth"
+    authcheck_table = "radcheck"
+    groupcheck_table = "radgroupcheck"
+    authreply_table = "radreply"
+    groupreply_table = "radgroupreply"
+    usergroup_table = "radusergroup"
+
+    # Disable reading clients from SQL
+    read_clients = no
+
+    # Connection pool
+    pool {
+        start = 5
+        min = 3
+        max = 10
+        spare = 3
+        uses = 0
+        lifetime = 0
+        idle_timeout = 60
+    }
+
+    # Include custom queries
+    $INCLUDE ${modconfdir}/sql/queries.conf
+}
