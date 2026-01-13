@@ -1,48 +1,77 @@
 services:
-  freeradius:
-    build:
-      context: ./docker/freeradius
-      dockerfile: Dockerfile
-    image: freeradius-server-tls:latest
-    container_name: freeradius-server
-    hostname: ${RADIUS_DOMAIN:-radius.example.com}
-    restart: unless-stopped
-    ports:
-      # RADIUS Authentication (UDP)
-      - "1812:1812/udp"
-      # RADIUS Accounting (UDP)
-      - "1813:1813/udp"
-      # RADIUS over TLS (TCP)
-      - "2083:2083/tcp"
-    environment:
-      - RADIUS_DOMAIN=${RADIUS_DOMAIN:-radius.example.com}
-      - RADIUS_SECRET=${RADIUS_SECRET:-changeme123}
-      - ENVIRONMENT=${ENVIRONMENT:-development}
-      - FREERADIUS_LOG_LEVEL=${FREERADIUS_LOG_LEVEL:-info}
-      - ENABLE_TLS=${ENABLE_TLS:-true}
-      - TLS_CERT_FILE=cert.pem
-      - TLS_KEY_FILE=privkey.pem
-      - TLS_CA_FILE=fullchain.pem
-      # Test user credentials
-      - TEST_USER_PASSWORD=${TEST_USER_PASSWORD:-testpass123}
-      - GUEST_USER_PASSWORD=${GUEST_USER_PASSWORD:-guestpass123}
-      - ADMIN_USER_PASSWORD=${ADMIN_USER_PASSWORD:-adminpass123}
-      - CONTRACTOR_PASSWORD=${CONTRACTOR_PASSWORD:-contractorpass123}
-      - VIP_PASSWORD=${VIP_PASSWORD:-vippass123}
-    volumes:
-      - radius-data:/var/log/freeradius
-    networks:
-      - radius-network
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+    postgres:
+        image: postgres:15-alpine
+        container_name: radius-postgres
+        restart: unless-stopped
+        environment:
+            - POSTGRES_DB=radius
+            - POSTGRES_USER=radius
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-radiuspass123}
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+            - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+        networks:
+            - radius-network
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    freeradius:
+        build:
+            context: ./docker/freeradius
+            dockerfile: Dockerfile
+        image: freeradius-server-tls:latest
+        container_name: freeradius-server
+        hostname: ${RADIUS_DOMAIN:-radius.example.com}
+        restart: unless-stopped
+        depends_on:
+            - postgres
+        ports:
+            # RADIUS Authentication (UDP)
+            - "1812:1812/udp"
+            # RADIUS Accounting (UDP)
+            - "1813:1813/udp"
+            # RADIUS over TLS (TCP)
+            - "2083:2083/tcp"
+        environment:
+            - RADIUS_DOMAIN=${RADIUS_DOMAIN:-radius.example.com}
+            - RADIUS_SECRET=${RADIUS_SECRET:-changeme123}
+            - ENVIRONMENT=${ENVIRONMENT:-development}
+            - FREERADIUS_LOG_LEVEL=${FREERADIUS_LOG_LEVEL:-info}
+            - ENABLE_TLS=${ENABLE_TLS:-true}
+            - TLS_CERT_FILE=cert.pem
+            - TLS_KEY_FILE=privkey.pem
+            - TLS_CA_FILE=fullchain.pem
+            # Database configuration
+            - POSTGRES_HOST=radius-postgres
+            - POSTGRES_PORT=5432
+            - POSTGRES_DB=radius
+            - POSTGRES_USER=radius
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-radiuspass123}
+            # Test user credentials
+            - TEST_USER_PASSWORD=${TEST_USER_PASSWORD:-testpass123}
+            - GUEST_USER_PASSWORD=${GUEST_USER_PASSWORD:-guestpass123}
+            - ADMIN_USER_PASSWORD=${ADMIN_USER_PASSWORD:-adminpass123}
+            - CONTRACTOR_PASSWORD=${CONTRACTOR_PASSWORD:-contractorpass123}
+            - VIP_PASSWORD=${VIP_PASSWORD:-vippass123}
+        volumes:
+            - radius-data:/var/log/freeradius
+        networks:
+            - radius-network
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
 
 volumes:
-  radius-data:
-    driver: local
+    radius-data:
+        driver: local
+    postgres-data:
+        driver: local
 
 networks:
-  radius-network:
-    driver: bridge
+    radius-network:
+        driver: bridge
