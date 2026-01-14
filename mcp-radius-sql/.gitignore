@@ -2,3 +2,6 @@ node_modules/
 dist/
 .env
 *.log
+
+# TLS certificates (copied at build time)
+certs/*.pem

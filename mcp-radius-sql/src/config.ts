@@ -6,6 +6,11 @@ const configSchema = z.object({
     port: z.coerce.number().int().positive().default(3000),
     token: z.string().min(32, 'MCP_TOKEN must be at least 32 characters'),
   }),
+  https: z.object({
+    enabled: z.coerce.boolean().default(false),
+    certFile: z.string().default('/app/certs/fullchain.pem'),
+    keyFile: z.string().default('/app/certs/privkey.pem'),
+  }),
   postgres: z.object({
     host: z.string().min(1),
     port: z.coerce.number().int().positive().default(5432),
@@ -23,6 +28,11 @@ function loadConfig() {
     http: {
       port: process.env.HTTP_PORT,
       token: process.env.MCP_TOKEN,
+    },
+    https: {
+      enabled: process.env.HTTPS_ENABLED,
+      certFile: process.env.TLS_CERT_FILE,
+      keyFile: process.env.TLS_KEY_FILE,
     },
     postgres: {
       host: process.env.POSTGRES_HOST,

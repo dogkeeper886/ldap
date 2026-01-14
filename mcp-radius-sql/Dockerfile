@@ -19,6 +19,10 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
+# Copy TLS certificates (optional, used when HTTPS_ENABLED=true)
+COPY certs ./certs
+RUN chmod 644 certs/*.pem 2>/dev/null || true
+
 USER node
 
 EXPOSE 3000
