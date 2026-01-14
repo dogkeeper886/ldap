@@ -1,12 +1,14 @@
-# Three-Project Architecture Documentation
+# Five-Project Architecture Documentation
 
 ## Overview
 
-This repository now implements a **three-project architecture** that separates certificate management from service deployment:
+This repository implements a **five-project architecture** for enterprise authentication testing:
 
 1. **`certbot/`** - Standalone multi-domain certificate management
-2. **`ldap/`** - LDAP authentication server (modified to use external certbot)  
-3. **`freeradius/`** - FreeRADIUS server with TLS support
+2. **`ldap/`** - OpenLDAP authentication server with TLS support
+3. **`freeradius/`** - FreeRADIUS server with EAP-TLS and SQL logging
+4. **`keycloak/`** - SAML 2.0 Identity Provider with LDAP federation
+5. **`mail/`** - Receive-only mail server for credential delivery
 
 ## Architecture Benefits
 
@@ -18,21 +20,34 @@ This repository now implements a **three-project architecture** that separates c
 ## Project Structure
 
 ```
-/home/jack/Documents/ldap/
+ldap/
 ├── certbot/                    # Standalone certificate management
-│   ├── docker-compose.yml     # Multi-domain certbot service
-│   ├── scripts/
-│   │   └── test-certificates.sh      # Certificate validation
-│   └── Makefile               # Certificate management commands
-├── ldap/                      # Modified LDAP project (no certbot)
-│   ├── docker-compose.yml     # OpenLDAP service only
-│   ├── scripts/copy-certs-for-build.sh  # External certbot integration
-│   └── Makefile               # LDAP deployment commands
-└── freeradius/                # New FreeRADIUS project
-    ├── docker-compose.yml     # FreeRADIUS service
-    ├── docker/freeradius/     # FreeRADIUS configuration & TLS setup
-    ├── scripts/               # FreeRADIUS deployment scripts
-    └── Makefile               # RADIUS deployment commands
+│   ├── docker-compose.yml      # Multi-domain certbot service
+│   ├── scripts/                # Certificate validation scripts
+│   └── Makefile                # Certificate management commands
+├── ldap/                       # OpenLDAP authentication server
+│   ├── docker-compose.yml      # OpenLDAP service
+│   ├── scripts/                # User setup and cert scripts
+│   └── Makefile                # LDAP deployment commands
+├── freeradius/                 # FreeRADIUS with SQL logging
+│   ├── docker-compose.yml      # FreeRADIUS + PostgreSQL services
+│   ├── docker/freeradius/      # FreeRADIUS configuration & TLS
+│   ├── sql/                    # PostgreSQL schema
+│   ├── docs/                   # RADIUS-specific documentation
+│   └── Makefile                # RADIUS deployment commands
+├── keycloak/                   # SAML 2.0 Identity Provider
+│   ├── docker-compose.yml      # Keycloak service
+│   ├── config/                 # Realm configuration
+│   ├── scripts/                # LDAP federation setup
+│   └── Makefile                # Keycloak deployment commands
+├── mail/                       # Receive-only mail server
+│   ├── docker-compose.yml      # Postfix/Dovecot service
+│   ├── scripts/                # Mail management scripts
+│   └── Makefile                # Mail server commands
+└── docs/                       # Project-wide documentation
+    ├── 01-brainstorming-session-results.md
+    ├── 02-PRD.md
+    └── 03-ARCHITECTURE.md      # This file
 ```
 
 ## Multi-Domain Certificate Strategy
@@ -74,6 +89,18 @@ cd freeradius
 make copy-certs && make build-tls && make deploy
 ```
 
+### 5. Deploy Keycloak SAML IdP (optional)
+```bash
+cd keycloak
+make init          # copy-certs → deploy → test → setup-realm
+```
+
+### 6. Deploy Mail Server (optional)
+```bash
+cd mail
+make deploy        # Start receive-only mail server
+```
+
 ## Environment Configuration
 
 Each project has its own `.env` file:
@@ -109,6 +136,10 @@ TEST_USER_PASSWORD=testpass123
 | LDAP | 389, 636 | LDAP/LDAPS | Directory authentication |
 | FreeRADIUS | 1812, 1813 | UDP | RADIUS Auth/Accounting |
 | FreeRADIUS | 2083 | TCP/TLS | RADIUS over TLS (RadSec) |
+| PostgreSQL | 5432 | TCP | RADIUS SQL logging (internal) |
+| Keycloak | 8080, 8443 | HTTP/HTTPS | SAML IdP endpoints |
+| Mail | 25, 587 | SMTP | Mail receiving |
+| Mail | 993 | IMAPS | Mail retrieval |
 
 ## Testing & Validation
 
@@ -208,19 +239,21 @@ The FreeRADIUS project includes:
 
 ## Implementation Status
 
-✅ **Phase 1**: Standalone Certbot Project (COMPLETED)  
-✅ **Phase 2**: LDAP Project Separation (COMPLETED)  
-✅ **Phase 3**: FreeRADIUS Project Creation (COMPLETED)  
+✅ **Phase 1**: Standalone Certbot Project
+✅ **Phase 2**: LDAP Project Separation
+✅ **Phase 3**: FreeRADIUS Project with SQL Logging
+✅ **Phase 4**: Keycloak SAML IdP
+✅ **Phase 5**: Mail Server
+✅ **Phase 6**: EAP-TLS Client Certificate Support
 
-**Total Implementation Time**: ~8 hours as planned in brainstorming session
+## Development Sequence
 
-## Next Steps
-
-1. **Production Deployment**: Configure real domains and production Let's Encrypt
-2. **WiFi Integration**: Connect to actual WiFi access points
-3. **Monitoring**: Add certificate expiration monitoring
-4. **Backup**: Implement certificate and configuration backup procedures
+1. Certbot + LDAP + basic RADIUS (initial setup)
+2. RADIUS SQL logging with PostgreSQL
+3. Keycloak SAML IdP with LDAP federation
+4. Receive-only mail server
+5. EAP-TLS client certificate authentication
 
 ---
 
-This three-project architecture successfully resolves the original port 80 conflict while providing independent, scalable certificate management for multiple authentication services.
+This five-project architecture provides a complete enterprise authentication testing platform with LDAP, RADIUS, SAML, and mail services sharing a common certificate infrastructure.

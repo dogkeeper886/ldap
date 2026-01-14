@@ -124,6 +124,111 @@ function createUser(email, password) {
 }
 ```
 
+## MCP Server Development Guidelines
+
+### Required Technology Stack
+
+| Component | Library | Purpose |
+|-----------|---------|---------|
+| Language | TypeScript | Type safety, better tooling |
+| Validation | zod | Runtime input validation |
+| Logging | pino | Structured JSON logging |
+| Config | dotenv + zod | Environment loading with validation |
+| Testing | vitest | Fast TypeScript-native testing |
+
+### MCP Server Requirements
+
+1. **Configuration Validation**
+   - Validate all environment variables at startup using Zod
+   - Fail fast if required config is missing
+   - Never use unchecked `process.env` values
+
+2. **Health Checks**
+   - Implement database/service health check
+   - Check health on startup before accepting requests
+   - Exit with error if health check fails
+
+3. **Input Validation**
+   - Define Zod schemas for all tool inputs
+   - Validate inputs before query execution
+   - Return structured validation errors
+
+4. **Error Handling**
+   - Catch and categorize errors (validation, database, unknown)
+   - Log errors with context (tool name, input params)
+   - Return user-friendly error messages without stack traces
+   - Never expose internal error details to clients
+
+5. **Logging**
+   - Log at tool execution boundaries (start, completion, error)
+   - Include context: tool name, relevant parameters
+   - Never log: passwords, full query results, PII
+   - Use structured logging (JSON format)
+
+6. **Graceful Shutdown**
+   - Handle SIGTERM signal
+   - Close database connections cleanly
+   - Log shutdown events
+
+### MCP Server Project Structure
+
+```
+mcp-{name}/
+├── package.json
+├── tsconfig.json
+├── .env.example
+├── src/
+│   ├── index.ts      # Entry point with signal handlers
+│   ├── config.ts     # Zod-validated configuration
+│   ├── logger.ts     # Pino logger setup
+│   ├── db/           # Database connection and health
+│   └── tools/        # Tool implementations with schemas
+└── tests/
+```
+
+### Example: Config with Validation
+
+```typescript
+import { z } from 'zod';
+import 'dotenv/config';
+
+const schema = z.object({
+  db: z.object({
+    host: z.string().min(1),
+    port: z.coerce.number().positive(),
+    password: z.string().min(1),
+  }),
+});
+
+const result = schema.safeParse({ /* env values */ });
+if (!result.success) {
+  console.error('Config error:', result.error.format());
+  process.exit(1);
+}
+export const config = result.data;
+```
+
+### Example: Tool with Error Handling
+
+```typescript
+const tool = {
+  handler: async (input: unknown) => {
+    try {
+      const validated = schema.parse(input);
+      logger.info({ tool: 'name', ...validated }, 'Executing');
+      const result = await query(validated);
+      return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return { content: [{ type: 'text', text: `Validation: ${error.message}` }], isError: true };
+      }
+      logger.error({ error }, 'Tool failed');
+      return { content: [{ type: 'text', text: 'Internal error' }], isError: true };
+    }
+  },
+};
+```
+
 ## Remember
 - Code should be boring and predictable
 - When in doubt, delete it

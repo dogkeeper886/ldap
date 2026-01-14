@@ -8,7 +8,8 @@ ifneq (,$(wildcard ./.env))
 endif
 
 .PHONY: help copy-certs copy-client-ca build-tls deploy stop restart clean logs test build setup-users \
-       sql-auth sql-acct sql-by-mac sql-clear sql-detail debug debug-stop
+       sql-auth sql-acct sql-by-mac sql-clear sql-detail debug debug-stop \
+       mcp-build mcp-deploy mcp-stop mcp-logs mcp-status
 
 # Default target
 help:
@@ -43,6 +44,13 @@ help:
 	@echo "  make clean         - Clean containers and volumes"
 	@echo "  make status        - Show service status"
 	@echo "  make config-test   - Test FreeRADIUS configuration"
+	@echo ""
+	@echo "MCP RADIUS SQL Server:"
+	@echo "  make mcp-build     - Build MCP server Docker image"
+	@echo "  make mcp-deploy    - Deploy MCP server"
+	@echo "  make mcp-stop      - Stop MCP server"
+	@echo "  make mcp-logs      - Show MCP server logs"
+	@echo "  make mcp-status    - Show MCP server status"
 	@echo ""
 
 # Environment setup
@@ -248,3 +256,36 @@ debug-stop:
 	DEBUG_MODE=false docker compose up -d freeradius
 	@sleep 5
 	@make status
+
+# MCP RADIUS SQL Server targets
+mcp-build:
+	@echo "Building MCP RADIUS SQL server..."
+	docker compose build mcp-radius-sql
+
+mcp-deploy: mcp-build
+	@echo "Deploying MCP RADIUS SQL server..."
+	docker compose up -d mcp-radius-sql
+	@sleep 5
+	@make mcp-status
+
+mcp-stop:
+	@echo "Stopping MCP RADIUS SQL server..."
+	docker compose stop mcp-radius-sql
+
+mcp-logs:
+	docker compose logs mcp-radius-sql
+
+mcp-status:
+	@echo "MCP RADIUS SQL Server Status:"
+	@echo "=============================="
+	@if docker ps | grep -q mcp-radius-sql; then \
+		echo "✓ MCP server is running"; \
+		echo ""; \
+		docker ps --filter "name=mcp-radius-sql" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"; \
+		echo ""; \
+		echo "Health check:"; \
+		curl -s http://localhost:3000/health || echo "Health endpoint not responding"; \
+	else \
+		echo "✗ MCP server is not running"; \
+		echo "Run 'make mcp-deploy' to start the service"; \
+	fi

@@ -148,8 +148,101 @@ Received Access-Accept Id 222 from 127.0.0.1:714 to 127.0.0.1:33448 length 37
 | `make logs-follow` | Follow logs in real-time |
 | `make test` | Test basic authentication |
 | `make test-users` | Test all configured users |
+| `make config-test` | Validate FreeRADIUS configuration |
 | `make clean` | Remove containers and volumes |
 | `make status` | Show service status |
+
+### Debug Mode
+
+| Command | Description |
+|---------|-------------|
+| `make debug` | Run FreeRADIUS with verbose logging (-X flag) |
+| `make debug-stop` | Return to normal mode |
+
+### SQL Logging Queries
+
+Authentication and accounting data is logged to PostgreSQL.
+
+| Command | Description |
+|---------|-------------|
+| `make sql-auth` | View recent authentication attempts (last 20) |
+| `make sql-acct` | View recent accounting sessions (last 20) |
+| `make sql-by-mac MAC=XX-XX-XX-XX-XX-XX` | Search auth/acct by MAC address |
+| `make sql-detail MAC=XX-XX-XX-XX-XX-XX` | Full record details for a MAC |
+| `make sql-clear` | Truncate auth and accounting tables |
+
+Example:
+```bash
+# View recent auth attempts
+make sql-auth
+
+# Search by device MAC address
+make sql-by-mac MAC=C6-AD-50-7C-41-04
+
+# Get full record details
+make sql-detail MAC=B6-64-89-61-87-E5
+```
+
+### MCP RADIUS SQL Server
+
+HTTP-based MCP server for programmatic access to RADIUS SQL data. Enables AI assistants and automation tools to query authentication and accounting records.
+
+| Command | Description |
+|---------|-------------|
+| `make mcp-build` | Build MCP server Docker image |
+| `make mcp-deploy` | Deploy MCP server |
+| `make mcp-stop` | Stop MCP server |
+| `make mcp-logs` | Show MCP server logs |
+| `make mcp-status` | Show MCP server status |
+
+**Setup:**
+
+1. Set `MCP_TOKEN` in `.env` (minimum 32 characters):
+   ```bash
+   echo "MCP_TOKEN=$(openssl rand -hex 32)" >> .env
+   ```
+
+2. Deploy:
+   ```bash
+   make mcp-deploy
+   ```
+
+3. Test:
+   ```bash
+   curl http://localhost:3000/health
+   ```
+
+**Available MCP Tools:**
+
+| Tool | Description |
+|------|-------------|
+| `radius_auth_recent` | Recent authentication attempts |
+| `radius_failed_auth` | Failed authentication attempts |
+| `radius_by_mac` | Search by MAC address |
+| `radius_by_user` | Search by username |
+| `radius_acct_recent` | Recent accounting sessions |
+| `radius_active_sessions` | Currently active sessions |
+| `radius_by_nas` | Search by NAS identifier |
+| `radius_bandwidth_top` | Top bandwidth consumers |
+| `radius_health` | Database connectivity check |
+
+**Claude Code Configuration:**
+
+Add to `~/.claude.json`:
+```json
+{
+  "mcpServers": {
+    "radius-sql": {
+      "url": "http://localhost:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-mcp-token>"
+      }
+    }
+  }
+}
+```
+
+See `mcp-radius-sql/README.md` for detailed documentation.
 
 ## How It Works
 
