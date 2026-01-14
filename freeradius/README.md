@@ -185,7 +185,7 @@ make sql-detail MAC=B6-64-89-61-87-E5
 
 ### MCP RADIUS SQL Server
 
-HTTP-based MCP server for programmatic access to RADIUS SQL data. Enables AI assistants and automation tools to query authentication and accounting records.
+HTTPS-based MCP server for programmatic access to RADIUS SQL data. Enables AI assistants and automation tools to query authentication and accounting records.
 
 | Command | Description |
 |---------|-------------|
@@ -209,7 +209,7 @@ HTTP-based MCP server for programmatic access to RADIUS SQL data. Enables AI ass
 
 3. Test:
    ```bash
-   curl http://localhost:3000/health
+   curl -k https://localhost:3443/health
    ```
 
 **Available MCP Tools:**
@@ -233,7 +233,7 @@ Add to `~/.claude.json`:
 {
   "mcpServers": {
     "radius-sql": {
-      "url": "http://localhost:3000/mcp",
+      "url": "https://localhost:3443/mcp",
       "headers": {
         "Authorization": "Bearer <your-mcp-token>"
       }
