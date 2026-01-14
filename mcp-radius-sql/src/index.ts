@@ -1,4 +1,6 @@
 import express from 'express';
+import https from 'node:https';
+import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -228,9 +230,19 @@ async function main(): Promise<void> {
   }
   logger.info({ latencyMs: health.latencyMs }, 'Database connected');
 
-  app.listen(config.http.port, () => {
-    logger.info({ port: config.http.port }, 'MCP HTTP server started');
-  });
+  if (config.https.enabled) {
+    const tlsOptions = {
+      cert: fs.readFileSync(config.https.certFile),
+      key: fs.readFileSync(config.https.keyFile),
+    };
+    https.createServer(tlsOptions, app).listen(config.http.port, () => {
+      logger.info({ port: config.http.port }, 'MCP HTTPS server started');
+    });
+  } else {
+    app.listen(config.http.port, () => {
+      logger.info({ port: config.http.port }, 'MCP HTTP server started');
+    });
+  }
 }
 
 main().catch((error) => {

@@ -77,10 +77,13 @@ services:
         depends_on:
             - postgres
         ports:
-            - "3000:3000"
+            - "3443:3000"
         environment:
             - HTTP_PORT=3000
             - MCP_TOKEN=${MCP_TOKEN:-change-me-to-a-secure-token-at-least-32-chars}
+            - HTTPS_ENABLED=${HTTPS_ENABLED:-true}
+            - TLS_CERT_FILE=/app/certs/fullchain.pem
+            - TLS_KEY_FILE=/app/certs/privkey.pem
             - POSTGRES_HOST=radius-postgres
             - POSTGRES_PORT=5432
             - POSTGRES_DB=radius
@@ -90,7 +93,7 @@ services:
         networks:
             - radius-network
         healthcheck:
-            test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+            test: ["CMD", "wget", "-q", "--spider", "--no-check-certificate", "https://localhost:3000/health"]
             interval: 30s
             timeout: 10s
             retries: 3
