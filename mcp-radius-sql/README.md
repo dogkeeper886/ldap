@@ -175,6 +175,60 @@ Add to `~/.claude.json`:
 - Parameterized queries to prevent SQL injection
 - Credentials never logged
 
+## Troubleshooting
+
+### MCP Connection Failed
+
+**Symptom:** `claude mcp list` shows `✗ Failed to connect`
+
+**Common Causes:**
+
+| Issue | Error | Solution |
+|-------|-------|----------|
+| Missing Bearer prefix | `401 Invalid authorization format` | Use `Authorization: Bearer <token>` not just `<token>` |
+| SSL hostname mismatch | `SSL certificate problem` | Use hostname (e.g., `mcp.example.com`) not IP address |
+| Wrong transport type | `Session ID required for SSE` | Use `--transport http` (not sse) |
+
+### Fix MCP Configuration
+
+```bash
+# Remove old config
+claude mcp remove radius-sql -s local
+
+# Add with correct format (note: Bearer prefix and hostname)
+claude mcp add radius-sql \
+  --transport http \
+  https://mcp.example.com:3443/mcp \
+  -s local \
+  --header "Authorization: Bearer <your-token>"
+
+# Verify connection
+claude mcp list
+```
+
+### Test Endpoints Manually
+
+```bash
+# Health check (no auth required)
+curl -s https://mcp.example.com:3443/health
+
+# MCP endpoint (requires Bearer token)
+curl -s -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -X POST https://mcp.example.com:3443/mcp \
+  -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}},"id":1}'
+```
+
+### SSL Certificate Issues
+
+When using Let's Encrypt certificates, always connect using the hostname that matches the certificate:
+
+- **Use hostname:** `https://mcp.example.com:3443` ✓
+- **Avoid IP:** `https://192.0.2.1:3443` ✗ (SSL hostname mismatch)
+
+Claude Code does not support skipping SSL verification, so you must use the correct hostname.
+
 ## Development
 
 ```bash
