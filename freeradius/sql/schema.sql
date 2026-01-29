@@ -61,3 +61,52 @@ CREATE INDEX radpostauth_username_idx ON radpostauth (username);
 CREATE INDEX radpostauth_nasidentifier_idx ON radpostauth (nasidentifier);
 CREATE INDEX radpostauth_authdate_idx ON radpostauth (authdate);
 CREATE INDEX radpostauth_class_idx ON radpostauth (class);
+
+-- User check attributes (passwords)
+CREATE TABLE IF NOT EXISTS radcheck (
+    id          serial PRIMARY KEY,
+    username    text NOT NULL DEFAULT '',
+    attribute   text NOT NULL DEFAULT '',
+    op          char(2) NOT NULL DEFAULT ':=',
+    value       text NOT NULL DEFAULT ''
+);
+CREATE INDEX radcheck_username_idx ON radcheck (username);
+
+-- User reply attributes
+CREATE TABLE IF NOT EXISTS radreply (
+    id          serial PRIMARY KEY,
+    username    text NOT NULL DEFAULT '',
+    attribute   text NOT NULL DEFAULT '',
+    op          char(2) NOT NULL DEFAULT '=',
+    value       text NOT NULL DEFAULT ''
+);
+CREATE INDEX radreply_username_idx ON radreply (username);
+
+-- User group membership
+CREATE TABLE IF NOT EXISTS radusergroup (
+    id          serial PRIMARY KEY,
+    username    text NOT NULL DEFAULT '',
+    groupname   text NOT NULL DEFAULT '',
+    priority    integer NOT NULL DEFAULT 1
+);
+CREATE INDEX radusergroup_username_idx ON radusergroup (username);
+
+-- Group check attributes
+CREATE TABLE IF NOT EXISTS radgroupcheck (
+    id          serial PRIMARY KEY,
+    groupname   text NOT NULL DEFAULT '',
+    attribute   text NOT NULL DEFAULT '',
+    op          char(2) NOT NULL DEFAULT ':=',
+    value       text NOT NULL DEFAULT ''
+);
+CREATE INDEX radgroupcheck_groupname_idx ON radgroupcheck (groupname);
+
+-- Group reply attributes
+CREATE TABLE IF NOT EXISTS radgroupreply (
+    id          serial PRIMARY KEY,
+    groupname   text NOT NULL DEFAULT '',
+    attribute   text NOT NULL DEFAULT '',
+    op          char(2) NOT NULL DEFAULT '=',
+    value       text NOT NULL DEFAULT ''
+);
+CREATE INDEX radgroupreply_groupname_idx ON radgroupreply (groupname);
