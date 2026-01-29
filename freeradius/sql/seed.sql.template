@@ -1,0 +1,14 @@
+-- Default test users (passwords from .env)
+INSERT INTO radcheck (username, attribute, op, value) VALUES
+    ('test', 'Cleartext-Password', ':=', '{{TEST_USER_PASSWORD}}'),
+    ('guest', 'Cleartext-Password', ':=', '{{GUEST_USER_PASSWORD}}')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO radusergroup (username, groupname, priority) VALUES
+    ('test', 'users', 1),
+    ('guest', 'guests', 1)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES
+    ('guests', 'Session-Timeout', '=', '3600')
+ON CONFLICT DO NOTHING;
