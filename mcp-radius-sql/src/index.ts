@@ -29,6 +29,19 @@ import {
   nasSchema,
   timeRangeSchema,
 } from './tools/schemas.js';
+import {
+  createUser,
+  getUser,
+  updateUser,
+  deleteUser,
+  listUsers,
+} from './tools/users.js';
+import {
+  createUserSchema,
+  updateUserSchema,
+  listUsersSchema,
+  userIdentifierSchema,
+} from './tools/user-schemas.js';
 
 const app = express();
 app.use(express.json());
@@ -133,6 +146,100 @@ mcp.tool(
   async () => {
     const health = await checkHealth();
     return { content: [{ type: 'text', text: JSON.stringify(health, null, 2) }] };
+  }
+);
+
+mcp.tool(
+  'radius_user_create',
+  'Create a new RADIUS user with password and optional groups',
+  {
+    username: createUserSchema.shape.username.describe('Username (alphanumeric, dots, underscores, hyphens)'),
+    password: createUserSchema.shape.password.describe('User password (min 4 chars)'),
+    groups: createUserSchema.shape.groups.describe('Optional list of groups to assign'),
+    session_timeout: createUserSchema.shape.session_timeout.describe('Optional session timeout in seconds'),
+  },
+  async (args) => {
+    try {
+      const result = await createUser(args);
+      return { content: [{ type: 'text', text: result }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { content: [{ type: 'text', text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+);
+
+mcp.tool(
+  'radius_user_get',
+  'Get details of a RADIUS user (excludes password)',
+  {
+    username: userIdentifierSchema.shape.username.describe('Username to look up'),
+  },
+  async (args) => {
+    try {
+      const result = await getUser(args);
+      return { content: [{ type: 'text', text: result }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { content: [{ type: 'text', text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+);
+
+mcp.tool(
+  'radius_user_update',
+  'Update an existing RADIUS user (password, groups, enabled state)',
+  {
+    username: updateUserSchema.shape.username.describe('Username to update'),
+    password: updateUserSchema.shape.password.describe('New password (optional)'),
+    groups: updateUserSchema.shape.groups.describe('New group list (optional, replaces existing)'),
+    session_timeout: updateUserSchema.shape.session_timeout.describe('New session timeout in seconds (optional)'),
+    enabled: updateUserSchema.shape.enabled.describe('Enable or disable user (optional)'),
+  },
+  async (args) => {
+    try {
+      const result = await updateUser(args);
+      return { content: [{ type: 'text', text: result }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { content: [{ type: 'text', text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+);
+
+mcp.tool(
+  'radius_user_delete',
+  'Delete a RADIUS user',
+  {
+    username: userIdentifierSchema.shape.username.describe('Username to delete'),
+  },
+  async (args) => {
+    try {
+      const result = await deleteUser(args);
+      return { content: [{ type: 'text', text: result }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { content: [{ type: 'text', text: JSON.stringify({ error: message }) }], isError: true };
+    }
+  }
+);
+
+mcp.tool(
+  'radius_user_list',
+  'List RADIUS users with pagination and optional search',
+  {
+    limit: listUsersSchema.shape.limit.describe('Maximum number of users to return (default 50)'),
+    offset: listUsersSchema.shape.offset.describe('Number of users to skip (default 0)'),
+    search: listUsersSchema.shape.search.describe('Optional username search pattern'),
+  },
+  async (args) => {
+    try {
+      const result = await listUsers(args);
+      return { content: [{ type: 'text', text: result }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { content: [{ type: 'text', text: JSON.stringify({ error: message }) }], isError: true };
+    }
   }
 );
 

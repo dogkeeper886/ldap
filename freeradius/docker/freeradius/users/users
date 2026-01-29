@@ -1,29 +1,3 @@
-# FreeRADIUS Test Users
-# Test users for WiFi authentication validation
-
-# Test user for basic authentication
-test    Cleartext-Password := "{{TEST_USER_PASSWORD}}"
-        Reply-Message := "Hello test user"
-
-# Guest user with limited access
-guest   Cleartext-Password := "{{GUEST_USER_PASSWORD}}"
-        Reply-Message := "Welcome guest user",
-        Session-Timeout = 3600
-
-# Admin user with full access
-admin   Cleartext-Password := "{{ADMIN_USER_PASSWORD}}"
-        Reply-Message := "Admin access granted"
-
-# Contractor user with time-limited access
-contractor Cleartext-Password := "{{CONTRACTOR_PASSWORD}}"
-        Reply-Message := "Contractor access",
-        Session-Timeout = 28800
-
-# VIP user with priority access
-vip     Cleartext-Password := "{{VIP_PASSWORD}}"
-        Reply-Message := "VIP access granted"
-
-# Default user (fallback) - only reject non-EAP requests
-# EAP requests have EAP-Message attribute and are handled by the eap module
-DEFAULT Auth-Type := Reject, EAP-Message !* ANY
-        Reply-Message := "Authentication denied"
+# FreeRADIUS Users File
+# All users are managed via SQL database
+# Use MCP tools (radius_user_create, etc.) to manage users
