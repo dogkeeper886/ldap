@@ -9,10 +9,26 @@ import {
   type UpdateUserInput,
   type ListUsersInput,
   type UserIdentifierInput,
+  type ReplyAttribute,
 } from './user-schemas.js';
+import type { PoolClient } from 'pg';
+
+async function insertReplyAttributes(
+  client: PoolClient,
+  username: string,
+  attributes: ReplyAttribute[]
+): Promise<void> {
+  for (const attr of attributes) {
+    await client.query(
+      `INSERT INTO radreply (username, attribute, op, value)
+       VALUES ($1, $2, $3, $4)`,
+      [username, attr.attribute, attr.op, attr.value]
+    );
+  }
+}
 
 export async function createUser(input: unknown): Promise<string> {
-  const { username, password, groups, session_timeout } = createUserSchema.parse(input);
+  const { username, password, groups, session_timeout, reply_attributes } = createUserSchema.parse(input);
   logger.info({ tool: 'radius_user_create', username }, 'Creating user');
 
   const client = await pool.connect();
@@ -42,6 +58,11 @@ export async function createUser(input: unknown): Promise<string> {
          VALUES ($1, 'Session-Timeout', '=', $2)`,
         [username, session_timeout.toString()]
       );
+    }
+
+    // Insert custom reply attributes if provided
+    if (reply_attributes && reply_attributes.length > 0) {
+      await insertReplyAttributes(client, username, reply_attributes);
     }
 
     // Insert group memberships
@@ -116,7 +137,7 @@ export async function getUser(input: unknown): Promise<string> {
 }
 
 export async function updateUser(input: unknown): Promise<string> {
-  const { username, password, groups, session_timeout, enabled } = updateUserSchema.parse(input);
+  const { username, password, groups, session_timeout, enabled, reply_attributes } = updateUserSchema.parse(input);
   logger.info({ tool: 'radius_user_update', username }, 'Updating user');
 
   const client = await pool.connect();
@@ -152,6 +173,17 @@ export async function updateUser(input: unknown): Promise<string> {
          VALUES ($1, 'Session-Timeout', '=', $2)`,
         [username, session_timeout.toString()]
       );
+    }
+
+    // Update custom reply attributes if provided (replaces all except Session-Timeout)
+    if (reply_attributes !== undefined) {
+      await client.query(
+        `DELETE FROM radreply WHERE username = $1 AND attribute != 'Session-Timeout'`,
+        [username]
+      );
+      if (reply_attributes.length > 0) {
+        await insertReplyAttributes(client, username, reply_attributes);
+      }
     }
 
     // Update groups if provided
