@@ -9,6 +9,9 @@ services:
             - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-radiuspass123}
             - TEST_USER_PASSWORD=${TEST_USER_PASSWORD:-testpass123}
             - GUEST_USER_PASSWORD=${GUEST_USER_PASSWORD:-guestpass123}
+            - ADMIN_USER_PASSWORD=${ADMIN_USER_PASSWORD:-adminpass123}
+            - CONTRACTOR_PASSWORD=${CONTRACTOR_PASSWORD:-contractorpass123}
+            - VIP_PASSWORD=${VIP_PASSWORD:-vippass123}
         volumes:
             - postgres-data:/var/lib/postgresql/data
             - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro

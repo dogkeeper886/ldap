@@ -1,14 +1,28 @@
--- Default test users (passwords from .env)
+-- Default users (passwords from .env)
 INSERT INTO radcheck (username, attribute, op, value) VALUES
     ('test', 'Cleartext-Password', ':=', '{{TEST_USER_PASSWORD}}'),
-    ('guest', 'Cleartext-Password', ':=', '{{GUEST_USER_PASSWORD}}')
+    ('guest', 'Cleartext-Password', ':=', '{{GUEST_USER_PASSWORD}}'),
+    ('admin', 'Cleartext-Password', ':=', '{{ADMIN_USER_PASSWORD}}'),
+    ('contractor', 'Cleartext-Password', ':=', '{{CONTRACTOR_PASSWORD}}'),
+    ('vip', 'Cleartext-Password', ':=', '{{VIP_PASSWORD}}')
 ON CONFLICT DO NOTHING;
 
+-- User group memberships
 INSERT INTO radusergroup (username, groupname, priority) VALUES
     ('test', 'users', 1),
-    ('guest', 'guests', 1)
+    ('guest', 'guests', 1),
+    ('admin', 'admins', 1),
+    ('contractor', 'contractors', 1),
+    ('vip', 'vip', 1)
 ON CONFLICT DO NOTHING;
 
+-- Group reply attributes
 INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES
-    ('guests', 'Session-Timeout', '=', '3600')
+    ('users', 'Reply-Message', '=', 'Hello test user'),
+    ('guests', 'Reply-Message', '=', 'Welcome guest user'),
+    ('guests', 'Session-Timeout', '=', '3600'),
+    ('admins', 'Reply-Message', '=', 'Admin access granted'),
+    ('contractors', 'Reply-Message', '=', 'Contractor access'),
+    ('contractors', 'Session-Timeout', '=', '28800'),
+    ('vip', 'Reply-Message', '=', 'VIP access granted')
 ON CONFLICT DO NOTHING;
