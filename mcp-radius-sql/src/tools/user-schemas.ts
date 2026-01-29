@@ -1,10 +1,19 @@
 import { z } from 'zod';
 
+export const replyAttributeSchema = z.object({
+  attribute: z.string().min(1).max(64),
+  op: z.enum([':=', '=', '+=', '-=', '==']).default('='),
+  value: z.string().max(253),
+});
+
+export type ReplyAttribute = z.infer<typeof replyAttributeSchema>;
+
 export const createUserSchema = z.object({
   username: z.string().min(1).max(64).regex(/^[a-zA-Z0-9._-]+$/),
   password: z.string().min(4).max(128),
   groups: z.array(z.string()).optional(),
   session_timeout: z.number().int().positive().max(86400).optional(),
+  reply_attributes: z.array(replyAttributeSchema).max(20).optional(),
 });
 
 export const updateUserSchema = z.object({
@@ -13,6 +22,7 @@ export const updateUserSchema = z.object({
   groups: z.array(z.string()).optional(),
   session_timeout: z.number().int().positive().max(86400).optional(),
   enabled: z.boolean().optional(),
+  reply_attributes: z.array(replyAttributeSchema).max(20).optional(),
 });
 
 export const listUsersSchema = z.object({

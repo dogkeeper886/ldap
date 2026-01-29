@@ -157,6 +157,9 @@ mcp.tool(
     password: createUserSchema.shape.password.describe('User password (min 4 chars)'),
     groups: createUserSchema.shape.groups.describe('Optional list of groups to assign'),
     session_timeout: createUserSchema.shape.session_timeout.describe('Optional session timeout in seconds'),
+    reply_attributes: createUserSchema.shape.reply_attributes.describe(
+      'Optional array of reply attributes [{attribute, op, value}]. Use for Tunnel-Password, Reply-Message, etc.'
+    ),
   },
   async (args) => {
     try {
@@ -195,6 +198,9 @@ mcp.tool(
     groups: updateUserSchema.shape.groups.describe('New group list (optional, replaces existing)'),
     session_timeout: updateUserSchema.shape.session_timeout.describe('New session timeout in seconds (optional)'),
     enabled: updateUserSchema.shape.enabled.describe('Enable or disable user (optional)'),
+    reply_attributes: updateUserSchema.shape.reply_attributes.describe(
+      'Optional array of reply attributes [{attribute, op, value}]. Use for Tunnel-Password, Reply-Message, etc.'
+    ),
   },
   async (args) => {
     try {
