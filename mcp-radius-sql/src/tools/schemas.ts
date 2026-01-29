@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const limitSchema = z.object({
-  limit: z.number().int().min(1).max(100).default(20),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 export const macSchema = z.object({
@@ -20,8 +20,8 @@ export const nasSchema = z.object({
 });
 
 export const timeRangeSchema = z.object({
-  hours: z.number().int().min(1).max(720).default(24),
-  limit: z.number().int().min(1).max(100).default(20),
+  hours: z.coerce.number().int().min(1).max(720).default(24),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 export type LimitInput = z.infer<typeof limitSchema>;

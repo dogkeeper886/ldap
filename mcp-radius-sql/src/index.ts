@@ -56,7 +56,7 @@ const mcp = new McpServer({
 mcp.tool(
   'radius_auth_recent',
   'Get recent RADIUS authentication attempts',
-  { limit: z.number().int().min(1).max(100).default(20).describe('Number of records to return') },
+  { limit: z.coerce.number().int().min(1).max(100).default(20).describe('Number of records to return') },
   async (args) => {
     const result = await radiusAuthRecent(args);
     return { content: [{ type: 'text', text: result }] };
@@ -67,8 +67,8 @@ mcp.tool(
   'radius_failed_auth',
   'Get recent failed authentication attempts',
   {
-    hours: z.number().int().min(1).max(720).default(24).describe('Hours to look back'),
-    limit: z.number().int().min(1).max(100).default(20).describe('Number of records to return'),
+    hours: z.coerce.number().int().min(1).max(720).default(24).describe('Hours to look back'),
+    limit: z.coerce.number().int().min(1).max(100).default(20).describe('Number of records to return'),
   },
   async (args) => {
     const result = await radiusFailedAuth(args);
@@ -99,7 +99,7 @@ mcp.tool(
 mcp.tool(
   'radius_acct_recent',
   'Get recent RADIUS accounting sessions',
-  { limit: z.number().int().min(1).max(100).default(20).describe('Number of records to return') },
+  { limit: z.coerce.number().int().min(1).max(100).default(20).describe('Number of records to return') },
   async (args) => {
     const result = await radiusAcctRecent(args);
     return { content: [{ type: 'text', text: result }] };
@@ -130,8 +130,8 @@ mcp.tool(
   'radius_bandwidth_top',
   'Get top bandwidth consumers',
   {
-    hours: z.number().int().min(1).max(720).default(24).describe('Hours to look back'),
-    limit: z.number().int().min(1).max(100).default(20).describe('Number of records to return'),
+    hours: z.coerce.number().int().min(1).max(720).default(24).describe('Hours to look back'),
+    limit: z.coerce.number().int().min(1).max(100).default(20).describe('Number of records to return'),
   },
   async (args) => {
     const result = await radiusBandwidthTop(args);
