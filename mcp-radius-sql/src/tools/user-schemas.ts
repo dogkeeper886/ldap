@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
 export const replyAttributeSchema = z.object({
-  attribute: z.string().min(1).max(64),
+  attribute: z.string().min(1).max(64).refine(
+    (val) => val.toLowerCase() !== 'session-timeout',
+    { message: 'Use session_timeout parameter instead of Session-Timeout attribute' }
+  ),
   op: z.enum([':=', '=', '+=', '-=', '==']).default('='),
   value: z.string().max(253),
 });
