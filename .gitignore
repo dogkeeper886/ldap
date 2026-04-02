@@ -31,3 +31,6 @@ mail/docker/certs/
 
 # Keycloak certificates
 keycloak/docker/certs/
+
+# Cloudflare credentials
+certbot/cloudflare.ini

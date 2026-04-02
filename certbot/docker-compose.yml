@@ -1,16 +1,16 @@
-version: '3.8'
-
 services:
   certbot:
-    image: certbot/certbot
+    image: certbot/dns-cloudflare
     container_name: certbot
-    ports:
-      - "80:80"
     volumes:
       - certificates:/etc/letsencrypt
+      - ./cloudflare.ini:/etc/cloudflare/cloudflare.ini:ro
     entrypoint: sh
     command: >
-      -c 'certbot certonly --standalone --non-interactive --agree-tos
+      -c 'certbot certonly --dns-cloudflare
+      --dns-cloudflare-credentials /etc/cloudflare/cloudflare.ini
+      --dns-cloudflare-propagation-seconds 30
+      --non-interactive --agree-tos
       --email $${EMAIL} --domains $${DOMAINS}
       $$([ "$${STAGING}" = "true" ] && echo "--staging")
       $$([ "$${DRY_RUN}" = "true" ] && echo "--dry-run") &&
