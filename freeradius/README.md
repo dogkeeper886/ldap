@@ -11,8 +11,8 @@ RADIUS authentication server with TLS/EAP support, featuring EAP-TLS client cert
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         │                       │
         ▼                       ▼
-  ldap.tsengsyu.com      Ports: 1812/udp (auth)
-  radius.tsengsyu.com           1813/udp (acct)
+  ldap.example.com       Ports: 1812/udp (auth)
+  radius.example.com            1813/udp (acct)
   (SAN certificate)             2083/tcp (RadSec)
 ```
 
@@ -63,8 +63,8 @@ Key variables in `.env`:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `RADIUS_DOMAIN` | RADIUS server hostname | `radius.tsengsyu.com` |
-| `CERTBOT_CERT_NAME` | Certificate directory name in certbot | `ldap.tsengsyu.com` |
+| `RADIUS_DOMAIN` | RADIUS server hostname | `radius.example.com` |
+| `CERTBOT_CERT_NAME` | Certificate directory name in certbot | `ldap.example.com` |
 | `EXTERNAL_CERTBOT_CONTAINER` | Certbot container name | `certbot` |
 | `CLIENT_CA_FILE` | Path to client CA certificate | `./wrca-root-*.crt` |
 | `TEST_USER_PASSWORD` | Password for test user | `testpass123` |
@@ -97,7 +97,7 @@ If you have a private CA for client certificate authentication:
 
 ```bash
 # Option 1: Using environment variable
-make copy-client-ca CLIENT_CA_FILE=./wrca-root-98214785.tsengsyu.com.crt
+make copy-client-ca CLIENT_CA_FILE=./wrca-root-<serial>.example.com.crt
 
 # Option 2: Set in .env file, then run
 make copy-client-ca
@@ -299,7 +299,7 @@ See `mcp-radius-sql/README.md` for detailed documentation.
 ```
 Certbot Container                    FreeRADIUS Build
 /etc/letsencrypt/live/              ./docker/freeradius/certs/
-└── ldap.tsengsyu.com/    ──copy──▶ └── server/
+└── ldap.example.com/    ──copy──▶ └── server/
     ├── cert.pem                        ├── cert.pem
     ├── privkey.pem                     ├── privkey.pem
     └── fullchain.pem                   └── fullchain.pem
