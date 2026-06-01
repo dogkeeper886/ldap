@@ -11,8 +11,8 @@ RADIUS authentication server with TLS/EAP support, featuring EAP-TLS client cert
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         │                       │
         ▼                       ▼
-  ldap.example.com      Ports: 1812/udp (auth)
-  radius.example.com           1813/udp (acct)
+  ldap.example.com       Ports: 1812/udp (auth)
+  radius.example.com            1813/udp (acct)
   (SAN certificate)             2083/tcp (RadSec)
 ```
 
@@ -97,7 +97,7 @@ If you have a private CA for client certificate authentication:
 
 ```bash
 # Option 1: Using environment variable
-make copy-client-ca CLIENT_CA_FILE=./wrca-root-98214785.example.com.crt
+make copy-client-ca CLIENT_CA_FILE=./wrca-root-<serial>.example.com.crt
 
 # Option 2: Set in .env file, then run
 make copy-client-ca
