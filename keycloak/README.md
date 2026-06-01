@@ -11,7 +11,7 @@ SAML 2.0 Identity Provider with LDAP user federation for enterprise authenticati
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         │                       │                       │
         ▼                       ▼                       ▼
-  ldap.tsengsyu.com      Ports: 8080 (HTTP)      Ports: 389 (LDAP)
+  ldap.example.com       Ports: 8080 (HTTP)      Ports: 389 (LDAP)
   (SAN certificate)             8443 (HTTPS)            636 (LDAPS)
 ```
 

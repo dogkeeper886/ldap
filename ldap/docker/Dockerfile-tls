@@ -1,5 +1,5 @@
 FROM osixia/openldap:1.5.0
-LABEL maintainer="LDAP Admin <admin@tsengsyu.com>"
+LABEL maintainer="LDAP Admin <admin@example.com>"
 
 # Add custom TLS certificates using the official recommended approach
 # Certificates will be copied from certbot container during build
