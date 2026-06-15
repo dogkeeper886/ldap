@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="360" viewBox="0 0 1000 360" font-family="Arial, 'Helvetica Neue', 'DejaVu Sans', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="360" fill="#FFFFFF"/>
+  <text x="40" y="42" font-size="21" font-weight="700" fill="#0F172A">SAML SSO backed by LDAP</text>
+  <text x="40" y="68" font-size="13" fill="#64748B">Keycloak issues SAML assertions for web apps, reading users from OpenLDAP (read-only federation).</text>
+
+  <!-- certbot feeding cert -->
+  <rect x="410" y="104" width="200" height="44" rx="9" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="510" y="131" text-anchor="middle" font-size="12.5" font-weight="700" fill="#92400E">certbot → TLS cert</text>
+  <path d="M510,148 V186" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- edges -->
+  <path d="M236,222 H398" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M398,236 H236" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M602,229 H758" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <g font-size="11" fill="#475569" text-anchor="middle">
+    <rect x="268" y="200" width="98" height="15" fill="#FFFFFF"/><text x="317" y="211">SAML 2.0 · :8443</text>
+    <rect x="628" y="207" width="104" height="15" fill="#FFFFFF"/><text x="680" y="218">LDAPS :636 federation</text>
+  </g>
+
+  <!-- web app -->
+  <rect x="40" y="194" width="196" height="70" rx="10" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1.5"/>
+  <text x="138" y="224" text-anchor="middle" font-size="15" font-weight="600" fill="#5B21B6">Web application</text>
+  <text x="138" y="244" text-anchor="middle" font-size="11" fill="#7C3AED">SAML service provider</text>
+
+  <!-- keycloak -->
+  <rect x="398" y="186" width="204" height="92" rx="12" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
+  <text x="500" y="216" text-anchor="middle" font-size="16" font-weight="700" fill="#1E3A8A">Keycloak 26</text>
+  <text x="500" y="237" text-anchor="middle" font-size="11" fill="#2563EB">SAML 2.0 IdP · realm saml-test</text>
+  <text x="500" y="255" text-anchor="middle" font-size="11" fill="#2563EB">8080 HTTP · 8443 HTTPS</text>
+
+  <!-- openldap -->
+  <rect x="758" y="194" width="200" height="70" rx="10" fill="#D1FAE5" stroke="#10B981" stroke-width="1.5"/>
+  <text x="858" y="224" text-anchor="middle" font-size="15" font-weight="700" fill="#065F46">OpenLDAP</text>
+  <text x="858" y="244" text-anchor="middle" font-size="11" fill="#047857">ou=users · READ_ONLY</text>
+</svg>

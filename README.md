@@ -50,9 +50,10 @@ apps; the mail server receives the credential emails a real onboarding flow woul
 `mcp-radius-sql` exposes the FreeRADIUS PostgreSQL data — auth attempts, accounting
 sessions, active connections — as an **MCP server** over HTTPS with bearer-token auth.
 Point Claude (or any MCP client) at it and ask "show me failed logins in the last hour"
-in plain language; every query is read-only and parameterized.
+in plain language. It offers 14 tools: read-only queries plus user-management tools that
+can create or update RADIUS users; all queries are parameterized.
 
-![MCP observability: an MCP client queries mcp-radius-sql over HTTPS with a bearer token; the server runs read-only SQL against the PostgreSQL database that FreeRADIUS writes to](docs/images/mcp-observability.png)
+![MCP access: an MCP client queries mcp-radius-sql over HTTPS with a bearer token; the server runs query and user-management SQL against the PostgreSQL database that FreeRADIUS writes to](docs/images/mcp-observability.png)
 
 ## Components
 

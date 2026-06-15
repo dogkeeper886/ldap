@@ -1,243 +1,96 @@
-# MCP RADIUS SQL Server
+# mcp-radius-sql — RADIUS database over MCP
 
-HTTPS-based MCP server for querying RADIUS PostgreSQL data with bearer token authentication.
+> Part of the [Enterprise Authentication Testing Platform](../README.md). The query and
+> management layer: it exposes the FreeRADIUS database to an MCP client over HTTPS.
 
-## Architecture
+## What it is
 
-```
-┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│  MCP Client      │────►│  MCP Server      │────►│  radius-postgres │
-│  (HTTPS + Token) │     │  (Express + TLS) │     │  (Docker network)│
-└──────────────────┘     └──────────────────┘     └──────────────────┘
-        │                       │                       │
-   Authorization:          POST /mcp              postgres:5432
-   Bearer <token>          GET /mcp (SSE)         (internal DNS)
-                           GET /health
-                           Port 3443 (HTTPS)
-```
+An HTTPS [MCP](https://modelcontextprotocol.io) server over the FreeRADIUS PostgreSQL
+database. Point Claude (or any MCP client) at it and ask, in plain language, "show me
+failed logins in the last hour" or "create a RADIUS user." It offers **14 tools**: 9
+read-only queries (auth, accounting, health) plus 5 user-management tools — `get`/`list`
+read, while `create`/`update`/`delete` **write**, so this is not a read-only service. Every
+request needs a bearer token; queries are parameterized.
 
-## Prerequisites
+## How it works
 
-- Node.js >= 18
-- FreeRADIUS with PostgreSQL running (see `freeradius/` project)
-- Docker (for containerized deployment)
+![MCP access to the RADIUS database: an MCP client calls mcp-radius-sql over HTTPS with a bearer token; the server runs query and user-management SQL against the PostgreSQL that FreeRADIUS writes to](docs/images/mcp-flow.png)
 
-## Setup
+An Express + TLS server validates the bearer token (timing-safe) and serves the MCP
+protocol; it reads — and, for user management, writes — the same PostgreSQL that
+[`freeradius`](../freeradius/README.md) authenticates against.
 
-### 1. Configure Environment
+## Quickstart
+
+The server is built and deployed as part of the `freeradius` Docker stack:
 
 ```bash
-cp .env.example .env
-# Edit .env with your settings
-```
-
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-### 3. Build
-
-```bash
-npm run build
-```
-
-### 4. Run
-
-```bash
-npm start
-```
-
-## Docker Deployment
-
-### Build Image
-
-```bash
-docker build -t mcp-radius-sql .
-```
-
-### Run Container
-
-```bash
-docker run -d \
-  --name mcp-radius-sql \
-  --network freeradius_default \
-  -p 3443:3000 \
-  -e HTTP_PORT=3000 \
-  -e MCP_TOKEN=your-secure-token \
-  -e HTTPS_ENABLED=true \
-  -e TLS_CERT_FILE=/app/certs/fullchain.pem \
-  -e TLS_KEY_FILE=/app/certs/privkey.pem \
-  -e POSTGRES_HOST=postgres \
-  -e POSTGRES_PORT=5432 \
-  -e POSTGRES_DB=radius \
-  -e POSTGRES_USER=radius \
-  -e POSTGRES_PASSWORD=radiuspass123 \
-  mcp-radius-sql
-```
-
-## HTTPS Setup
-
-### Using Let's Encrypt Certificates
-
-1. Copy certificates from certbot container:
-
-```bash
-cd mcp-radius-sql
-./scripts/copy-certs-for-build.sh
-```
-
-2. Build and deploy with docker-compose:
-
-```bash
-make deploy
-# Or from freeradius directory:
-cd ../freeradius && make mcp-deploy
-```
-
-3. Verify HTTPS is working:
-
-```bash
+make deploy           # copy certs → build → start (via ../freeradius/docker-compose.yml)
 curl -k https://localhost:3443/health
 ```
 
-### Certificate Configuration
+Or run it directly with Node (≥ 18):
 
-The server expects certificates at:
-- `/app/certs/fullchain.pem` - Certificate chain
-- `/app/certs/privkey.pem` - Private key
+```bash
+npm install && npm run build && npm start   # or: npm run dev
+```
 
-Override paths via `TLS_CERT_FILE` and `TLS_KEY_FILE` environment variables.
+`make` targets: `copy-certs`, `build`, `deploy`, `stop`, `logs`, `status`.
+npm scripts: `build` (tsc), `start`, `dev` (tsx), `test` (vitest), `test:watch`, `lint`.
 
-## Environment Variables
+## Configuration
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `HTTP_PORT` | No | 3000 | Server port |
-| `MCP_TOKEN` | Yes | - | Bearer token (min 32 chars) |
-| `HTTPS_ENABLED` | No | false | Enable HTTPS |
-| `TLS_CERT_FILE` | No | /app/certs/fullchain.pem | TLS certificate |
-| `TLS_KEY_FILE` | No | /app/certs/privkey.pem | TLS private key |
-| `POSTGRES_HOST` | Yes | - | PostgreSQL host |
-| `POSTGRES_PORT` | No | 5432 | PostgreSQL port |
-| `POSTGRES_DB` | Yes | - | Database name |
-| `POSTGRES_USER` | Yes | - | Database user |
-| `POSTGRES_PASSWORD` | Yes | - | Database password |
-| `LOG_LEVEL` | No | info | Log level (debug/info/warn/error) |
+`.env` (from `.env.example`):
 
-## API Endpoints
+| Variable | Required | Default | Purpose |
+|----------|----------|---------|---------|
+| `MCP_TOKEN` | **yes** | — | Bearer token (≥ 32 chars) |
+| `HTTP_PORT` | no | `3000` | In-container port |
+| `HTTPS_ENABLED` | no | `false` | Serve TLS (true in the compose deploy) |
+| `TLS_CERT_FILE` / `TLS_KEY_FILE` | no | `/app/certs/fullchain.pem`, `privkey.pem` | TLS material |
+| `POSTGRES_HOST` / `_DB` / `_USER` / `_PASSWORD` | **yes** | — | Database connection |
+| `POSTGRES_PORT` | no | `5432` | Database port |
+| `LOG_LEVEL` | no | `info` | `debug` / `info` / `warn` / `error` |
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/health` | GET | No | Health check |
-| `/mcp` | POST | Yes | MCP requests |
-| `/mcp` | GET | Yes | SSE notifications |
-| `/mcp/sessions/:id` | DELETE | Yes | Close session |
+Port mapping in the deploy: **`3443` (host, HTTPS) → `3000` (container)**.
 
-## MCP Tools
+## HTTP endpoints
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `radius_auth_recent` | Recent auth attempts | `limit` (default: 20) |
-| `radius_failed_auth` | Failed auth attempts | `hours`, `limit` |
-| `radius_by_mac` | Search by MAC address | `mac` |
-| `radius_by_user` | Search by username | `username` |
-| `radius_acct_recent` | Recent accounting | `limit` |
-| `radius_active_sessions` | Active sessions | none |
-| `radius_by_nas` | Search by NAS | `nas_identifier` |
-| `radius_bandwidth_top` | Top bandwidth users | `hours`, `limit` |
-| `radius_health` | Database health | none |
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/health` | GET | none | DB connectivity + latency |
+| `/mcp` | POST | bearer | MCP requests |
+| `/mcp` | GET | bearer | SSE notifications |
+| `/mcp/sessions/:sessionId` | DELETE | bearer | Close a session |
 
-## Claude Code Configuration
+## MCP tools (14)
 
-Add to `~/.claude.json`:
+**Query — authentication** · `radius_auth_recent`, `radius_failed_auth`, `radius_by_mac`,
+`radius_by_user`
+**Query — accounting** · `radius_acct_recent`, `radius_active_sessions`, `radius_by_nas`,
+`radius_bandwidth_top`
+**Health** · `radius_health`
+**User management** · `radius_user_create`, `radius_user_get`, `radius_user_update`,
+`radius_user_delete`, `radius_user_list` (`create`/`update`/`delete` modify the database)
+
+## Connect from Claude Code
 
 ```json
 {
   "mcpServers": {
     "radius-sql": {
-      "url": "https://localhost:3443/mcp",
-      "headers": {
-        "Authorization": "Bearer your-secure-token"
-      }
+      "url": "https://<host>:3443/mcp",
+      "headers": { "Authorization": "Bearer <your-mcp-token>" }
     }
   }
 }
 ```
 
-## Security
+Use the hostname that matches the certificate (not an IP) — Claude Code does not skip TLS
+verification.
 
-- HTTPS with TLS 1.2+ for encrypted transport
-- Bearer token authentication required for MCP endpoints
-- Timing-safe token comparison to prevent enumeration
-- Read-only PostgreSQL queries (no writes)
-- Parameterized queries to prevent SQL injection
-- Credentials never logged
+## Files
 
-## Troubleshooting
-
-### MCP Connection Failed
-
-**Symptom:** `claude mcp list` shows `✗ Failed to connect`
-
-**Common Causes:**
-
-| Issue | Error | Solution |
-|-------|-------|----------|
-| Missing Bearer prefix | `401 Invalid authorization format` | Use `Authorization: Bearer <token>` not just `<token>` |
-| SSL hostname mismatch | `SSL certificate problem` | Use hostname (e.g., `mcp.example.com`) not IP address |
-| Wrong transport type | `Session ID required for SSE` | Use `--transport http` (not sse) |
-
-### Fix MCP Configuration
-
-```bash
-# Remove old config
-claude mcp remove radius-sql -s local
-
-# Add with correct format (note: Bearer prefix and hostname)
-claude mcp add radius-sql \
-  --transport http \
-  https://mcp.example.com:3443/mcp \
-  -s local \
-  --header "Authorization: Bearer <your-token>"
-
-# Verify connection
-claude mcp list
-```
-
-### Test Endpoints Manually
-
-```bash
-# Health check (no auth required)
-curl -s https://mcp.example.com:3443/health
-
-# MCP endpoint (requires Bearer token)
-curl -s -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -X POST https://mcp.example.com:3443/mcp \
-  -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}},"id":1}'
-```
-
-### SSL Certificate Issues
-
-When using Let's Encrypt certificates, always connect using the hostname that matches the certificate:
-
-- **Use hostname:** `https://mcp.example.com:3443` ✓
-- **Avoid IP:** `https://192.0.2.1:3443` ✗ (SSL hostname mismatch)
-
-Claude Code does not support skipping SSL verification, so you must use the correct hostname.
-
-## Development
-
-```bash
-# Run in development mode
-npm run dev
-
-# Run tests
-npm test
-
-# Watch tests
-npm run test:watch
-```
+- [`src/tools/`](src/tools/) — the tool implementations (`auth`, `acct`, `users`) + Zod schemas
+- [`src/auth/middleware.ts`](src/auth/middleware.ts) — bearer-token check · [`src/db/`](src/db/) — pool + health
+- [`Dockerfile`](Dockerfile) · [`Makefile`](Makefile) · [`.env.example`](.env.example)
