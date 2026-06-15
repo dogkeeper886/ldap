@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="350" viewBox="0 0 1000 350" font-family="Arial, 'Helvetica Neue', 'DejaVu Sans', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="350" fill="#FFFFFF"/>
+  <text x="40" y="40" font-size="21" font-weight="700" fill="#0F172A">Receive a credential email, read it back</text>
+  <text x="40" y="66" font-size="13" fill="#64748B">A test workflow delivers over SMTP; you retrieve over IMAPS or with make read-guest-mail. No relay, no outbound.</text>
+
+  <!-- cert feed -->
+  <rect x="403" y="96" width="204" height="42" rx="9" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="505" y="122" text-anchor="middle" font-size="12.5" font-weight="700" fill="#92400E">certbot → TLS cert</text>
+  <path d="M505,138 V177" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="512" y="148" width="84" height="14" fill="#FFFFFF"/><text x="554" y="159" font-size="11" fill="#475569" text-anchor="middle">mounted :ro</text>
+
+  <!-- edges -->
+  <path d="M232,238 H398" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M612,238 H768" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <g font-size="11" fill="#475569" text-anchor="middle">
+    <rect x="280" y="216" width="68" height="15" fill="#FFFFFF"/><text x="314" y="227">SMTP :25</text>
+    <rect x="624" y="216" width="132" height="15" fill="#FFFFFF"/><text x="690" y="227">IMAPS :993 · read-guest-mail</text>
+  </g>
+
+  <!-- sender -->
+  <rect x="40" y="205" width="192" height="66" rx="10" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1.5"/>
+  <text x="136" y="234" text-anchor="middle" font-size="15" font-weight="600" fill="#5B21B6">Test workflow</text>
+  <text x="136" y="253" text-anchor="middle" font-size="11" fill="#7C3AED">sends credential email</text>
+
+  <!-- mail server -->
+  <rect x="398" y="180" width="214" height="112" rx="12" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
+  <text x="505" y="208" text-anchor="middle" font-size="15" font-weight="700" fill="#1E3A8A">docker-mailserver</text>
+  <text x="505" y="228" text-anchor="middle" font-size="11" fill="#2563EB">Postfix + Dovecot</text>
+  <text x="505" y="246" text-anchor="middle" font-size="11" fill="#2563EB">receive-only · Maildir</text>
+  <text x="505" y="264" text-anchor="middle" font-size="11" fill="#2563EB">no relay · no SMTP auth · scanning off</text>
+
+  <!-- tester -->
+  <rect x="768" y="205" width="192" height="66" rx="10" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1.5"/>
+  <text x="864" y="234" text-anchor="middle" font-size="15" font-weight="600" fill="#5B21B6">Tester</text>
+  <text x="864" y="253" text-anchor="middle" font-size="11" fill="#7C3AED">reads the password</text>
+</svg>
