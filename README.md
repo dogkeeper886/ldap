@@ -27,9 +27,10 @@ real trust chains, not self-signed stand-ins.
 certificate is the spine that lets the services stay independent yet trust each other.
 A single `certbot` project acquires one multi-domain (SAN) certificate through the
 Let's Encrypt **DNS-01 challenge via Cloudflare** — no public port 80 required — and
-keeps it renewed in a Docker volume. Each service then copies that certificate into its
-own build context with `make copy-certs` (a `docker cp` out of the certbot container),
-so certificates live in the image at build time rather than being mounted at runtime.
+keeps it renewed in a Docker volume. Each service then copies that certificate in
+with `make copy-certs` (out of the certbot container). Most bake it into their image at
+build time (`ldap`, `freeradius`, `mcp-radius-sql`); `keycloak` and `mail` mount it
+read-only at runtime — so a renewal means a rebuild for the first group, a restart for the second.
 
 ![Shared certificate lifecycle: certbot acquires a SAN cert via Cloudflare DNS-01, stores it in a Docker volume, and each service copies it in with make copy-certs](docs/images/cert-lifecycle.png)
 

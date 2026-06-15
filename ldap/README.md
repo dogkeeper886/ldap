@@ -74,6 +74,14 @@ ldapsearch -x -H ldaps://localhost:636 \
   -w "$TEST_USER_PASSWORD" -b "" -s base
 ```
 
+## Certificates
+
+`make copy-certs` pulls `cert.pem`, `privkey.pem`, and `fullchain.pem` out of the running
+certbot container into `docker/certs/`; `build-tls` then **bakes them into the image**
+(`Dockerfile-tls`). After certbot renews, re-run `make copy-certs build-tls deploy`.
+`LDAP_DOMAIN` must match certbot's live-directory name — the first domain in certbot's
+`DOMAINS` (default `ldap.example.com`).
+
 ## Files
 
 - [`ldifs/`](ldifs/) — the directory contents, loaded in order (01 → 06)

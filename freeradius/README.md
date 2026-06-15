@@ -90,6 +90,13 @@ Seeded into `radcheck` from `.env` (the same five identities as the `ldap` direc
 | `contractor` | contractors | Session-Timeout 28800 (via group) |
 | `vip` | vip | — |
 
+## Certificates
+
+`make copy-certs` pulls the server cert out of the certbot container into
+`docker/freeradius/certs/server/`; `build` **bakes it into the image**, alongside the
+EAP-TLS client CA from `copy-client-ca`. After a renewal, re-run `copy-certs` and rebuild.
+`CERTBOT_CERT_NAME` must match certbot's live-directory name (default `ldap.example.com`).
+
 ## Documentation
 
 - [`docs/03-radius-sql-logging.md`](docs/03-radius-sql-logging.md) — the SQL logging tables

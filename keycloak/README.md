@@ -65,6 +65,13 @@ For SAML service providers (realm `saml-test`):
 The five LDAP test users (`test-user-01` … `05`) and their groups appear in the realm via
 federation — see the [`ldap` README](../ldap/README.md).
 
+## Certificates
+
+`make copy-certs` pulls the cert out of the certbot container into `docker/certs/`, which
+docker-compose **mounts read-only at runtime** (`/opt/keycloak/conf/certs`) — no image
+rebuild. After a renewal, re-run `make copy-certs restart`. `CERTBOT_CERT_NAME` must match
+certbot's live-directory name (default `ldap.example.com`).
+
 ## Files
 
 - [`config/realm-export.json`](config/realm-export.json) — realm, groups, and roles

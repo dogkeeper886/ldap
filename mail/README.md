@@ -46,6 +46,14 @@ build step. To fan many guest addresses into one mailbox, see
 | 25 | SMTP | Receive incoming mail |
 | 993 | IMAPS | Secure retrieval (TLS) |
 
+## Certificates
+
+`make deploy` runs `copy-certs`, pulling `fullchain.pem` and `privkey.pem` out of the
+certbot container into `docker/certs/`, which docker-compose **mounts read-only at runtime**
+(`/tmp/ssl`, `SSL_TYPE=manual`) — no build step. After a renewal, re-run
+`make copy-certs && make stop && make deploy`. `PRIMARY_CERT_DOMAIN` must match certbot's
+live-directory name (default `ldap.example.com`).
+
 ## Files
 
 - [`scripts/read-guest-mail.sh`](scripts/read-guest-mail.sh) — parse WiFi credentials from a guest email

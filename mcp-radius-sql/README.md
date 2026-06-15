@@ -89,6 +89,12 @@ Port mapping in the deploy: **`3443` (host, HTTPS) → `3000` (container)**.
 Use the hostname that matches the certificate (not an IP) — Claude Code does not skip TLS
 verification.
 
+## Certificates
+
+`make copy-certs` pulls the cert out of the certbot container into `certs/`; the Docker
+build **bakes it into the image** at `/app/certs`. After a renewal, re-run `copy-certs` and
+rebuild. `CERTBOT_CERT_NAME` must match certbot's live-directory name (e.g. `ldap.example.com`).
+
 ## Files
 
 - [`src/tools/`](src/tools/) — the tool implementations (`auth`, `acct`, `users`) + Zod schemas
