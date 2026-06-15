@@ -1,5 +1,5 @@
 ---
-name: info-leak-review
+name: ldap-info-leak-review
 description: Review the repository for leaked sensitive information — secrets (passwords, API keys, tokens, private keys), and real-world identifiers (domains, emails, hostnames, IPs) that should be placeholders. Use when the user asks to check/review/scan for info leaks, secret leaks, exposed credentials, or before sharing/publishing a repo.
 ---
 
@@ -49,8 +49,9 @@ Discard hits that resolve to env vars / templates (`${VAR}`, `process.env`, `get
 ### 5. Scan for real-world identifiers that should be placeholders
 Surface candidates, then compare against the project's placeholder convention:
 ```bash
-# Domains/hostnames — then exclude the project's own placeholder domains
-git grep -nIE '[a-z0-9-]+\.[a-z0-9-]+\.[a-z]{2,}'
+# Domains/hostnames (two-label and deeper) — then exclude the project's own placeholder domains.
+# Expect false positives from file names / version strings (package.json, app.module.ts); discard by judgment.
+git grep -nIE '\b([a-z0-9-]+\.)+[a-z]{2,}\b'
 # Emails — exclude example.com / noreply / test addresses
 git grep -nIE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
 # Public IPs (ignore private ranges 10./192.168./172.16-31./127.)
