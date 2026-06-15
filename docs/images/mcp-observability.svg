@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="320" viewBox="0 0 980 320" font-family="Arial, 'Helvetica Neue', 'DejaVu Sans', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="320" fill="#FFFFFF"/>
+  <text x="40" y="42" font-size="21" font-weight="700" fill="#0F172A">Query RADIUS data through MCP</text>
+  <text x="40" y="68" font-size="13" fill="#64748B">mcp-radius-sql exposes the FreeRADIUS database to an MCP client over HTTPS with bearer-token auth — read-only.</text>
+
+  <!-- edges -->
+  <path d="M232,150 H378" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M562,150 C620,150 662,150 718,150" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M800,246 V204" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <g font-size="11" fill="#475569" text-anchor="middle">
+    <rect x="244" y="128" width="124" height="15" fill="#FFFFFF"/><text x="306" y="139">HTTPS + Bearer token</text>
+    <rect x="612" y="128" width="80" height="15" fill="#FFFFFF"/><text x="652" y="139">read-only SQL</text>
+    <rect x="658" y="220" width="134" height="15" fill="#FFFFFF"/><text x="725" y="231">writes auth + accounting</text>
+  </g>
+
+  <!-- MCP client -->
+  <rect x="40" y="114" width="192" height="72" rx="10" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1.5"/>
+  <text x="136" y="145" text-anchor="middle" font-size="15" font-weight="600" fill="#5B21B6">Claude / MCP client</text>
+  <text x="136" y="165" text-anchor="middle" font-size="11" fill="#7C3AED">"show failed logins this hour"</text>
+
+  <!-- MCP server -->
+  <rect x="378" y="110" width="184" height="80" rx="12" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
+  <text x="470" y="143" text-anchor="middle" font-size="16" font-weight="700" fill="#1E3A8A">mcp-radius-sql</text>
+  <text x="470" y="163" text-anchor="middle" font-size="11" fill="#2563EB">9 read-only query tools</text>
+  <text x="470" y="178" text-anchor="middle" font-size="11" fill="#2563EB">Express + TLS · port 3443</text>
+
+  <!-- PostgreSQL -->
+  <path d="M722,150 V200 A78,15 0 0 0 878,200 V150" fill="#A7F3D0" stroke="#10B981" stroke-width="2"/>
+  <ellipse cx="800" cy="150" rx="78" ry="15" fill="#D1FAE5" stroke="#10B981" stroke-width="2"/>
+  <text x="800" y="182" text-anchor="middle" font-size="15" font-weight="700" fill="#065F46">PostgreSQL</text>
+  <text x="800" y="199" text-anchor="middle" font-size="11" fill="#047857">radacct · radpostauth</text>
+
+  <!-- freeradius -->
+  <rect x="712" y="248" width="176" height="58" rx="10" fill="#DBEAFE" stroke="#3B82F6" stroke-width="1.5"/>
+  <text x="800" y="275" text-anchor="middle" font-size="15" font-weight="700" fill="#1E3A8A">freeradius</text>
+  <text x="800" y="294" text-anchor="middle" font-size="11" fill="#2563EB">auth + accounting</text>
+</svg>

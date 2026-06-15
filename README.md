@@ -1,128 +1,148 @@
 # Enterprise Authentication Testing Platform
 
-A comprehensive authentication testing platform for enterprise WiFi environments. This project provides a complete solution with independent authentication services: certificate management, LDAP directory services, RADIUS authentication, and SAML identity provider.
+A self-hosted lab for testing enterprise WiFi and SSO authentication end to end —
+LDAP, RADIUS, and SAML on real TLS certificates, run as independent Docker services.
 
-**Current Status**: All components complete - certbot, LDAP, FreeRADIUS, Mail server, and Keycloak SAML IdP are fully functional.
+![OpenLDAP](https://img.shields.io/badge/OpenLDAP-directory-blue)
+![FreeRADIUS](https://img.shields.io/badge/FreeRADIUS-3.x-blue)
+![Keycloak](https://img.shields.io/badge/Keycloak-SAML%202.0-blue)
+![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## 🎯 Project Overview
+## What it is
 
-This platform provides authentication testing with:
-- **Let's Encrypt certificate management** for TLS/SSL automation
-- **LDAP directory authentication** with test users and Microsoft AD compatibility
-- **RADIUS authentication server** with EAP protocol support
-- **SAML 2.0 Identity Provider** with LDAP user federation
-- **Mail server** for receiving email (SMTP/IMAP)
+Standing up an authentication backend to test a WiFi access point, an 802.1X
+supplicant, or a SAML web app usually means wiring together a directory, a RADIUS
+server, an identity provider, and the certificates that tie them together. This
+repository packages all of that as six independent Docker sub-projects you drive with
+`make` — deploy the whole stack, or just the piece you need.
 
-## 🏗️ Five-Project Architecture
+Every service runs on genuine Let's Encrypt certificates, so TLS behaves exactly as it
+would in production: EAP-TLS, RadSec, LDAPS, and SAML-over-HTTPS all negotiate against
+real trust chains, not self-signed stand-ins.
 
-This repository contains **five independent sub-projects** that work together to provide a complete authentication testing environment:
+## How it works
 
-### 1. **Certificate Management** (`certbot/`)
-- **Purpose**: Standalone multi-domain SSL/TLS certificate management
-- **Technology**: Let's Encrypt with automated renewal
-- **Ports**: 80 (HTTP challenge)
-- **Function**: Provides certificates for both LDAP and RADIUS services
+**The key idea: six sub-projects, one shared certificate lifecycle.** That shared
+certificate is the spine that lets the services stay independent yet trust each other.
+A single `certbot` project acquires one multi-domain (SAN) certificate through the
+Let's Encrypt **DNS-01 challenge via Cloudflare** — no public port 80 required — and
+keeps it renewed in a Docker volume. Each service then copies that certificate into its
+own build context with `make copy-certs` (a `docker cp` out of the certbot container),
+so certificates live in the image at build time rather than being mounted at runtime.
 
-### 2. **LDAP Directory Service** (`ldap/`)
-- **Purpose**: OpenLDAP authentication server with Microsoft AD compatibility
-- **Technology**: OpenLDAP with custom schemas and test users
-- **Ports**: 389 (LDAP), 636 (LDAPS)
-- **Function**: Directory authentication backend for enterprise WiFi
+![Shared certificate lifecycle: certbot acquires a SAN cert via Cloudflare DNS-01, stores it in a Docker volume, and each service copies it in with make copy-certs](docs/images/cert-lifecycle.png)
 
-### 3. **RADIUS Authentication Service** (`freeradius/`)
-- **Purpose**: FreeRADIUS server with EAP protocol support
-- **Technology**: FreeRADIUS with TLS/RadSec capabilities
-- **Ports**: 1812/1813 (RADIUS), 2083 (RadSec)
-- **Function**: RADIUS authentication for WiFi access points
+Add a new TLS service by pointing its `copy-certs` script at the same volume — the
+certificate strategy scales without a second certbot.
 
-### 4. **SAML Identity Provider** (`keycloak/`)
-- **Purpose**: SAML 2.0 Identity Provider with LDAP user federation
-- **Technology**: Keycloak with LDAP backend integration
-- **Ports**: 8080 (HTTP), 8443 (HTTPS)
-- **Function**: SAML SSO authentication for web applications
+### The services compose into one authentication fabric
 
-### 5. **Mail Server** (`mail/`)
-- **Purpose**: Receive-only mail server
-- **Technology**: docker-mailserver with Postfix/Dovecot
-- **Ports**: 25 (SMTP), 993 (IMAPS)
-- **Function**: Receive emails via IMAP
+With certificates in place, the services exercise the flows you actually want to test.
+FreeRADIUS authenticates WiFi clients against a PostgreSQL user store and logs every
+attempt; Keycloak federates the OpenLDAP directory to issue SAML assertions for web
+apps; the mail server receives the credential emails a real onboarding flow would send.
 
-## 📖 Getting Started - Reading Order
+![Authentication fabric: WiFi clients reach FreeRADIUS backed by PostgreSQL; web apps reach Keycloak backed by OpenLDAP; a receive-only mail server handles credential delivery](docs/images/auth-fabric.png)
 
-To understand and deploy this authentication platform, please read the documentation in this specific sequence:
+### RADIUS data is queryable through MCP
 
-### Step 1: Certificate Foundation
-**Read first**: [`certbot/README.md`](certbot/README.md)
-- Understand certificate management architecture
-- Learn multi-domain certificate acquisition
-- Set up the certificate foundation for all services
+`mcp-radius-sql` exposes the FreeRADIUS PostgreSQL data — auth attempts, accounting
+sessions, active connections — as an **MCP server** over HTTPS with bearer-token auth.
+Point Claude (or any MCP client) at it and ask "show me failed logins in the last hour"
+in plain language; every query is read-only and parameterized.
 
-### Step 2: LDAP Directory Service
-**Read second**: [`ldap/README.md`](ldap/README.md)
-- Deploy OpenLDAP authentication server
-- Configure test users and Microsoft AD compatibility
-- Understand LDAP integration with WiFi access points
+![MCP observability: an MCP client queries mcp-radius-sql over HTTPS with a bearer token; the server runs read-only SQL against the PostgreSQL database that FreeRADIUS writes to](docs/images/mcp-observability.png)
 
-### Step 3: RADIUS Authentication Service
-**Read third**: [`freeradius/README.md`](freeradius/README.md)
-- Deploy FreeRADIUS with EAP protocol support
-- Configure RadSec (RADIUS over TLS)
-- Test enterprise WiFi authentication flows
+## Components
 
-### Step 4: SAML Identity Provider
-**Read fourth**: [`keycloak/README.md`](keycloak/README.md)
-- Deploy Keycloak SAML 2.0 Identity Provider
-- Configure LDAP user federation
-- Set up SAML authentication for web applications
+| Sub-project | Role | Stack | Ports |
+|-------------|------|-------|-------|
+| [`certbot/`](certbot/README.md) | Shared certificate management | Certbot + Cloudflare DNS-01 | — (DNS challenge) |
+| [`ldap/`](ldap/README.md) | Directory authentication | OpenLDAP, AD-compatible schema | 389, 636 |
+| [`freeradius/`](freeradius/README.md) | RADIUS authentication + accounting | FreeRADIUS 3.x, PostgreSQL | 1812–1813/udp, 2083/tcp |
+| [`keycloak/`](keycloak/README.md) | SAML 2.0 identity provider | Keycloak, LDAP federation | 8080, 8443 |
+| [`mail/`](mail/README.md) | Receive-only mail server | Postfix / Dovecot | 25, 993 |
+| [`mcp-radius-sql/`](mcp-radius-sql/README.md) | RADIUS data over MCP | Node.js, Express + TLS | 3443 |
 
-## 🔧 Architecture Benefits
+## Quickstart
 
-✅ **Independent Deployment** - Each service deploys and scales independently  
-✅ **Shared Certificate Lifecycle** - Single certificate management for all services  
-✅ **Port Conflict Resolution** - No conflicts between services  
-✅ **Modular Testing** - Test LDAP and RADIUS separately or together  
-✅ **Production Ready** - Proper TLS encryption and security practices  
+> **Prerequisites:** Linux host with Docker and Docker Compose v2, a domain you control
+> on Cloudflare DNS, and a Cloudflare API token for the DNS-01 challenge. Each project
+> has its own `.env` — run `make env` to scaffold it from `.env.example`.
 
-## 📁 Project Structure
+Deploy in dependency order; the certificate foundation comes first.
 
+```bash
+# 1. Certificate foundation — acquire the shared SAN certificate
+cd certbot
+make env                              # configure DOMAINS, email, Cloudflare creds
+make deploy
+
+# 2. LDAP directory + test users
+cd ../ldap
+make init                             # copy-certs → build-tls → deploy
+make setup-users
+
+# 3. RADIUS authentication
+cd ../freeradius
+make init                             # copy-certs → build → deploy → smoke test
+
+# 4. SAML identity provider (optional)
+cd ../keycloak
+make init                             # copy-certs → deploy → smoke test
+make setup-realm                      # configure the SAML realm
+
+# 5. Mail server (optional)
+cd ../mail
+make deploy
+
+# 6. RADIUS-over-MCP server (optional)
+cd ../mcp-radius-sql
+make deploy
 ```
-ldap/
-├── README.md              # This overview document
-├── certbot/               # Certificate management project
-├── ldap/                  # LDAP authentication project
-├── freeradius/            # RADIUS authentication project
-├── keycloak/              # SAML Identity Provider project
-├── mail/                  # Mail server project
-└── docs/                  # Architecture documentation
+
+Every project shares the same operational verbs: `make deploy`, `make stop`,
+`make logs`, `make clean`. See each sub-project's README for its full target list.
+
+### Verify it works
+
+```bash
+cd freeradius
+make test            # basic RADIUS authentication
+make test-users      # every configured test user
+make test-tls        # RadSec (RADIUS over TLS)
 ```
 
-## 🚀 Use Cases
+### Test users
 
-This platform supports various enterprise authentication testing scenarios:
+The same five users exist across LDAP and RADIUS, so you can test either path with one
+credential set (passwords are set from each project's `.env`).
 
-- **WiFi Access Point Testing**: Validate AP configurations with real authentication backends
-- **802.1X Development**: Test EAP protocols and certificate-based authentication
-- **Network Access Control**: Integrate with NAC systems requiring LDAP/RADIUS
-- **SAML SSO Integration**: Test SAML 2.0 authentication for web applications
-- **Enterprise Migration**: Test authentication flows before production deployment
-- **Security Validation**: Verify TLS configurations and authentication policies
+| Username | Role | Notes |
+|----------|------|-------|
+| `test` | Basic user | — |
+| `guest` | Limited access | Session timeout via group |
+| `admin` | Administrator | — |
+| `contractor` | Time-limited | Session timeout via group |
+| `vip` | Priority user | — |
 
-## 📋 Prerequisites
+## Use cases
 
-Before starting, ensure you have:
-- Linux server with Docker and Docker Compose v2
-- Domain names for your services (e.g., ldap.example.com, radius.example.com, keycloak.example.com)
-- DNS records pointing to your server
-- Required ports available (25, 80, 389, 636, 993, 1812, 1813, 2083, 8080, 8443)
+- **WiFi / 802.1X testing** — validate AP configs against a real EAP-TLS / PEAP / TTLS backend
+- **SAML SSO integration** — test web-app login against a standards-compliant IdP
+- **Network access control** — exercise NAC systems that expect LDAP and RADIUS
+- **Pre-production validation** — rehearse auth flows and TLS configs before going live
 
-## 📄 License
+## Documentation
 
-MIT License - See LICENSE file for details
+- [Architecture](docs/03-ARCHITECTURE.md) — the multi-project layout and certificate strategy
+- [Features](docs/04-FEATURES.md) — capability matrix per service
+- [SQL auth design](docs/05-SQL-AUTH-DESIGN.md) — why RADIUS users live in PostgreSQL, and the MCP tools that manage them
+- [Product requirements](docs/02-PRD.md) · [Brainstorming notes](docs/01-brainstorming-session-results.md) — background and rationale
+- RADIUS deep dives live in [`freeradius/docs/`](freeradius/docs/)
+- Diagram sources: [`docs/images/`](docs/images/) (`*.svg`; re-render the PNGs with `docs/images/render.sh`)
 
-## 🤝 Contributing
+## License
 
-Contributions are welcome! Each sub-project accepts pull requests independently.
-
----
-
-**Start with [`certbot/README.md`](certbot/README.md) to begin your authentication testing journey!** 🔒
+Released under the MIT License.
