@@ -1,237 +1,116 @@
-# Code Review Guidelines
+# CLAUDE.md
 
-## Core Principles
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
-### Simplicity First
-- Choose the simplest solution that works
-- Avoid abstractions until you have 3+ concrete use cases
-- Delete code rather than comment it out
-- One responsibility per function/class
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-### Fail Fast, Fail Loud
-- Let the code fail immediately when inputs are invalid
-- Use language built-ins for type checking
-- Crash early rather than propagate bad state
-- Don't catch exceptions just to log and re-throw
+## 1. Think Before Coding
 
-### Validate at Boundaries
-- Validate user input and external API responses (security requirement)
-- Don't re-validate data passed between internal functions
-- Trust internal interfaces, verify external ones
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-### Consistency Over Cleverness
-- Same patterns for same problems
-- If you solve authentication one way, solve it the same way everywhere
-- Consistent naming conventions throughout the codebase
-- Follow existing code style in the file you're editing
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-### Appropriate Logging
-- Use structured logging with log levels (debug, info, warn, error)
-- Log at system boundaries: incoming requests, outgoing calls, errors
-- Don't log inside tight loops or internal helper functions
-- Include context (request ID, user ID) for traceability
-- Avoid logging sensitive data (passwords, tokens, PII)
+## 2. Simplicity First
 
-### Production Readiness
-- Health checks are required for containerized services (Kubernetes, Docker)
-- Include liveness and readiness probes where applicable
-- Handle external service failures gracefully (timeouts, retries)
-- Don't over-engineer: start simple, add resilience when needed
+**Minimum code that solves the problem. Nothing speculative.**
 
-## New Feature Guidelines
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
 
-### Design Documents Required
-- Before implementing a new feature, create a design document in `/docs`
-- Document the original design intent, architecture decisions, and rationale
-- This preserves context for future maintenance and prevents design drift
-- Keep design docs simple: problem statement, proposed solution, key decisions
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-## What to Look For
+## 3. Surgical Changes
 
-### Approve
-- Direct, obvious implementations
-- Code that follows existing patterns in the codebase
-- Minimal abstractions
-- Clear, descriptive variable/function names
-- Removal of unnecessary code
-- Validation at system boundaries
-- Appropriate logging at entry/exit points
+**Touch only what you must. Clean up only your own mess.**
 
-### Request Changes
-- Over-abstraction (interfaces with single implementations)
-- Re-validation of already-validated internal data
-- Logging inside loops or performance-critical paths
-- Different patterns for the same type of problem
-- Catching exceptions only to log and re-throw
-- Files containing private information (passwords, API keys, tokens, credentials, internal URLs)
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
 
-## Review Checklist
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
 
-1. **Is this the simplest approach?** Can it be done with fewer lines/files/abstractions?
-2. **Does it follow existing patterns?** Look for similar code elsewhere in the codebase
-3. **Does it fail fast?** No swallowing errors or silent failures
-4. **Is boundary validation present?** User input and external APIs should be validated
-5. **Can any code be deleted?** Less code is better code
-6. **Is logging appropriate?** At boundaries, not inside loops, with proper levels
-7. **No private information?** Check for passwords, API keys, tokens, internal URLs, or credentials
+The test: Every changed line should trace directly to the user's request.
 
-## Examples
+## 4. Goal-Driven Execution
 
-### Good: Clean with Boundary Validation
-```javascript
-function createUser(email, password) {
-  // Validate at API boundary
-  if (!email || !password) {
-    throw new Error('Email and password required');
-  }
-  return db.users.create({ email, password });
-}
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
 ```
 
-### Good: Appropriate Logging
-```javascript
-async function processOrder(orderId) {
-  log.info('Processing order', { orderId });
-  const order = await db.orders.get(orderId);
-  const result = await paymentService.charge(order);
-  log.info('Order processed', { orderId, status: result.status });
-  return result;
-}
-```
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
-### Bad: Over-Logging and Redundant Validation
-```javascript
-function createUser(email, password) {
-  logger.debug('Creating user', { email });
-  
-  if (!email || typeof email !== 'string') {
-    logger.error('Invalid email provided');
-    throw new Error('Invalid email');
-  }
-  if (!password || password.length < 8) {
-    logger.warn('Password validation failed');
-    throw new Error('Password too short');
-  }
-  
-  try {
-    const user = db.users.create({ email, password });
-    logger.info('User created successfully', { userId: user.id });
-    return { success: true, user };
-  } catch (error) {
-    logger.error('User creation failed', error);
-    return { success: false, error: error.message };
-  }
-}
-```
+## 5. Dev & QA workflow discipline
 
-## MCP Server Development Guidelines
-
-### Required Technology Stack
-
-| Component | Library | Purpose |
-|-----------|---------|---------|
-| Language | TypeScript | Type safety, better tooling |
-| Validation | zod | Runtime input validation |
-| Logging | pino | Structured JSON logging |
-| Config | dotenv + zod | Environment loading with validation |
-| Testing | vitest | Fast TypeScript-native testing |
-
-### MCP Server Requirements
-
-1. **Configuration Validation**
-   - Validate all environment variables at startup using Zod
-   - Fail fast if required config is missing
-   - Never use unchecked `process.env` values
-
-2. **Health Checks**
-   - Implement database/service health check
-   - Check health on startup before accepting requests
-   - Exit with error if health check fails
-
-3. **Input Validation**
-   - Define Zod schemas for all tool inputs
-   - Validate inputs before query execution
-   - Return structured validation errors
-
-4. **Error Handling**
-   - Catch and categorize errors (validation, database, unknown)
-   - Log errors with context (tool name, input params)
-   - Return user-friendly error messages without stack traces
-   - Never expose internal error details to clients
-
-5. **Logging**
-   - Log at tool execution boundaries (start, completion, error)
-   - Include context: tool name, relevant parameters
-   - Never log: passwords, full query results, PII
-   - Use structured logging (JSON format)
-
-6. **Graceful Shutdown**
-   - Handle SIGTERM signal
-   - Close database connections cleanly
-   - Log shutdown events
-
-### MCP Server Project Structure
+Substantial work flows through a pipeline; each step is a gate that stops for a
+human decision (commands suggest the next, they never auto-run it):
 
 ```
-mcp-{name}/
-├── package.json
-├── tsconfig.json
-├── .env.example
-├── src/
-│   ├── index.ts      # Entry point with signal handlers
-│   ├── config.ts     # Zod-validated configuration
-│   ├── logger.ts     # Pino logger setup
-│   ├── db/           # Database connection and health
-│   └── tools/        # Tool implementations with schemas
-└── tests/
+dw-story → dw-review-story → dw-plan → [human reviews the plan issue]
+        → dw-tasks → dw-review-tasks → dw-implement → dw-review-implement
+        → dw-create-pr → [human review + /review] → dw-merge
 ```
 
-### Example: Config with Validation
+The full flow + producer→review pairing lives in `.claude/rules/dev-workflow.md`. Trivial
+work skips the plan: `dw-story → dw-tasks`.
 
-```typescript
-import { z } from 'zod';
-import 'dotenv/config';
+**qa-workflow** is the sibling pipeline — same gated discipline, turning a story into
+trustworthy test docs:
 
-const schema = z.object({
-  db: z.object({
-    host: z.string().min(1),
-    port: z.coerce.number().positive(),
-    password: z.string().min(1),
-  }),
-});
-
-const result = schema.safeParse({ /* env values */ });
-if (!result.success) {
-  console.error('Config error:', result.error.format());
-  process.exit(1);
-}
-export const config = result.data;
+```
+qw-plan → qw-review-plan → qw-cases → qw-review-cases
 ```
 
-### Example: Tool with Error Handling
+The full flow + pairing lives in `.claude/rules/qa-workflow.md`.
 
-```typescript
-const tool = {
-  handler: async (input: unknown) => {
-    try {
-      const validated = schema.parse(input);
-      logger.info({ tool: 'name', ...validated }, 'Executing');
-      const result = await query(validated);
-      return { content: [{ type: 'text', text: JSON.stringify(result) }] };
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return { content: [{ type: 'text', text: `Validation: ${error.message}` }], isError: true };
-      }
-      logger.error({ error }, 'Tool failed');
-      return { content: [{ type: 'text', text: 'Internal error' }], isError: true };
-    }
-  },
-};
-```
+One review gate is an external builtin this toolkit does not own — invoke it by hand:
+- `/review` (builtin): PR overview. Run after `dw-create-pr`, before `dw-merge`.
 
-## Remember
-- Code should be boring and predictable
-- When in doubt, delete it
-- Trust internal code, verify external input
-- Consistency beats perfection
-- Simple code with good logging beats complex defensive code
+Don't wire this into the `dw-*` commands — it may not exist in every install,
+and a command that references a missing skill is a dangling pointer.
+
+**Right-size it.** A typo or a one-line doc change does not need the full chain —
+use judgment; branch + PR + merge is enough. The review passes overlap:
+`dw-review-implement` is the always-on substance gate, `/review` is the PR summary.
+Running both on a trivial diff is ritual, not rigor.
+
+## 6. Artifact & doc review discipline
+
+Match the reviewer to **who reads** the file you changed:
+
+- **Human-read docs** (README, `docs/` prose): run `reviewing-phrasing` (the words)
+  + `reviewing-typography` (the look) — the human-read doc review.
+- **Agent-read tooling** (commands, skills, CLAUDE.md, rules): run
+  `reviewing-artifacts` (does it do its job — one job, complete, goal-not-spec,
+  fits the project, right for its reader).
+
+These are skills this project owns. Like the dev-workflow gates, they stop for a human
+and never auto-run — invoke them by hand.
+
+**Right-size it.** A typo or a one-line tweak does not need a review pass — use
+judgment. Reach for these when a change is substantial enough that the look, the
+wording, or the artifact's fitness actually matters.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
