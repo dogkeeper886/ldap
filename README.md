@@ -27,9 +27,10 @@ real trust chains, not self-signed stand-ins.
 certificate is the spine that lets the services stay independent yet trust each other.
 A single `certbot` project acquires one multi-domain (SAN) certificate through the
 Let's Encrypt **DNS-01 challenge via Cloudflare** — no public port 80 required — and
-keeps it renewed in a Docker volume. Each service then copies that certificate into its
-own build context with `make copy-certs` (a `docker cp` out of the certbot container),
-so certificates live in the image at build time rather than being mounted at runtime.
+keeps it renewed in a Docker volume. Each service then copies that certificate in
+with `make copy-certs` (out of the certbot container). Most bake it into their image at
+build time (`ldap`, `freeradius`, `mcp-radius-sql`); `keycloak` and `mail` mount it
+read-only at runtime — so a renewal means a rebuild for the first group, a restart for the second.
 
 ![Shared certificate lifecycle: certbot acquires a SAN cert via Cloudflare DNS-01, stores it in a Docker volume, and each service copies it in with make copy-certs](docs/images/cert-lifecycle.png)
 
@@ -50,9 +51,10 @@ apps; the mail server receives the credential emails a real onboarding flow woul
 `mcp-radius-sql` exposes the FreeRADIUS PostgreSQL data — auth attempts, accounting
 sessions, active connections — as an **MCP server** over HTTPS with bearer-token auth.
 Point Claude (or any MCP client) at it and ask "show me failed logins in the last hour"
-in plain language; every query is read-only and parameterized.
+in plain language. It offers 14 tools: read-only queries plus user-management tools that
+can create or update RADIUS users; all queries are parameterized.
 
-![MCP observability: an MCP client queries mcp-radius-sql over HTTPS with a bearer token; the server runs read-only SQL against the PostgreSQL database that FreeRADIUS writes to](docs/images/mcp-observability.png)
+![MCP access: an MCP client queries mcp-radius-sql over HTTPS with a bearer token; the server runs query and user-management SQL against the PostgreSQL database that FreeRADIUS writes to](docs/images/mcp-observability.png)
 
 ## Components
 

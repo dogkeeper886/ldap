@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="470" viewBox="0 0 1020 470" font-family="Arial, 'Helvetica Neue', 'DejaVu Sans', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1020" height="470" fill="#FFFFFF"/>
+  <text x="40" y="42" font-size="21" font-weight="700" fill="#0F172A">Acquire once, distribute to all</text>
+  <text x="40" y="68" font-size="13" fill="#64748B">certbot gets one SAN cert via Cloudflare DNS-01 and renews it in a volume; each service copies it out with make copy-certs.</text>
+
+  <!-- edges -->
+  <path d="M190,177 C224,177 224,200 248,200" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M190,297 C224,297 224,228 248,228" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M402,212 C428,212 432,210 453,210" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M587,196 C642,180 662,170 698,170" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M587,232 C642,292 662,316 698,316" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <g font-size="11" fill="#475569" text-anchor="middle">
+    <rect x="410" y="190" width="44" height="15" fill="#FFFFFF"/><text x="432" y="201">stores</text>
+    <rect x="612" y="150" width="92" height="15" fill="#FFFFFF"/><text x="658" y="161">make copy-certs</text>
+    <rect x="612" y="320" width="92" height="15" fill="#FFFFFF"/><text x="658" y="331">make copy-certs</text>
+  </g>
+
+  <!-- sources -->
+  <rect x="40" y="150" width="150" height="54" rx="10" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5"/>
+  <text x="115" y="182" text-anchor="middle" font-size="14" font-weight="600" fill="#334155">Let's Encrypt</text>
+  <rect x="40" y="270" width="150" height="54" rx="10" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5"/>
+  <text x="115" y="293" text-anchor="middle" font-size="14" font-weight="600" fill="#334155">Cloudflare DNS</text>
+  <text x="115" y="311" text-anchor="middle" font-size="11" fill="#64748B">DNS-01 challenge</text>
+
+  <!-- certbot -->
+  <rect x="248" y="170" width="154" height="84" rx="12" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+  <text x="325" y="208" text-anchor="middle" font-size="17" font-weight="700" fill="#92400E">certbot</text>
+  <text x="325" y="228" text-anchor="middle" font-size="11" fill="#B45309">acquire + 12h renew</text>
+
+  <!-- volume -->
+  <path d="M455,182 V250 A65,14 0 0 0 585,250 V182" fill="#FDE68A" stroke="#F59E0B" stroke-width="2"/>
+  <ellipse cx="520" cy="182" rx="65" ry="14" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+  <text x="520" y="218" text-anchor="middle" font-size="14" font-weight="700" fill="#92400E">SAN cert</text>
+  <text x="520" y="235" text-anchor="middle" font-size="11" fill="#B45309">Docker volume</text>
+
+  <!-- distribution mode A: build-time -->
+  <rect x="700" y="96" width="300" height="146" rx="11" fill="#DBEAFE" stroke="#3B82F6" stroke-width="1.5"/>
+  <text x="720" y="126" font-size="14" font-weight="700" fill="#1E3A8A">Build-time — baked into image</text>
+  <text x="720" y="146" font-size="11" fill="#2563EB">Dockerfile COPY</text>
+  <text x="720" y="178" font-size="14" font-weight="600" fill="#1E40AF">ldap · freeradius · mcp-radius-sql</text>
+  <text x="720" y="216" font-size="11.5" fill="#2563EB">renewal → re-copy + rebuild</text>
+
+  <!-- distribution mode B: runtime -->
+  <rect x="700" y="262" width="300" height="114" rx="11" fill="#D1FAE5" stroke="#10B981" stroke-width="1.5"/>
+  <text x="720" y="292" font-size="14" font-weight="700" fill="#065F46">Runtime — mounted read-only</text>
+  <text x="720" y="312" font-size="11" fill="#047857">docker-compose volume (:ro)</text>
+  <text x="720" y="340" font-size="14" font-weight="600" fill="#065F46">keycloak · mail</text>
+  <text x="720" y="364" font-size="11.5" fill="#047857">renewal → re-copy + restart</text>
+</svg>

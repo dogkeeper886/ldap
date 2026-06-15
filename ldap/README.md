@@ -1,204 +1,90 @@
-# LDAP Authentication Server
+# ldap — OpenLDAP directory
 
-Simple LDAP server with test users for authentication testing.
+> Part of the [Enterprise Authentication Testing Platform](../README.md). The directory of
+> record: it holds the test users that FreeRADIUS and Keycloak authenticate against.
 
-## What This Is
+## What it is
 
-- **LDAP server** with TLS support (LDAPS on port 636)
-- **Standard LDAP attributes** for user authentication
-- **Microsoft AD compatibility** (optional)
-- **5 test users** with different roles and departments
+An OpenLDAP server, pre-seeded with **five test users and six groups**, that speaks LDAP
+(389) and LDAPS (636). It adds **Microsoft AD-compatible attributes** (`sAMAccountName`,
+`userPrincipalName`, `userAccountControl`, `memberOf`) so it can stand in for Active
+Directory when testing WiFi and SSO. Keycloak federates it for SAML; the same people exist
+as RADIUS users in the `freeradius` project.
 
-## Quick Start
+## How it works
 
-```bash
-# 1. Create environment configuration
-make env
-# Edit .env with your domain and passwords
+`make setup-users` loads the LDIF files **in order**, then sets passwords — the directory
+is built from these steps, not hand-edited. LDAPS uses the certificate copied from certbot
+at build time.
 
-# 2. Deploy LDAP server with certificates
-make init
+![How the directory is built: LDIFs 01–06 load organizational units, users, groups, and MS-AD attributes in order, then ldappasswd sets passwords, producing the directory tree](docs/images/ldap-directory.png)
 
-# 3. Create test users
-make setup-users
+The base DN is derived from `LDAP_DOMAIN` — `ldap.example.com` becomes
+`dc=ldap,dc=example,dc=com`. (ACLs are configured in the slapd config; `04-acls.ldif` is
+reference documentation, not loaded.)
 
-# 4. Server is ready for LDAP queries
-```
-
-## Test Users
-
-| Username | Password | Department | Job Title | Employment Type | Use Case |
-|----------|----------|------------|-----------|-----------------|----------|
-| test-user-01 | TestPass123! | IT Department | IT Support Specialist | Full-Time | Standard employee |
-| test-user-02 | GuestPass789! | External | Visitor | Temporary | Guest access |
-| test-user-03 | AdminPass456! | IT Operations | Senior System Administrator | Full-Time | Administrator |
-| test-user-04 | ContractorPass321! | Professional Services | Technical Consultant | Contractor | External contractor |
-| test-user-05 | VipPass654! | Executive Management | Chief Technology Officer | Executive | VIP user |
-
-## LDAP Attributes
-
-Each user includes **standard LDAP attributes**:
-
-### Core Attributes
-- `uid` - Primary username
-- `cn` - Common name
-- `givenName` - First name
-- `sn` - Last name (surname)
-- `displayName` - User's display name
-- `mail` - Email address
-- `telephoneNumber` - Phone number
-- `mobile` - Mobile phone number
-- `title` - Job title
-- `ou` - Organizational unit (department)
-- `departmentNumber` - Department identifier
-- `employeeNumber` - Employee identifier
-- `employeeType` - Employment type (Full-Time, Contractor, Temporary, Executive)
-- `description` - User description
-- `street` - Street address
-- `l` - Locality/city
-- `st` - State/province
-- `postalCode` - Postal/ZIP code
-- `preferredLanguage` - Preferred language (e.g., en-US)
-
-### Microsoft AD Compatibility
-For systems expecting Active Directory attributes:
-- **Automatically enabled** via `make setup-users`
-- Adds `sAMAccountName` and `userPrincipalName` to all users
-- Adds `memberOf` for group memberships
-- Adds `userAccountControl` for account status
-- Compatible with WiFi APs expecting MS AD authentication
-
-## Available Commands
+## Quickstart
 
 ```bash
-# Setup
-make env           # Create .env file
-make init          # Complete setup (certificates + deployment)
-
-# Deployment  
-make deploy        # Start LDAP service
-make stop          # Stop LDAP service
-make logs          # Show service logs
-make clean         # Clean up containers and volumes
-
-# Certificate Management
-make copy-certs    # Copy certificates from external certbot
-make build-tls     # Build OpenLDAP with TLS certificates
-
-# User Management  
-make setup-users   # Create test users (run after make init)
-
-# Maintenance
-make backup        # Export LDAP data to LDIF file
+make init           # env → copy-certs → build-tls → deploy
+make setup-users    # load the LDIFs, set passwords, apply MS-AD attributes
 ```
 
-## LDAP Server Configuration
+> Requires the `certbot` service to be running first (for the TLS certificate).
 
-### Connection Settings
-- **LDAP Server**: `ldap.yourdomain.com`
-- **Port**: 636 (LDAPS recommended) or 389 (LDAP)
-- **Base DN**: `dc=yourdomain,dc=com` (auto-generated from LDAP_DOMAIN)
-- **Bind DN**: `cn=admin,dc=yourdomain,dc=com`
-- **Bind Password**: Your LDAP_ADMIN_PASSWORD
+`make` targets: `env`, `copy-certs`, `build-tls`, `deploy`, `init`, `setup-users`,
+`stop`, `logs`, `clean`, `backup` (exports the directory to LDIF via `slapcat`).
 
-### User Search Filters
+## Configuration
+
+`.env` (from `.env.example`):
+
+| Variable | Purpose |
+|----------|---------|
+| `LDAP_DOMAIN` | Domain → base DN (`ldap.example.com` → `dc=ldap,dc=example,dc=com`) |
+| `LDAP_ORG` | Organization name in the directory |
+| `LDAP_ADMIN_PASSWORD` | Password for `cn=admin,<base-dn>` |
+| `LDAP_CONFIG_PASSWORD` | slapd `cn=config` password |
+| `TEST_USER_PASSWORD` … `VIP_PASSWORD` | Per-user passwords for the five test users |
+
+## Ports
+
+| Port | Protocol | Use |
+|------|----------|-----|
+| 389 | LDAP | Plaintext — local testing |
+| 636 | LDAPS | TLS — recommended |
+
+## Test users
+
+`uid=test-user-01` … `test-user-05` under `ou=users`:
+
+| uid | Role | Group |
+|-----|------|-------|
+| `test-user-01` | IT employee | `wifi-users`, `it-department` |
+| `test-user-02` | Guest | `wifi-guests` |
+| `test-user-03` | Administrator | `wifi-admins`, `it-department` |
+| `test-user-04` | Contractor | `external-users` |
+| `test-user-05` | Executive | `executives` |
+
+Check a bind once `setup-users` has run (substitute your base DN):
+
 ```bash
-# Primary username lookup (most common)
-(uid=%username%)
-
-# Alternative lookups
-(cn=%username%)
-(|(uid=%username%)(cn=%username%))
-
-# Microsoft AD compatible (if AD attributes enabled)
-(|(sAMAccountName=%username%)(userPrincipalName=%username%@yourdomain.com))
+ldapsearch -x -H ldaps://localhost:636 \
+  -D "uid=test-user-01,ou=users,dc=ldap,dc=example,dc=com" \
+  -w "$TEST_USER_PASSWORD" -b "" -s base
 ```
 
-## Certificate Requirements
+## Certificates
 
-This project uses **automatic certificate management**:
+`make copy-certs` pulls `cert.pem`, `privkey.pem`, and `fullchain.pem` out of the running
+certbot container into `docker/certs/`; `build-tls` then **bakes them into the image**
+(`Dockerfile-tls`). After certbot renews, re-run `make copy-certs build-tls deploy`.
+`LDAP_DOMAIN` must match certbot's live-directory name — the first domain in certbot's
+`DOMAINS` (default `ldap.example.com`).
 
-1. **Certificate acquisition**: Handled automatically during `make init`
-2. **TLS support**: LDAPS on port 636 with Let's Encrypt certificates
-3. **Certificate renewal**: Automatic renewal via integrated certificate management
+## Files
 
-### Certificate Renewal
-
-You'll need to run `make deploy` in this directory before certs expire (every ~60-90 days). Let's Encrypt certs are valid for 90 days, and certbot auto-renews them when they're within 30 days of expiry. The `make deploy` command copies the renewed certificates from the certbot container and rebuilds the OpenLDAP image.
-
-## Testing LDAP Server
-
-### Manual LDAP Queries
-```bash
-# Test LDAP connection (replace yourdomain.com with your LDAP_DOMAIN)
-ldapsearch -x -H ldap://localhost:389 -b "dc=yourdomain,dc=com"
-
-# Test LDAPS connection  
-ldapsearch -x -H ldaps://localhost:636 -b "dc=yourdomain,dc=com"
-
-# Test user authentication
-ldapsearch -x -H ldap://localhost:389 \
-  -D "uid=test-user-01,ou=users,dc=yourdomain,dc=com" \
-  -w "TestPass123!" -b "" -s base
-
-# Search for a specific user
-ldapsearch -x -H ldap://localhost:389 \
-  -D "cn=admin,dc=yourdomain,dc=com" \
-  -w "your-admin-password" \
-  -b "ou=users,dc=yourdomain,dc=com" \
-  "(uid=test-user-01)"
-```
-
-## Troubleshooting
-
-### Common Issues
-- **"Certificate acquisition failed"**: Check domain DNS configuration and firewall settings
-- **"Authentication failed"**: Run `make setup-users` to create test users with correct passwords
-- **"No such object" errors**: Use `make clean && make init && make setup-users` for fresh setup
-- **"TLS connection failed"**: Restart with `make clean && make init` to refresh certificates
-
-### Persistent Volume Issues
-If users authenticate inconsistently, old Docker volumes may contain stale data:
-```bash
-make clean          # Removes old volumes completely
-make init           # Fresh LDAP server deployment  
-make setup-users    # Create users with current .env passwords
-```
-
-### Logs and Debugging
-```bash
-make logs                    # View LDAP service logs
-docker compose ps            # Check container status
-```
-
-## Project Structure
-
-```
-ldap/
-├── docker/
-│   └── Dockerfile-tls        # OpenLDAP with TLS support
-├── ldifs/
-│   ├── 01-organizational-units.ldif  # Organizational units (ou=users, ou=groups)
-│   ├── 02-users.ldif         # Test users (without passwords)
-│   ├── 03-groups.ldif        # User groups
-│   ├── 05-msad-compat.ldif   # Microsoft AD compatibility
-│   └── 06-users-with-msad.ldif  # AD attributes for users
-├── scripts/
-│   ├── setup-users.sh        # Create test users with passwords
-│   ├── copy-certs-for-build.sh  # Certificate management
-│   └── backup-ldap.sh        # Simple LDIF export
-├── docker-compose.yml        # Service definition
-├── Makefile                 # Build commands
-└── .env.example             # Environment template
-```
-
-## Security Notes
-
-- **Test environment only** - Not hardened for production use
-- **Default passwords** - Change all passwords in .env for real testing
-- **Certificate management** - Uses Let's Encrypt staging by default
-- **Network access** - Ports 389/636 exposed for LDAP access
-
----
-
-This LDAP server provides a simple enterprise solution with standard LDAP attributes and 802.1X standards, with optional Microsoft AD compatibility.
+- [`ldifs/`](ldifs/) — the directory contents, loaded in order (01 → 06)
+- [`scripts/setup-users.sh`](scripts/setup-users.sh) — load LDIFs, set passwords, apply MS-AD attrs
+- [`CLAUDE.md`](CLAUDE.md) — how to add users, groups, and attributes
+- [`Makefile`](Makefile) · [`.env.example`](.env.example) · [`docker-compose.yml`](docker-compose.yml)

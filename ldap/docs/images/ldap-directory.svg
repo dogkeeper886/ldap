@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="540" viewBox="0 0 1000 540" font-family="Arial, 'Helvetica Neue', 'DejaVu Sans', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1000" height="540" fill="#FFFFFF"/>
+  <text x="40" y="42" font-size="21" font-weight="700" fill="#0F172A">How the directory is built</text>
+  <text x="40" y="68" font-size="13" fill="#64748B">`make setup-users` loads the LDIFs in order, then sets passwords. LDAPS (:636) uses the cert copied from certbot.</text>
+
+  <!-- left: load order pipeline -->
+  <text x="50" y="96" font-size="12" font-weight="700" fill="#475569">LOAD ORDER ↓</text>
+  <g>
+    <rect x="40" y="104" width="330" height="50" rx="9" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5"/>
+    <text x="56" y="124" font-size="13.5" font-weight="700" fill="#334155">01 · organizational units</text>
+    <text x="56" y="142" font-size="11" fill="#64748B">ou=users, ou=groups</text>
+
+    <rect x="40" y="166" width="330" height="50" rx="9" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5"/>
+    <text x="56" y="186" font-size="13.5" font-weight="700" fill="#334155">02 · 5 users</text>
+    <text x="56" y="204" font-size="11" fill="#64748B">uid=test-user-01 … 05 (no password yet)</text>
+
+    <rect x="40" y="228" width="330" height="50" rx="9" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5"/>
+    <text x="56" y="248" font-size="13.5" font-weight="700" fill="#334155">03 · 6 groups</text>
+    <text x="56" y="266" font-size="11" fill="#64748B">wifi-users / -admins / -guests, executives …</text>
+
+    <rect x="40" y="290" width="330" height="50" rx="9" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5"/>
+    <text x="56" y="310" font-size="13.5" font-weight="700" fill="#334155">05 · MS-AD schema</text>
+    <text x="56" y="328" font-size="11" fill="#64748B">sAMAccountName, userPrincipalName</text>
+
+    <rect x="40" y="352" width="330" height="50" rx="9" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5"/>
+    <text x="56" y="372" font-size="13.5" font-weight="700" fill="#334155">06 · apply MS-AD attrs</text>
+    <text x="56" y="390" font-size="11" fill="#64748B">memberOf, userAccountControl=512</text>
+
+    <rect x="40" y="414" width="330" height="50" rx="9" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5"/>
+    <text x="56" y="434" font-size="13.5" font-weight="700" fill="#92400E">ldappasswd</text>
+    <text x="56" y="452" font-size="11" fill="#B45309">set SSHA passwords from .env</text>
+  </g>
+  <g stroke="#94A3B8" stroke-width="1.6" fill="none" marker-end="url(#arrow)">
+    <path d="M205,154 V164"/><path d="M205,216 V226"/><path d="M205,278 V288"/><path d="M205,340 V350"/><path d="M205,402 V412"/>
+  </g>
+
+  <!-- produces arrow -->
+  <path d="M370,260 C440,260 470,250 538,250" fill="none" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="430" y="230" width="62" height="15" fill="#FFFFFF"/><text x="461" y="241" font-size="11" fill="#475569" text-anchor="middle">produces</text>
+
+  <!-- right: resulting directory tree -->
+  <rect x="540" y="104" width="420" height="300" rx="11" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.5"/>
+  <text x="560" y="132" font-size="13.5" font-weight="700" fill="#1E3A8A">dc=ldap,dc=example,dc=com</text>
+  <g font-size="12.5" fill="#1E40AF" font-family="'DejaVu Sans Mono', monospace">
+    <text x="560" y="160">├─ ou=users</text>
+    <text x="578" y="182">├─ uid=test-user-01   (IT)</text>
+    <text x="578" y="202">├─ uid=test-user-02   (guest)</text>
+    <text x="578" y="222">├─ uid=test-user-03   (admin)</text>
+    <text x="578" y="242">├─ uid=test-user-04   (contractor)</text>
+    <text x="578" y="262">└─ uid=test-user-05   (executive)</text>
+    <text x="560" y="288">└─ ou=groups</text>
+    <text x="578" y="310">├─ cn=wifi-users / wifi-admins</text>
+    <text x="578" y="330">├─ cn=wifi-guests / external-users</text>
+    <text x="578" y="350">└─ cn=executives / it-department</text>
+  </g>
+  <text x="560" y="384" font-size="11" fill="#2563EB">ACLs live in slapd config; 04-acls.ldif is reference only.</text>
+
+  <!-- cert note -->
+  <rect x="540" y="420" width="420" height="56" rx="10" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="560" y="443" font-size="13" font-weight="700" fill="#92400E">LDAPS :636</text>
+  <text x="560" y="462" font-size="11" fill="#B45309">cert.pem / privkey.pem copied from certbot at build time</text>
+</svg>

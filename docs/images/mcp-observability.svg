@@ -15,7 +15,7 @@
   <path d="M800,246 V204" fill="none" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arrow)"/>
   <g font-size="11" fill="#475569" text-anchor="middle">
     <rect x="244" y="128" width="124" height="15" fill="#FFFFFF"/><text x="306" y="139">HTTPS + Bearer token</text>
-    <rect x="612" y="128" width="80" height="15" fill="#FFFFFF"/><text x="652" y="139">read-only SQL</text>
+    <rect x="606" y="128" width="120" height="15" fill="#FFFFFF"/><text x="666" y="139">SQL: query + user mgmt</text>
     <rect x="658" y="220" width="134" height="15" fill="#FFFFFF"/><text x="725" y="231">writes auth + accounting</text>
   </g>
 
@@ -27,7 +27,7 @@
   <!-- MCP server -->
   <rect x="378" y="110" width="184" height="80" rx="12" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
   <text x="470" y="143" text-anchor="middle" font-size="16" font-weight="700" fill="#1E3A8A">mcp-radius-sql</text>
-  <text x="470" y="163" text-anchor="middle" font-size="11" fill="#2563EB">9 read-only query tools</text>
+  <text x="470" y="163" text-anchor="middle" font-size="11" fill="#2563EB">9 query · 5 user tools</text>
   <text x="470" y="178" text-anchor="middle" font-size="11" fill="#2563EB">Express + TLS · port 3443</text>
 
   <!-- PostgreSQL -->

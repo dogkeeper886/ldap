@@ -1,140 +1,80 @@
-# Mail Server (Receive Only)
+# mail — receive-only credential inbox
 
-Receive-only mail server for guest credential delivery and testing.
+> Part of the [Enterprise Authentication Testing Platform](../README.md). A throwaway inbox
+> for verifying the credential emails an onboarding flow sends — without a real mail provider.
 
-## Architecture
+## What it is
 
-```
-┌─────────────────┐     ┌─────────────────┐
-│    Certbot      │────▶│   Mail Server   │
-│  (certificates) │     │ (Postfix/IMAP)  │
-└─────────────────┘     └─────────────────┘
-        │                       │
-        ▼                       ▼
-  ldap.example.com        Ports: 25 (SMTP)
-  (SAN certificate)              993 (IMAPS)
-```
+A `docker-mailserver` (Postfix + Dovecot) configured to **receive only** — it accepts mail
+on SMTP (25), stores it in a Maildir, and serves it over IMAPS (993). There is **no relay,
+no outbound, and no SMTP authentication**, and spam/AV scanning (ClamAV, SpamAssassin,
+Fail2Ban, Postgrey) is off. That posture is fine for a closed test platform and unsafe to
+expose to the internet. A test sends a guest a WiFi password; you read it back to confirm
+delivery.
 
-## Prerequisites
+## How it works
 
-- Certbot container running with certificates
-- Docker and Docker Compose v2
+![Receive a credential email, read it back: a test workflow delivers over SMTP :25 to docker-mailserver (receive-only, no relay/auth, scanning off); a tester retrieves over IMAPS :993 or with make read-guest-mail; the TLS cert is mounted read-only from certbot](docs/images/mail-flow.png)
 
-## Directory Structure
+Mail lands in the Maildir at `/var/mail/<MAIL_DOMAIN>/<MAIL_USER>/new/`. You can read it
+over IMAPS, or run `make read-guest-mail`, which parses the **WiFi network name and
+password out of the email's HTML** — purpose-built for verifying guest-credential delivery.
 
-```
-mail/
-├── .env                    # Environment configuration
-├── .env.example            # Template for .env
-├── docker-compose.yml      # Docker service definition
-├── Makefile                # Management commands
-├── config/                 # Mail server configuration
-├── docker/
-│   └── certs/              # TLS certificates (copied at build)
-└── scripts/
-    ├── copy-certs.sh       # Copy certs from certbot
-    └── read-guest-mail.sh  # Read guest credential emails
-```
-
-## Setup
-
-### Step 1: Configure Environment
+## Quickstart
 
 ```bash
-cd mail
-make env
-# Edit .env with your settings
+make deploy            # copy the cert from certbot, then start the server
+make add-user          # create a mailbox (interactive)
+make read-guest-mail   # print the WiFi name + password from the newest emails
 ```
 
-Key variables in `.env`:
+> Requires the `certbot` service running first (for the TLS certificate).
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `MAIL_DOMAIN` | Mail server hostname | `mail.example.com` |
-| `PRIMARY_CERT_DOMAIN` | Certificate domain in certbot | `ldap.example.com` |
-| `POSTMASTER_ADDRESS` | Postmaster email | `postmaster@mail.example.com` |
-| `MAIL_USER` | Default mail user for reading | `guest` |
+## Mailbox management
 
-### Step 2: Deploy
+Thin wrappers over docker-mailserver's `setup email` command:
 
-```bash
-make deploy
-```
+| Target | Action |
+|--------|--------|
+| `add-user` / `del-user` | Add / remove a mailbox (interactive) |
+| `update-password` | Change a mailbox password (interactive) |
+| `list-users` | List mailboxes |
+| `read-guest-mail` | Extract WiFi credentials from `MAIL_USER`'s inbox |
+| `clean-mail` | Empty `MAIL_USER`'s `new/` and `cur/` folders |
 
-This copies certificates and starts the mail server.
+Lifecycle: `deploy`, `stop`, `logs`, `clean` (`down -v` — removes the mailbox volumes).
 
-## Management Commands
+## Configuration
 
-| Command | Description |
-|---------|-------------|
-| `make deploy` | Start mail server |
-| `make stop` | Stop mail server |
-| `make logs` | View logs |
-| `make clean` | Remove containers and volumes |
+`.env` (from `.env.example`):
 
-### User Management
+| Variable | Purpose |
+|----------|---------|
+| `MAIL_DOMAIN` | Mail hostname and Maildir path root |
+| `PRIMARY_CERT_DOMAIN` | Which certbot certificate to copy (e.g. `ldap.example.com`) |
+| `POSTMASTER_ADDRESS` | Postmaster contact address |
+| `MAIL_USER` | Default mailbox for `read-guest-mail` / `clean-mail` |
 
-| Command | Description |
-|---------|-------------|
-| `make add-user` | Add a mail user (interactive) |
-| `make del-user` | Delete a mail user (interactive) |
-| `make update-password` | Update user password (interactive) |
-| `make list-users` | List mail users |
-
-### Guest Mail
-
-| Command | Description |
-|---------|-------------|
-| `make read-guest-mail` | Read guest credential emails |
-| `make clean-mail` | Delete all mail |
+To fan many guest addresses into one mailbox, see
+[`config/postfix-virtual.cf.example`](config/postfix-virtual.cf.example).
 
 ## Ports
 
 | Port | Protocol | Purpose |
 |------|----------|---------|
 | 25 | SMTP | Receive incoming mail |
-| 993 | IMAPS | Secure mail retrieval |
+| 993 | IMAPS | Secure retrieval (TLS) |
 
-## Features
+## Certificates
 
-- Receive-only configuration (no relay)
-- TLS encryption with Let's Encrypt certificates
-- IMAP access for mail retrieval
-- No spam filtering (ClamAV, SpamAssassin disabled)
-- Minimal footprint for testing purposes
+`make deploy` runs `copy-certs`, pulling `fullchain.pem` and `privkey.pem` out of the
+certbot container into `docker/certs/`, which docker-compose **mounts read-only at runtime**
+(`/tmp/ssl`, `SSL_TYPE=manual`) — no build step. After a renewal, re-run
+`make copy-certs && make stop && make deploy`. `PRIMARY_CERT_DOMAIN` must match certbot's
+live-directory name (default `ldap.example.com`).
 
-## Use Cases
+## Files
 
-1. **Guest credential delivery** - Send WiFi credentials to guest email
-2. **Testing email notifications** - Receive system alerts
-3. **Credential verification** - Confirm user registration emails
-
-## Troubleshooting
-
-### Mail not receiving
-
-```bash
-# Check mail server logs
-make logs
-
-# Verify mail server is running
-docker ps | grep mailserver
-```
-
-### Certificate errors
-
-```bash
-# Re-copy certificates from certbot
-make copy-certs
-make stop && make deploy
-```
-
-### Cannot read mail
-
-```bash
-# Verify mail user exists
-make list-users
-
-# Check mail directory
-docker exec mailserver ls -la /var/mail/
-```
+- [`scripts/read-guest-mail.sh`](scripts/read-guest-mail.sh) — parse WiFi credentials from a guest email
+- [`config/postfix-virtual.cf.example`](config/postfix-virtual.cf.example) — guest-address forwarding template
+- [`Makefile`](Makefile) · [`.env.example`](.env.example) · [`docker-compose.yml`](docker-compose.yml)
