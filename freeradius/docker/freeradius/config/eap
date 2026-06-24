@@ -15,8 +15,9 @@ eap {
     # EAP-TLS
     tls-config tls-common {
         # Server certificate (Let's Encrypt - for server identity)
+        # Use fullchain (leaf + intermediates) so EAP clients can build the trust chain
         private_key_file = ${certdir}/server/privkey.pem
-        certificate_file = ${certdir}/server/cert.pem
+        certificate_file = ${certdir}/server/fullchain.pem
 
         # Client CA (Private CA - for verifying client certificates)
         ca_file = ${certdir}/ca/client-ca.pem

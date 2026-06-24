@@ -1,10 +1,16 @@
 services:
   certbot:
-    image: certbot/dns-cloudflare
+    build: .
+    image: certbot-dns-cloudflare-docker:latest
     container_name: certbot
     volumes:
       - certificates:/etc/letsencrypt
       - ./cloudflare.ini:/etc/cloudflare/cloudflare.ini:ro
+      - ./deploy-hook.sh:/scripts/deploy-hook.sh:ro
+      # Host Docker socket + repo so the deploy-hook can rebuild dependent
+      # services on renewal (see docs/05-cert-renewal-automation.md).
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ..:/workspace
     entrypoint: sh
     command: >
       -c 'certbot certonly --dns-cloudflare
@@ -12,14 +18,16 @@ services:
       --dns-cloudflare-propagation-seconds 30
       --non-interactive --agree-tos
       --email $${EMAIL} --domains $${DOMAINS}
+      --deploy-hook /scripts/deploy-hook.sh
       $$([ "$${STAGING}" = "true" ] && echo "--staging")
       $$([ "$${DRY_RUN}" = "true" ] && echo "--dry-run") &&
-      trap exit TERM; while :; do certbot renew --quiet; sleep 43200 & wait $$!; done'
+      trap exit TERM; while :; do certbot renew --quiet --deploy-hook /scripts/deploy-hook.sh; sleep 43200 & wait $$!; done'
     environment:
       - DOMAINS=${DOMAINS:-ldap.example.com,radius.example.com}
       - EMAIL=${LETSENCRYPT_EMAIL}
       - STAGING=${STAGING:-false}
       - DRY_RUN=${DRY_RUN:-false}
+      - REPO=/workspace
 
 volumes:
   certificates:
