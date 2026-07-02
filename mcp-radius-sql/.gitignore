@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .env
+.mcp.json
 *.log
 
 # TLS certificates (copied at build time)

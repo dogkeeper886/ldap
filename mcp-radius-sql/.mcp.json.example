@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "radius-sql": {
+      "url": "https://<host>:3443/mcp",
+      "headers": { "Authorization": "Bearer <your-mcp-token>" }
+    }
+  }
+}
