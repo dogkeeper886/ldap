@@ -14,7 +14,7 @@ for mail_file in "$MAIL_DIR"/*; do
 
     echo "To: $to"
     echo "Subject: $subject"
-    echo "WiFi Network: $network"
-    echo "Password: $password"
+    [ -n "$network" ] && echo "WiFi Network: $network"
+    [ -n "$password" ] && echo "Password: $password"
     echo "---"
 done
