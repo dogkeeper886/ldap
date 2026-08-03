@@ -41,17 +41,13 @@ let this file or the project's own layer name the mechanism.
 ## Paths
 
 - stories dir: `docs/stories/`
-- tests dir: `docs/tests/`
 - diagrams dir: `docs/images/` (SVG source + rendered PNG)
 - story format contract: `docs/stories/README.md`
-- test format contract: `docs/tests/README.md`
 
 ## ID schemes
 
 - story id: `STORY-XXX` (zero-padded sequential, e.g. `STORY-001`)
-- scenario id: `TS-NN`
-- case id: `TC-NN`
-- title prefixes: `[STORY-XXX] Plan` · `[STORY-XXX] Test Plan` · `[STORY-XXX] <task>`
+- title prefixes: `[STORY-XXX] Plan` · `[STORY-XXX] <task>`
 
 ## Labels
 
@@ -59,7 +55,6 @@ Names the workflow uses; colours where the workflow pins one (`#hex`), otherwise
 project's choice.
 
 - plan: `plan` (`#5319e7`)
-- test plan: `test-plan` (`#006b75`)
 - priority: `priority:high` · `priority:medium` · `priority:low`
 - type: `feature` · `enhancement` · `bug` · `docs`
 - status: `status:in-progress` · `status:needs-review` · `status:blocked`
@@ -75,17 +70,6 @@ project's choice.
 
 - default branch: *derive it* (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`), don't assume `main`
 - merge strategy: `--merge` (preserve history; switch to `--squash` only if the project requires)
-
-## Front-matter & format contract (test docs)
-
-- test-doc filename: `TS-NN-<slug>.md` in the tests dir
-- front-matter fields: `id, title, namespace, story, story_hash, plan, issue, status` — the
-  anchor field tracks the drift anchor below; drop it when that is `none`
-- drift anchor: `story_hash` — the `sha256` of the story file (`sha256sum`), recorded so a
-  later gate can tell the story has moved. A project that detects drift another way (a
-  derived link check, say) names that here instead, or `none`. The `qw-*` commands record
-  whatever this declares; they do not assume hashing.
-- default status: `green`
 
 ## Docs & diagrams
 
