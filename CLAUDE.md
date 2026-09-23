@@ -60,52 +60,29 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
-## 5. Dev & QA workflow discipline
+## 5. Dev workflow discipline
 
-Substantial work flows through a pipeline; each step is a gate that stops for a
-human decision (commands suggest the next, they never auto-run it):
-
-```
-dw-story → dw-review-story → dw-plan → [human reviews the plan issue]
-        → dw-tasks → dw-review-tasks → dw-implement → dw-review-implement
-        → dw-create-pr → [human review + /review] → dw-merge
-```
-
-The full flow + producer→review pairing lives in `.claude/rules/dev-workflow.md`. Trivial
-work skips the plan: `dw-story → dw-tasks`.
-
-**qa-workflow** is the sibling pipeline — same gated discipline, turning a story into
-trustworthy test docs:
+Substantial work flows through the `agent-workflows` plugin; each step stops for a
+human decision and never auto-runs the next:
 
 ```
-qw-plan → qw-review-plan → qw-cases → qw-review-cases
+file-issue → do-task → open-pr → [human review] → land-pr
 ```
 
-The full flow + pairing lives in `.claude/rules/qa-workflow.md`.
-
-One review gate is an external builtin this toolkit does not own — invoke it by hand:
-- `/review` (builtin): PR overview. Run after `dw-create-pr`, before `dw-merge`.
-
-Don't wire this into the `dw-*` commands — it may not exist in every install,
-and a command that references a missing skill is a dangling pointer.
+Invoke them namespaced (`/agent-workflows:do-task`) so it is clear which copy ran.
 
 **Right-size it.** A typo or a one-line doc change does not need the full chain —
-use judgment; branch + PR + merge is enough. The review passes overlap:
-`dw-review-implement` is the always-on substance gate, `/review` is the PR summary.
-Running both on a trivial diff is ritual, not rigor.
+use judgment; branch + PR + merge is enough.
 
 ## 6. Artifact & doc review discipline
 
 Match the reviewer to **who reads** the file you changed:
 
-- **Human-read docs** (README, `docs/` prose): run `reviewing-phrasing` (the words)
-  + `reviewing-typography` (the look) — the human-read doc review.
-- **Agent-read tooling** (commands, skills, CLAUDE.md, rules): run
-  `reviewing-artifacts` (does it do its job — one job, complete, goal-not-spec,
-  fits the project, right for its reader).
+- **Human-read docs** (README, `docs/` prose): run `agent-workflows:reviewing-phrasing`
+  (the words) + `agent-workflows:reviewing-typography` (the look).
+- **Agent-read tooling** (skills, CLAUDE.md, rules): run `agent-workflows:skill-structure`.
 
-These are skills this project owns. Like the dev-workflow gates, they stop for a human
-and never auto-run — invoke them by hand.
+Like the dev-workflow steps, they stop for a human and never auto-run — invoke them by hand.
 
 **Right-size it.** A typo or a one-line tweak does not need a review pass — use
 judgment. Reach for these when a change is substantial enough that the look, the
