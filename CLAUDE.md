@@ -60,34 +60,6 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
-## 5. Dev workflow discipline
-
-Substantial work flows through the `agent-workflows` plugin; each step stops for a
-human decision and never auto-runs the next:
-
-```
-file-issue → do-task → open-pr → [human review] → land-pr
-```
-
-Invoke them namespaced (`/agent-workflows:do-task`) so it is clear which copy ran.
-
-**Right-size it.** A typo or a one-line doc change does not need the full chain —
-use judgment; branch + PR + merge is enough.
-
-## 6. Artifact & doc review discipline
-
-Match the reviewer to **who reads** the file you changed:
-
-- **Human-read docs** (README, `docs/` prose): run `agent-workflows:reviewing-phrasing`
-  (the words) + `agent-workflows:reviewing-typography` (the look).
-- **Agent-read tooling** (skills, CLAUDE.md, rules): run `agent-workflows:skill-structure`.
-
-Like the dev-workflow steps, they stop for a human and never auto-run — invoke them by hand.
-
-**Right-size it.** A typo or a one-line tweak does not need a review pass — use
-judgment. Reach for these when a change is substantial enough that the look, the
-wording, or the artifact's fitness actually matters.
-
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

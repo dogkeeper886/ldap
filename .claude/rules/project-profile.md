@@ -40,9 +40,7 @@ let this file or the project's own layer name the mechanism.
 
 ## Paths
 
-- stories dir: `docs/stories/`
 - diagrams dir: `docs/images/` (SVG source + rendered PNG)
-- story format contract: `docs/stories/README.md`
 
 ## ID schemes
 
